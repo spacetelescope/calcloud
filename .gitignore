@@ -5,6 +5,8 @@ coverage
 *.pyc
 *~
 *.egg-info/
+__pycache__/
+build/
+sdist/
+dist/
 
-documentation/crds_users_guide/build
-documentation/crds_users_guide/*.tar.gz
