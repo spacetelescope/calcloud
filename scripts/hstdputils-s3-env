@@ -1,0 +1,14 @@
+# CRDS environment variables
+
+export CRDS_PATH=$HOME/crds_cache
+
+export CRDS_SERVER_URL=https://hst-serverless.stsci.edu
+export CRDS_S3_ENABLED=1
+export CRDS_S3_RETURN_URI=0
+export CRDS_MAPPING_URI=s3://dmd-test-crds/mappings/hst
+export CRDS_REFERENCE_URI=s3://dmd-test-crds/references/hst
+export CRDS_CONFIG_URI=s3://dmd-test-crds/config/hst
+export CRDS_USE_PICKLES=0
+export CRDS_DOWNLOAD_MODE=plugin
+export CRDS_DOWNLOAD_PLUGIN='crds_s3_get ${SOURCE_URL} ${OUTPUT_PATH} ${FILE_SIZE} ${FILE_SHA1SUM}'
+

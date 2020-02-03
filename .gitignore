@@ -1,0 +1,12 @@
+coverage
+.coverage
+.pydevproject
+.project
+*.pyc
+*~
+*.egg-info/
+__pycache__/
+build/
+sdist/
+dist/
+

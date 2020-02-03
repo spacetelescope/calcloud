@@ -1,0 +1,328 @@
+{
+    "jobDefinitions": [
+        {
+            "jobDefinitionName": "hstdp-test-echo-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-test-echo-job:1",
+            "revision": 1,
+            "status": "ACTIVE",
+            "type": "container",
+            "parameters": {},
+            "containerProperties": {
+                "image": "amazonlinux",
+                "vcpus": 1,
+                "memory": 1024,
+                "command": [
+                    "echo",
+                    "hello",
+                    "world"
+                ],
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "resourceRequirements": []
+            }
+        },
+        {
+            "jobDefinitionName": "hstdp-ipppssoot-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-ipppssoot-job:8",
+            "revision": 8,
+            "status": "INACTIVE",
+            "type": "container",
+            "parameters": {
+                "output_bucket": "s3://jmiller-hstdp-output",
+                "ipppssoots": "O8JHG2NNQ",
+                "prefix": "ipppssoot_prefix",
+                "command": "hstdp-process"
+            },
+            "containerProperties": {
+                "image": "jaytmiller/hstdp-calcloud:latest",
+                "vcpus": 1,
+                "memory": 2048,
+                "command": [
+                    "ref::command",
+                    "ref::output_bucket",
+                    "ref::prefix",
+                    "ref::ipppssoots"
+                ],
+                "jobRoleArn": "arn:aws:iam::162808325377:role/HSTDP-BatchJobRole",
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "user": "root",
+                "resourceRequirements": []
+            }
+        },
+        {
+            "jobDefinitionName": "hstdp-ipppssoot-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-ipppssoot-job:7",
+            "revision": 7,
+            "status": "INACTIVE",
+            "type": "container",
+            "parameters": {},
+            "containerProperties": {
+                "image": "jaytmiller/hstdp-calcloud:latest",
+                "vcpus": 1,
+                "memory": 2048,
+                "command": [
+                    "hstdp-process",
+                    "s3://jmiller-hstdp-output",
+                    "stis-2020-01-24T18-57-53-639475",
+                    "O8JHG2NNQ"
+                ],
+                "jobRoleArn": "arn:aws:iam::162808325377:role/HSTDP-BatchJobRole",
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "user": "root",
+                "resourceRequirements": []
+            }
+        },
+        {
+            "jobDefinitionName": "hstdp-ipppssoot-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-ipppssoot-job:6",
+            "revision": 6,
+            "status": "INACTIVE",
+            "type": "container",
+            "parameters": {},
+            "containerProperties": {
+                "image": "jaytmiller/hstdp-calcloud:latest",
+                "vcpus": 1,
+                "memory": 1024,
+                "command": [
+                    "hstdp-process",
+                    "s3://jmiller-hstdp-output",
+                    "stis-2020-01-24T18-57-53-639475",
+                    "O8JHG2NNQ"
+                ],
+                "jobRoleArn": "arn:aws:iam::162808325377:role/HSTDP-BatchJobRole",
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "user": "root",
+                "resourceRequirements": []
+            }
+        },
+        {
+            "jobDefinitionName": "hstdp-ipppssoot-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-ipppssoot-job:5",
+            "revision": 5,
+            "status": "INACTIVE",
+            "type": "container",
+            "parameters": {},
+            "containerProperties": {
+                "image": "jaytmiller/hstdp-calcloud:latest",
+                "vcpus": 1,
+                "memory": 1024,
+                "command": [
+                    "hstdp-process",
+                    "s3://jmiller-hstdp-output",
+                    "stis-2020-01-24T18-57-53-639475",
+                    "O8JHG2NNQ"
+                ],
+                "jobRoleArn": "arn:aws:iam::162808325377:role/HSTDP-BatchJobRole",
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "user": "developer",
+                "resourceRequirements": []
+            }
+        },
+        {
+            "jobDefinitionName": "hstdp-ipppssoot-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-ipppssoot-job:4",
+            "revision": 4,
+            "status": "INACTIVE",
+            "type": "container",
+            "parameters": {},
+            "containerProperties": {
+                "image": "jaytmiller/hstdp-calcloud:latest",
+                "vcpus": 1,
+                "memory": 1024,
+                "command": [
+                    "hstdp-process",
+                    "s3://jmiller-hstdp-output",
+                    "stis-2020-01-24T18-57-53-639475",
+                    "O8JHG2NNQ"
+                ],
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "user": "developer",
+                "resourceRequirements": []
+            }
+        },
+        {
+            "jobDefinitionName": "hstdp-ipppssoot-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-ipppssoot-job:3",
+            "revision": 3,
+            "status": "INACTIVE",
+            "type": "container",
+            "parameters": {},
+            "containerProperties": {
+                "image": "jaytmiller/hstdp-calcloud:latest",
+                "vcpus": 1,
+                "memory": 1024,
+                "command": [
+                    "hstdp-process",
+                    "s3_output_bucket",
+                    "s3_batch_prefix",
+                    "IPPPSSOOT..."
+                ],
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "user": "developer",
+                "resourceRequirements": []
+            }
+        },
+        {
+            "jobDefinitionName": "hstdp-ipppssoot-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-ipppssoot-job:2",
+            "revision": 2,
+            "status": "INACTIVE",
+            "type": "container",
+            "parameters": {},
+            "containerProperties": {
+                "image": "jaytmiller/hstdp-calcloud:latest",
+                "vcpus": 1,
+                "memory": 1024,
+                "command": [
+                    "hstdp-process",
+                    "s3_output_bucket",
+                    "s3_batch_prefix",
+                    "IPPPSSOOT..."
+                ],
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "user": "developer",
+                "resourceRequirements": []
+            }
+        },
+        {
+            "jobDefinitionName": "hstdp-ipppssoot-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-ipppssoot-job:1",
+            "revision": 1,
+            "status": "INACTIVE",
+            "type": "container",
+            "parameters": {},
+            "containerProperties": {
+                "image": "jaytmiller/hstdp-cloud:latest",
+                "vcpus": 1,
+                "memory": 1024,
+                "command": [
+                    "hstdp-process",
+                    "s3_output_bucket",
+                    "s3_batch_prefix",
+                    "IPPPSSOOT..."
+                ],
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "user": "developer",
+                "resourceRequirements": []
+            }
+        },
+        {
+            "jobDefinitionName": "hstdp-ipppssoot-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-ipppssoot-job:11",
+            "revision": 11,
+            "status": "ACTIVE",
+            "type": "container",
+            "parameters": {
+                "output_bucket": "s3://jmiller-hstdp-output",
+                "ipppssoots": "O8JHG2NNQ",
+                "prefix": "ipppssoot_prefix",
+                "command": "hstdp-process"
+            },
+            "containerProperties": {
+                "image": "jaytmiller/hstdp-calcloud:latest",
+                "vcpus": 1,
+                "memory": 2048,
+                "command": [
+                    "Ref::command",
+                    "Ref::output_bucket",
+                    "Ref::prefix",
+                    "Ref::ipppssoots"
+                ],
+                "jobRoleArn": "arn:aws:iam::162808325377:role/HSTDP-BatchJobRole",
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "resourceRequirements": []
+            }
+        },
+        {
+            "jobDefinitionName": "hstdp-ipppssoot-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-ipppssoot-job:10",
+            "revision": 10,
+            "status": "ACTIVE",
+            "type": "container",
+            "parameters": {
+                "output_bucket": "s3://jmiller-hstdp-output",
+                "ipppssoots": "O8JHG2NNQ",
+                "prefix": "ipppssoot_prefix",
+                "command": "hstdp-process"
+            },
+            "containerProperties": {
+                "image": "jaytmiller/hstdp-calcloud:latest",
+                "vcpus": 1,
+                "memory": 2048,
+                "command": [
+                    "Ref::command",
+                    "Ref::output_bucket",
+                    "Ref::prefix",
+                    "Ref::ipppssoots"
+                ],
+                "jobRoleArn": "arn:aws:iam::162808325377:role/HSTDP-BatchJobRole",
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "user": "developer",
+                "resourceRequirements": []
+            }
+        },
+        {
+            "jobDefinitionName": "hstdp-ipppssoot-job",
+            "jobDefinitionArn": "arn:aws:batch:us-east-1:162808325377:job-definition/hstdp-ipppssoot-job:9",
+            "revision": 9,
+            "status": "ACTIVE",
+            "type": "container",
+            "parameters": {
+                "output_bucket": "s3://jmiller-hstdp-output",
+                "ipppssoots": "O8JHG2NNQ",
+                "prefix": "ipppssoot_prefix",
+                "command": "hstdp-process"
+            },
+            "containerProperties": {
+                "image": "jaytmiller/hstdp-calcloud:latest",
+                "vcpus": 1,
+                "memory": 2048,
+                "command": [
+                    "Ref::command",
+                    "Ref::output_bucket",
+                    "Ref::prefix",
+                    "Ref::ipppssoots"
+                ],
+                "jobRoleArn": "arn:aws:iam::162808325377:role/HSTDP-BatchJobRole",
+                "volumes": [],
+                "environment": [],
+                "mountPoints": [],
+                "ulimits": [],
+                "user": "root",
+                "resourceRequirements": []
+            }
+        }
+    ]
+}

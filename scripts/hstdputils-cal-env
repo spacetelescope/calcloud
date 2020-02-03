@@ -1,0 +1,12 @@
+#! /bin/bash
+
+# Point IRAF-style CAL env vars into corresponding areas of CRDS cache.
+
+export iref=${CRDS_PATH}/references/hst/wfc3/
+export jref=${CRDS_PATH}/references/hst/acs/
+export oref=${CRDS_PATH}/references/hst/stis/
+export lref=${CRDS_PATH}/references/hst/cos/
+export nref=${CRDS_PATH}/references/hst/nicmos/
+export uref=${CRDS_PATH}/references/hst/wfcpc2/
+export uref_linux=$uref
+

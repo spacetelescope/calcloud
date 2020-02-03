@@ -1,0 +1,16 @@
+#! /bin/bash
+
+# hstdputils-remote-process  <ipppssoot's....>
+
+# Perform CAL processing based on pip install.  Docker must wrap.
+
+# Configure CRDS for offsite use with a dynamic reference file cache.
+export CRDS_SERVER_URL=https://hst-crds.stsci.edu
+export CRDS_PATH=${HOME}/crds_cache
+export CRDS_READONLY_CACHE=0
+
+# Set CAL code required env vars
+source hstdputils-cal-env
+
+python -m hstdputils.process none none $*
+

@@ -1,0 +1,38 @@
+{
+    "computeEnvironments": [
+        {
+            "computeEnvironmentName": "jmiller-hstdp-batch-compute-env",
+            "computeEnvironmentArn": "arn:aws:batch:us-east-1:162808325377:compute-environment/jmiller-hstdp-batch-compute-env",
+            "ecsClusterArn": "arn:aws:ecs:us-east-1:162808325377:cluster/jmiller-hstdp-batch-compute-env_Batch_e3848c0c-3118-336d-acb0-c1ae18bcbf2f",
+            "type": "MANAGED",
+            "state": "ENABLED",
+            "status": "VALID",
+            "statusReason": "ComputeEnvironment Healthy",
+            "computeResources": {
+                "type": "EC2",
+                "minvCpus": 0,
+                "maxvCpus": 32,
+                "desiredvCpus": 0,
+                "instanceTypes": [
+                    "optimal"
+                ],
+                "subnets": [
+                    "subnet-b29ed7d5",
+                    "subnet-d2e2a88e",
+                    "subnet-bd8380b2",
+                    "subnet-17cd9939",
+                    "subnet-c0c65afe",
+                    "subnet-17968f5d"
+                ],
+                "securityGroupIds": [
+                    "sg-0a06bceebce06bc0a"
+                ],
+                "instanceRole": "arn:aws:iam::162808325377:instance-profile/HSTDP-BatchInstanceRole",
+                "tags": {
+                    "Name": "jmiller-hstdp-batch-compute-env"
+                }
+            },
+            "serviceRole": "arn:aws:iam::162808325377:role/AWSBatchServiceRole"
+        }
+    ]
+}
