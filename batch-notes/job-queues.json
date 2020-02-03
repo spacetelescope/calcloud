@@ -1,0 +1,18 @@
+{
+    "jobQueues": [
+        {
+            "jobQueueName": "hstdp-batch-queue",
+            "jobQueueArn": "arn:aws:batch:us-east-1:162808325377:job-queue/hstdp-batch-queue",
+            "state": "ENABLED",
+            "status": "VALID",
+            "statusReason": "JobQueue Healthy",
+            "priority": 1,
+            "computeEnvironmentOrder": [
+                {
+                    "order": 0,
+                    "computeEnvironment": "arn:aws:batch:us-east-1:162808325377:compute-environment/jmiller-hstdp-batch-compute-env"
+                }
+            ]
+        }
+    ]
+}

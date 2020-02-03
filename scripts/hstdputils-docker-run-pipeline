@@ -1,0 +1,14 @@
+#! /bin/bash
+
+# For testing with Docker image prior to submitting actual workflow jobs.
+
+# For AWS usage including S3:
+#
+# $ hstdputils-docker-run-pipeline <output_bucket> <batch_name> <ipppssoot's....>
+
+# For laptop usage bypassing S3 actions:
+#
+# $ hstpdputils-docker-run-pipeline  none none <ipppssoot's...>
+
+hstdputils-docker-run-container hstdp-process $*
+

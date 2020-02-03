@@ -1,0 +1,38 @@
+#! /bin/bash
+
+# Primary command script passed into Batch container runs
+
+# hstdp-process  s3-output-bucket   batch-name    ipppssoots....
+
+source hstdputils-s3-env
+source hstdputils-cal-env
+
+# =========================================================================================================
+echo ........................................ Environment ..............................................
+echo "User is" `whoami`
+echo "Current dir is" `pwd`
+printenv | sort
+ls -ld .
+
+echo ........................................ S3 read check  ..............................................
+aws s3 ls $1
+
+# =========================================================================================================
+echo ........................................ processing log ..............................................
+set -o pipefail && /usr/bin/time --verbose -o metrics.out python -m hstdputils.process $* |& tee process.out
+exit_status=$?
+
+# =========================================================================================================
+echo ........................................ program metrics .............................................
+cat metrics.out
+
+# =========================================================================================================
+export bucket=$1
+export prefix=$2
+if [ $bucket != "none" ]; then
+    aws s3 cp  --quiet process.out  ${bucket}/${prefix}/
+    aws s3 cp  --quiet metrics.out  ${bucket}/${prefix}/
+fi
+
+exit $exit_status
+

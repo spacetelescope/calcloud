@@ -1,0 +1,10 @@
+For installing the DEV version of airflow from github you need to do these steps:
+
+airflow db init
+
+airflow users create --role Admin --username jmiller --firstname Todd --lastname Miller --email jmiller@stsci.edu --password foo
+
+airflow webserver -p 8080
+
+airflow scheduler
+
