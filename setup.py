@@ -4,7 +4,7 @@ import glob
 setup(name='hstdputils',
       version='0.1',
       description='Utilities to support HST processing',
-      url='http://github.com/jaytmiller/hstdp-utils',
+      url='http://github.com/spacetelescope/calcloud',
       author='Todd Miller',
       author_email='jmiller@stsci.edu',
       license='MIT',

@@ -4,7 +4,7 @@
 # DATB's HST CAL code build for the pipeline
 FROM astroconda/datb-tc-pipeline:hstdp-snapshot
 
-LABEL maintainer="jmiller@stsci.edu" \
+LABEL maintainer="dmd_octarine@stsci.edu" \
       vendor="Space Telescope Science Institute"
 
 # Environment variables
@@ -22,7 +22,7 @@ RUN yum install -y curl rsync time
 RUN pip install --upgrade pip
 RUN pip install awscli boto3
 RUN pip install jupyterlab
-RUN pip install --upgrade git+https://github.com/jaytmiller/hstdputils.git
+RUN pip install --upgrade git+https://github.com/spacetelescope/calcloud.git
 
 WORKDIR /home/developer
 USER developer
