@@ -32,6 +32,20 @@ def id_info(ipppssoot):
     instr = process.get_instrument(ipppssoot)
     return IdInfo(*(ipppssoot,)+JOB_INFO[instr])
 
+def plan(output_bucket, batch_name, ipppssoot):
+    """Core planner function for one `ipppssoot` ID.  
+
+    output_bucket:    S3 bucket name
+    batch_name:  root name for jobs and output subdirs
+    ipppssoot:  ID of dataset to reprocess
+
+    Returns (output_bucket, ipppssoot_prefix, ipppssoot, instrument, executable, cpus, memory, max_seconds)
+    """
+    prefix = batch_name + "/" + ipppssoot
+    plan = (output_bucket, prefix,) + id_info(ipppssoot)
+    return plan
+
+
 def planner(ipppssoots_file,  output_bucket, batch_name):
     """Given an S3 `output_bucket` name string, a `batch_name` string,
     and a list of IPPPSSOOT dataset IDs `ipppssoots`, planner() will
@@ -67,11 +81,6 @@ def planner(ipppssoots_file,  output_bucket, batch_name):
             print(plan(output_bucket, batch_name, ipppssoot))
         else:
             print(ipppssoot, file=sys.stderr)
-
-def plan(output_bucket, batch_name, ipppssoot):
-    prefix = batch_name + "/" + ipppssoot
-    plan = (output_bucket, prefix,) + id_info(ipppssoot)
-    return plan
 
 # ----------------------------------------------------------------------
 
