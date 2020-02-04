@@ -34,18 +34,6 @@ INSTRUMENTS = set(IPPPSSOOT_INSTR.values())
 
 def get_instrument(ipppssoot):
     """Given an IPPPSSOOT ID, return the corresponding instrument.
-
-    >>> get_instrument("JBW2BGNKQ")
-    'acs'
-    
-    >>> get_instrument("LCYID1030")
-    'cos'
-
-    >>> get_instrument("O8JHG2NNQ")
-    'stis'
-
-    >>> get_instrument("IDDE02XSQ")
-    'wfc3'
     """
     if ipppssoot.lower() in INSTRUMENTS:
         return ipppssoot.lower()
@@ -56,7 +44,7 @@ def get_instrument(ipppssoot):
 
 class InstrumentManager:
     name = None # abstract class
-    suffixes = None
+    download_suffixes = None
 
     def __init__(self, ipppssoot):
         self.ipppssoot = ipppssoot
@@ -69,7 +57,8 @@ class InstrumentManager:
     def assoc_files(self, files):
         return [f for f in files if f.endswith("_asn.fits")]
             
-    unassoc_files = raw_files  # can be overriden by subclasses
+    def unassoc_files(sef, files):  # can be overriden by subclasses
+        return self.raw_files(files)
 
     # .............................................................
     
@@ -90,7 +79,7 @@ class InstrumentManager:
     
     def dowload(self):
         self.divider("Retrieving data files.")
-        files = retrieve_observation(self.ipppssoot, suffix=self.suffixes)
+        files = retrieve_observation(self.ipppssoot, suffix=self.download_suffixes)
         self.divider("Download data complete.")
         return files
         
@@ -121,13 +110,13 @@ class InstrumentManager:
 
 class AcsManager(InstrumentManager):
     name = "acs"
-    suffixes = ["ASN", "RAW"]
+    download_suffixes = ["ASN", "RAW"]
     stage1 = "calacs.e"
     stage2 = "runastrodriz"
     
 class Wfc3Manager(InstrumentManager):
     name = "wfc3"
-    suffixes = ["ASN", "RAW"]
+    download_suffixes = ["ASN", "RAW"]
     stage1 = "calwf3.e"
     stage2 = "runastrodriz"
 
@@ -135,7 +124,7 @@ class Wfc3Manager(InstrumentManager):
     
 class CosManager(InstrumentManager):
     name = "cos"
-    suffixes = ["ASN", "RAW", "EPC", "RAWACCUM", "RAWACCUM_A", "RAWACCUM_B", "RAWACQ", "RAWTAG", "RAWTAG_A", "RAWTAG_B"]
+    download_suffixes = ["ASN", "RAW", "EPC", "RAWACCUM", "RAWACCUM_A", "RAWACCUM_B", "RAWACQ", "RAWTAG", "RAWTAG_A", "RAWTAG_B"]
     stage1 = "calcos"
     stage2 = None
 
@@ -146,7 +135,7 @@ class CosManager(InstrumentManager):
     
 class StisManager(InstrumentManager):
     name = "stis"
-    suffixes = ["ASN", "RAW", "EPC", "TAG",  "WAV"]
+    download_suffixes = ["ASN", "RAW", "EPC", "TAG",  "WAV"]
     stage1 = "cs0.e -tv"
     stage2 = None
 
