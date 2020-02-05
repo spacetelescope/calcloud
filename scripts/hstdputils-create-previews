@@ -1,0 +1,16 @@
+#! /usr/bin/bash
+
+# usage: create_previews.py [-h] input_uri_prefix output_uri_prefix
+
+# Create image and spectral previews
+
+# positional arguments:
+#   input_uri_prefix   S3 URI prefix containing FITS images that require
+#                      previews
+#   output_uri_prefix  S3 URI prefix for writing previews
+
+input_uri_prefix=$1
+output_uri_prefix=$2
+
+python -m hstdputils.create_previews ${input_uri_prefix} ${output_uri_prefix}
+

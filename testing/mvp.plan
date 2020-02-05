@@ -1,0 +1,8 @@
+('s3://jmiller-hstdp-output', 'batch-mvp-2020-02-05T23-59-35/J8CB010B0', 'J8CB010B0', 'acs', 'hstdp-process', 4, 4096, 21600)
+('s3://jmiller-hstdp-output', 'batch-mvp-2020-02-05T23-59-35/J8NE53ZNQ', 'J8NE53ZNQ', 'acs', 'hstdp-process', 4, 4096, 21600)
+('s3://jmiller-hstdp-output', 'batch-mvp-2020-02-05T23-59-35/LCYID1030', 'LCYID1030', 'cos', 'hstdp-process', 1, 2048, 1200)
+('s3://jmiller-hstdp-output', 'batch-mvp-2020-02-05T23-59-35/LDQHPBI9Q', 'LDQHPBI9Q', 'cos', 'hstdp-process', 1, 2048, 1200)
+('s3://jmiller-hstdp-output', 'batch-mvp-2020-02-05T23-59-35/O8L7SWS9Q', 'O8L7SWS9Q', 'stis', 'hstdp-process', 1, 512, 1200)
+('s3://jmiller-hstdp-output', 'batch-mvp-2020-02-05T23-59-35/OCTKA6010', 'OCTKA6010', 'stis', 'hstdp-process', 1, 512, 1200)
+('s3://jmiller-hstdp-output', 'batch-mvp-2020-02-05T23-59-35/ICB154060', 'ICB154060', 'wfc3', 'hstdp-process', 4, 4096, 21600)
+('s3://jmiller-hstdp-output', 'batch-mvp-2020-02-05T23-59-35/IDGG23ZTQ', 'IDGG23ZTQ', 'wfc3', 'hstdp-process', 4, 4096, 21600)

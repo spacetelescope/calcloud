@@ -2,6 +2,7 @@ import os
 import sys
 import glob
 import re
+import subprocess
 
 from drizzlepac.hlautils.astroquery_utils import retrieve_observation
 
@@ -50,39 +51,40 @@ class InstrumentManager:
         self.ipppssoot = ipppssoot
 
     # .............................................................
-    
+
     def raw_files(self, files):
         return [f for f in files if "_raw" in f]
 
     def assoc_files(self, files):
         return [f for f in files if f.endswith("_asn.fits")]
-            
-    def unassoc_files(sef, files):  # can be overriden by subclasses
+
+    def unassoc_files(self, files):  # can be overriden by subclasses
         return self.raw_files(files)
 
     # .............................................................
-    
-    def divider(self, *args, dash="="):
+
+    def divider(self, *args, dash=">"):
         msg = " ".join([str(a) for a in args])
         dashes = (100-len(msg)-2-5)
-        log.info(self.ipppssoot, dash*5, msg, dash*dashes)
-        
-    def run(self, *args):
-        self.divider("Running:", *args)
-        cmd = " ".join(args)
-        err = os.system(cmd)
+        log.info(dash *(5 + len(msg) + dashes + 2))
+        log.info(dash*5, msg, dash*dashes)
+
+    def run(self, cmd, *args):
+        cmd = tuple(cmd.split()) + args  # Handle stage values with switches.
+        self.divider("Running:", cmd)
+        err = subprocess.call(cmd)
         if err:
             log.error(self.ipppssoot, "Command:", repr(cmd), "exited with error status:", err)
             sys.exit(1) # should be 0-127,  higher err val's like 512 are truncated to 0 by shells
 
     # .............................................................
-    
+
     def dowload(self):
         self.divider("Retrieving data files.")
         files = retrieve_observation(self.ipppssoot, suffix=self.download_suffixes)
         self.divider("Download data complete.")
         return files
-        
+
     def assign_bestrefs(self, files):
         self.divider("Computing bestrefs and downloading references.", files)
         bestrefs_files = self.raw_files(files)
@@ -106,6 +108,31 @@ class InstrumentManager:
                 log.info("Saving:", output_bucket, prefix, filename)
                 s3.upload_filename(filename, output_bucket, prefix=prefix)
 
+    # .............................................................
+
+    def main(self, ipppssoot, output_bucket, prefix):
+        """Perform all processing steps for basic calibration processing:
+
+        download inputs
+        assign bestrefs (and potentially download refs)
+        perform CAL processing
+        copy outputs to S3
+
+        Returns [ output_files, ... ]
+        """
+        input_files = self.dowload()
+
+        self.assign_bestrefs(input_files)
+
+        self.process(input_files)
+
+        outputs = glob.glob("*.fits")  # include all files,  in particular,  modified inputs.
+        outputs += glob.glob("*.tra")
+
+        self.output_files(outputs, output_bucket, prefix)
+
+        return outputs
+
 # -----------------------------------------------------------------------------
 
 class AcsManager(InstrumentManager):
@@ -113,7 +140,7 @@ class AcsManager(InstrumentManager):
     download_suffixes = ["ASN", "RAW"]
     stage1 = "calacs.e"
     stage2 = "runastrodriz"
-    
+
 class Wfc3Manager(InstrumentManager):
     name = "wfc3"
     download_suffixes = ["ASN", "RAW"]
@@ -121,7 +148,7 @@ class Wfc3Manager(InstrumentManager):
     stage2 = "runastrodriz"
 
 # ............................................................................
-    
+
 class CosManager(InstrumentManager):
     name = "cos"
     download_suffixes = ["ASN", "RAW", "EPC", "RAWACCUM", "RAWACCUM_A", "RAWACCUM_B", "RAWACQ", "RAWTAG", "RAWTAG_A", "RAWTAG_B"]
@@ -130,9 +157,9 @@ class CosManager(InstrumentManager):
 
     def unassoc_files(self, files):
         return super(CosManager, self).raw_files(files)[:1]   # return only first file
-    
+
 # ............................................................................
-    
+
 class StisManager(InstrumentManager):
     name = "stis"
     download_suffixes = ["ASN", "RAW", "EPC", "TAG",  "WAV"]
@@ -151,7 +178,7 @@ class StisManager(InstrumentManager):
         return [f for f in files if f.endswith(('_raw.fits','_wav.fits','_tag.fits'))]
 
 # ............................................................................
-    
+
 MANAGERS = {
     "acs" : AcsManager,
     "cos" : CosManager,
@@ -172,22 +199,13 @@ def process(ipppssoot, output_bucket=None, prefix=None):
     process the dataset and upload output products to the `output_bucket` with
     the given `prefix`.
 
-    Nominally `prefix` identifies a job or batch of files dumped into an 
+    Nominally `prefix` identifies a job or batch of files dumped into an
     otherwise immense bucket.
     """
     manager = get_instrument_manager(ipppssoot)
 
-    files = manager.dowload()
+    outputs = manager.main(ipppssoot, output_bucket, prefix)
 
-    manager.assign_bestrefs(files)
-    
-    manager.process(files)
-    
-    all = glob.glob("*.fits")
-    outputs = list(set(all) - set(files))
-
-    manager.output_files(outputs, output_bucket, prefix)
-    
     return outputs
 
 # -----------------------------------------------------------------------------
@@ -195,8 +213,6 @@ def process(ipppssoot, output_bucket=None, prefix=None):
 def process_ipppssoots(ipppssoots, output_bucket=None, prefix=None):
     for ipppssoot in ipppssoots:
         process(ipppssoot, output_bucket, prefix)
-
-# -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
 
