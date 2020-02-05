@@ -42,7 +42,7 @@ def get_default_dag_args(
         'owner': 'Airflow',
         'depends_on_past': False,
         'start_date': datetime(1900,1,1,0,0,0),
-        'catchup' False,
+        'catchup' : False,
         'email': email,
         'email_on_failure': False,
         'email_on_retry': False,
@@ -62,28 +62,3 @@ def get_airflow_objs(plan, queue=DEFAULT_QUEUE, job_definition=DEFAULT_JOB_DEFIN
     operator = AwsBatchOperator(**pars, dag=dag, task_id=pars["job_name"])
     return pars, dag, operator
 
-'''
-def generate_dag_file(plan_file, job_queue, job_definition):
-        with open(plan_file) as plans:
-            default_dag_args = get_default_dag_args()
-            output_text += """
-            dagfile_template = f"""
-DEFAULT_DAG_ARGS = {pprint.pformat(get_default_dag_args())}
-
-dag = DAG()
-"""
-            print(DAGFILE_TEMPLATE)
-        
-def main(plan_file):
-    """Given a file `plan_file` defining job plan tuples one-per-line,  
-    submit each job and output the plan and submission response to stdout.
-    """
-    with open(plan_file) as f:
-        for line in f.readlines():
-            job_plan = eval(line)
-            print("----", job_plan)
-            print(generate_dag_file(job_plan))
-'''
-
-if __name__ == "__main__":
-    main(sys.argv[1])
