@@ -10,4 +10,7 @@ setup(name='hstdputils',
       license='MIT',
       packages=['hstdputils'],
       scripts=glob.glob("scripts/*"),
+      extras_require = {
+          "dev" : ["black", "flake8", "bandit"],
+          },
       zip_safe=False)

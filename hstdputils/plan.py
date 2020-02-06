@@ -15,10 +15,10 @@ def get_batch_name(name):
 IdInfo = namedtuple("IdInfo", ["ipppssoot", "instrument", "executable", "cpus", "memory", "max_seconds"])
 
 JOB_INFO = {
-    "acs" : ("acs", "hstdp-process", 4, 2*1024, 60*60*6),
+    "acs" : ("acs", "hstdp-process", 4, 4*1024, 60*60*6),
     "cos" : ("cos", "hstdp-process", 1, 2*1024, 60*20),
     "stis" : ("stis", "hstdp-process", 1, 1*512, 60*20),
-    "wfc3" : ("wfc3", "hstdp-process", 4, 2*1024, 60*60*6),
+    "wfc3" : ("wfc3", "hstdp-process", 4, 4*1024, 60*60*6),
     }
 
 def id_info(ipppssoot):
@@ -42,9 +42,7 @@ def plan(output_bucket, batch_name, ipppssoot):
     Returns (output_bucket, ipppssoot_prefix, ipppssoot, instrument, executable, cpus, memory, max_seconds)
     """
     prefix = batch_name + "/" + ipppssoot
-    plan = (output_bucket, prefix,) + id_info(ipppssoot)
-    return plan
-
+    return (output_bucket, prefix,) + id_info(ipppssoot)  # the plan tuple
 
 def planner(ipppssoots_file,  output_bucket, batch_name):
     """Given an S3 `output_bucket` name string, a `batch_name` string,

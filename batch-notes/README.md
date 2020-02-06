@@ -12,9 +12,3 @@ as-is to rebuild the env.
 Incomplete prototyping with Airflow for AWS Batch based on development
 version of Airflow.
 
-## Sample Data and Plans
-
-Test HST IPPPSSSOOT dataset IDs and hstdputils plan output.
-
-
-

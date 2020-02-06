@@ -1,4 +1,5 @@
 import sys
+import ast
 
 import boto3
 
@@ -41,7 +42,7 @@ def main(plan_file, job_definition=JOB_DEFINITION, job_queue=JOB_QUEUE):
     """
     with open(plan_file) as f:
         for line in f.readlines():
-            job_plan = eval(line)
+            job_plan = ast.literal_eval(line)
             print(submit_job(job_plan, job_definition, job_queue))
 
 if __name__ == "__main__":

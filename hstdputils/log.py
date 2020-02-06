@@ -58,10 +58,8 @@ exceptions onto HSTDP messages or adding information:
 """
 import sys
 import os
-import optparse
 import logging
 import pprint
-import contextlib
 
 DEFAULT_VERBOSITY_LEVEL = 50
 

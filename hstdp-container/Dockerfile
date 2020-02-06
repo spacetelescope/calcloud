@@ -24,6 +24,10 @@ RUN pip install awscli boto3
 RUN pip install jupyterlab
 RUN pip install --upgrade git+https://github.com/spacetelescope/calcloud.git
 
+# Install fitscut
+COPY install-fitscut  .
+RUN ./install-fitscut && rm ./install-fitscut
+
 WORKDIR /home/developer
 USER developer
 
