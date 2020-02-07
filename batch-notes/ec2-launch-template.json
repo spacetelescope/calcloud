@@ -5,8 +5,8 @@
             "LaunchTemplateName": "hstdp-batch-instance-template",
             "CreateTime": "2020-02-07T14:00:09.000Z",
             "CreatedBy": "arn:aws:iam::162808325377:user/jmiller",
-            "DefaultVersionNumber": 4,
-            "LatestVersionNumber": 4,
+            "DefaultVersionNumber": 9,
+            "LatestVersionNumber": 9,
             "Tags": [
                 {
                     "Key": "CALCLOUD",
