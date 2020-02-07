@@ -1,6 +1,45 @@
 {
     "computeEnvironments": [
         {
+            "computeEnvironmentName": "hstdp-batch-compute-env-templated-2",
+            "computeEnvironmentArn": "arn:aws:batch:us-east-1:162808325377:compute-environment/hstdp-batch-compute-env-templated-2",
+            "ecsClusterArn": "arn:aws:ecs:us-east-1:162808325377:cluster/hstdp-batch-compute-env-templated-2_Batch_c4c26552-b73b-3ec8-bd6d-15a2d2e84f86",
+            "type": "MANAGED",
+            "state": "ENABLED",
+            "status": "VALID",
+            "statusReason": "ComputeEnvironment Healthy",
+            "computeResources": {
+                "type": "EC2",
+                "allocationStrategy": "BEST_FIT",
+                "minvCpus": 0,
+                "maxvCpus": 256,
+                "desiredvCpus": 16,
+                "instanceTypes": [
+                    "optimal"
+                ],
+                "imageId": "ami-07a63940735aebd38",
+                "subnets": [
+                    "subnet-b29ed7d5",
+                    "subnet-d2e2a88e",
+                    "subnet-bd8380b2",
+                    "subnet-17cd9939",
+                    "subnet-c0c65afe",
+                    "subnet-17968f5d"
+                ],
+                "securityGroupIds": [
+                    "sg-02189c14668c2842f"
+                ],
+                "ec2KeyPair": "jmiller-key-pair",
+                "instanceRole": "arn:aws:iam::162808325377:instance-profile/HSTDP-BatchInstanceRole",
+                "tags": {},
+                "launchTemplate": {
+                    "launchTemplateId": "lt-0a99271d2f80c7116",
+                    "version": "$Default"
+                }
+            },
+            "serviceRole": "arn:aws:iam::162808325377:role/AWSBatchServiceRole"
+        },
+        {
             "computeEnvironmentName": "jmiller-hstdp-batch-compute-env",
             "computeEnvironmentArn": "arn:aws:batch:us-east-1:162808325377:compute-environment/jmiller-hstdp-batch-compute-env",
             "ecsClusterArn": "arn:aws:ecs:us-east-1:162808325377:cluster/jmiller-hstdp-batch-compute-env_Batch_e3848c0c-3118-336d-acb0-c1ae18bcbf2f",

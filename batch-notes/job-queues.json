@@ -6,11 +6,11 @@
             "state": "ENABLED",
             "status": "VALID",
             "statusReason": "JobQueue Healthy",
-            "priority": 1,
+            "priority": 10,
             "computeEnvironmentOrder": [
                 {
                     "order": 0,
-                    "computeEnvironment": "arn:aws:batch:us-east-1:162808325377:compute-environment/jmiller-hstdp-batch-compute-env"
+                    "computeEnvironment": "arn:aws:batch:us-east-1:162808325377:compute-environment/hstdp-batch-compute-env-templated-2"
                 }
             ]
         }
