@@ -1,0 +1,22 @@
+{
+    "LaunchTemplates": [
+        {
+            "LaunchTemplateId": "lt-0a99271d2f80c7116",
+            "LaunchTemplateName": "hstdp-batch-instance-template",
+            "CreateTime": "2020-02-07T14:00:09.000Z",
+            "CreatedBy": "arn:aws:iam::162808325377:user/jmiller",
+            "DefaultVersionNumber": 9,
+            "LatestVersionNumber": 9,
+            "Tags": [
+                {
+                    "Key": "CALCLOUD",
+                    "Value": "HSTDP-BATCH-LAUNCH-TEMPLATE"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "HSTDP-BATCH-LAUNCH-TEMPLATE"
+                }
+            ]
+        }
+    ]
+}
