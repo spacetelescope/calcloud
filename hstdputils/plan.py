@@ -17,7 +17,7 @@ IdInfo = namedtuple("IdInfo", ["ipppssoot", "instrument", "executable", "cpus", 
 JOB_INFO = {
     "acs" : ("acs", "hstdp-process", 4, 4*1024, 60*60*6),
     "cos" : ("cos", "hstdp-process", 1, 2*1024, 60*20),
-    "stis" : ("stis", "hstdp-process", 1, 1*512, 60*20),
+    "stis" : ("stis", "hstdp-process", 1, 3*512, 60*20),
     "wfc3" : ("wfc3", "hstdp-process", 4, 4*1024, 60*60*6),
     }
 
@@ -33,7 +33,7 @@ def id_info(ipppssoot):
     return IdInfo(*(ipppssoot,)+JOB_INFO[instr])
 
 def plan(output_bucket, batch_name, ipppssoot):
-    """Core planner function for one `ipppssoot` ID.  
+    """Core planner function for one `ipppssoot` ID.
 
     output_bucket:    S3 bucket name
     batch_name:  root name for jobs and output subdirs
