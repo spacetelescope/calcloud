@@ -46,6 +46,7 @@ def get_instrument(ipppssoot):
 class InstrumentManager:
     name = None # abstract class
     download_suffixes = None
+    not_so_bad_err_nums = []
 
     def __init__(self, ipppssoot):
         self.ipppssoot = ipppssoot
@@ -73,6 +74,9 @@ class InstrumentManager:
         cmd = tuple(cmd.split()) + args  # Handle stage values with switches.
         self.divider("Running:", cmd)
         err = subprocess.call(cmd)
+        if err in self.not_so_bad_err_nums:
+            log.info("Skipping 'not so bad' error status =", err)
+            err = 0
         if err:
             log.error(self.ipppssoot, "Command:", repr(cmd), "exited with error status:", err)
             sys.exit(1) # should be 0-127,  higher err val's like 512 are truncated to 0 by shells
@@ -154,6 +158,9 @@ class CosManager(InstrumentManager):
     download_suffixes = ["ASN", "RAW", "EPC", "RAWACCUM", "RAWACCUM_A", "RAWACCUM_B", "RAWACQ", "RAWTAG", "RAWTAG_A", "RAWTAG_B"]
     stage1 = "calcos"
     stage2 = None
+    not_so_bad_err_nums = [
+        5,    # Ignore calcos errors from RAWACQ
+    ]
 
     def unassoc_files(self, files):
         return super(CosManager, self).raw_files(files)[:1]   # return only first file
@@ -162,7 +169,7 @@ class CosManager(InstrumentManager):
 
 class StisManager(InstrumentManager):
     name = "stis"
-    download_suffixes = ["ASN", "RAW", "EPC", "TAG",  "WAV"]
+    download_suffixes = ["ASN", "RAW", "EPC", "TAG", "WAV"]
     stage1 = "cs0.e -tv"
     stage2 = None
 
