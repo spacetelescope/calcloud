@@ -130,11 +130,12 @@ def main(args, outdir="."):
         output_paths = generate_previews(input_path, outdir, filename_base)
         log.info("Generated", len(output_paths), "output files")
         for output_path in output_paths:
-            output_uri = os.path.join(args.output_uri_prefix, os.path.basename(output_path))
-            log.info("Uploading", output_path, "to", output_uri)
-            subprocess.check_call([
-                "aws", "s3", "cp", "--quiet", output_path, output_uri
-            ])
+            if output_path.startswith("s3://"):  # is set to "none" for local use
+                output_uri = os.path.join(args.output_uri_prefix, os.path.basename(output_path))
+                log.info("Uploading", output_path, "to", output_uri)
+                subprocess.check_call([
+                    "aws", "s3", "cp", "--quiet", output_path, output_uri
+                ])
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Create image and spectral previews")
