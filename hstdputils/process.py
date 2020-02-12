@@ -62,12 +62,12 @@ class InstrumentManager:
     def unassoc_files(self, files):  # can be overriden by subclasses
         return self.raw_files(files)
 
-    def bestrefs_files(self, files):
-        assoc = self.assoc_files(files)
-        if assoc:
-            return assoc
-        else:
-            return self.unassoc_files(files)
+    # def bestrefs_files(self, files):
+    #     assoc = self.assoc_files(files)
+    #     if assoc:
+    #         return assoc
+    #     else:
+    #         return self.unassoc_files(files)
 
     # .............................................................
 
@@ -98,10 +98,11 @@ class InstrumentManager:
 
     def assign_bestrefs(self, files):
         self.divider("Computing bestrefs and downloading references.", files)
-        bestrefs_files = self.bestrefs_files(files)
-        if not bestrefs_files:
-            self.divider("Bestrefs: no applicable data files, skipping...", files)
-            return []
+        bestrefs_files = self.raw_files(files)
+        # bestrefs_files = self.bestrefs_files(files)
+        # if not bestrefs_files:
+        #     self.divider("Bestrefs: no applicable data files, skipping...", files)
+        #     return []
         bestrefs.assign_bestrefs(bestrefs_files, sync_references=True)
         self.divider("Bestrefs complete.")
         return bestrefs_files
