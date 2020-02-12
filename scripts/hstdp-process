@@ -24,18 +24,23 @@ echo "Current dir is" `pwd`
 printenv | sort
 ls -ld .
 
-echo ........................................ S3 read check  ..............................................
-aws s3 ls $1
+if [ $output_bucket != "none" ]; then
+    echo ........................................ S3 read check  ..............................................
+    aws s3 ls $1
+else
+    echo ........................................ Skippiong S3 read check  ..............................................
+fi
 
 # =========================================================================================================
 echo ........................................ processing log ..............................................
 set -o pipefail && /usr/bin/time --verbose -o process_metrics.txt python -m hstdputils.process $output_bucket $batch_name $ipppssoots |& tee process.txt
 process_exit_status=$?
-
+echo "Processing exit status ${process_exit_status}"
 
 echo ........................................ previews log ................................................
 set -o pipefail && /usr/bin/time --verbose -o preview_metrics.txt python -m hstdputils.create_previews ${previews_input_dir}  ${previews_s3_output_dir} |& tee preview.txt
 preview_exit_status=$?
+echo "Preview exit status ${preview_exit_status}"
 
 # =========================================================================================================
 echo ........................................ process metrics .............................................
@@ -48,10 +53,9 @@ cat preview_metrics.txt
 if [ $output_bucket != "none" ]; then
     aws s3 cp  --quiet process.txt          ${processing_s3_output_dir}/
     aws s3 cp  --quiet process_metrics.txt  ${processing_s3_output_dir}/
-    
+
     aws s3 cp  --quiet preview.txt          ${previews_s3_output_dir}/
     aws s3 cp  --quiet preview_metrics.txt  ${previews_s3_output_dir}/
 fi
 
 [[ $process_exit_status -eq 0 && $preview_exit_status -eq 0 ]] || exit 1
-
