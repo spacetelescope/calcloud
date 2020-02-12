@@ -59,7 +59,7 @@ def generate_image_previews(input_path, output_dir, filename_base):
     return output_paths
 
 def generate_spectral_previews(input_path, output_dir, filename_base):
-    before_files = [f for f in os.listdir(output_dir) if os.isfile(f)]
+    before_files = [f for f in os.listdir(output_dir) if os.path.isfile(f)]
 
     cmd = [
         "make_hst_spec_previews",
@@ -69,24 +69,24 @@ def generate_spectral_previews(input_path, output_dir, filename_base):
         input_path
     ]
 
-    try:
-        output = subprocess.check_output(cmd)
-        after_files = [f for f in os.listdir(output_dir) if os.isfile(f)]
-
-        return [f for f in after_files if f not in before_files]
-    except:
+    # output = subprocess.check_output(cmd)
+    err = os.system(" ".join(cmd))
+    if err:
         LOGGER.exception(f"Preview file not generated for {input_path}")
         return []
-
+    else:
+        after_files = [f for f in os.listdir(output_dir) if os.path.isfile(f)]
+        return [f for f in after_files if f not in before_files]
 
 def generate_previews(input_path, output_dir, filename_base):
     with fits.open(input_path) as hdul:
         naxis = hdul[1].header["NAXIS"]
         ext = hdul[1].header["XTENSION"]
-
-    if naxis == 2 and ext == "BINTABLE":
+        extname = hdul[1].header["EXTNAME"].strip()
+        rootname = hdul[1].header["ROOTNAME"].strip()
+    if naxis == 2 and ext == "BINTABLE" and extname != "ASN":
         return generate_spectral_previews(input_path, output_dir, filename_base)
-    elif naxis >= 2 and ext == "IMAGE":
+    elif naxis >= 2 and ext == "IMAGE" and rootname[0].lower() not in ["l","o"]:
         return generate_image_previews(input_path, output_dir, filename_base)
     else:
         log.warning("Unable to determine FITS file type")
@@ -109,10 +109,12 @@ def list_fits_uris(uri_prefix):
     ])
     return [f"s3://{bucket_name}/{k}" for k in json.loads(result) if k.lower().endswith(".fits")]
 
-def main(args, outdir="."):
+def main(args, outdir=None):
     """Generates previews based on a file system or S3 input directory
     and an S3 output directory both specified in args.
     """
+    if outdir is None:
+        outdir = os.getcwd()
     if args.input_uri_prefix.startswith("s3://"):
         input_uris = list_fits_uris(args.input_uri_prefix)
         log.info("Processing", len(input_uris), "FITS files from prefix", args.input_uri_prefix)
