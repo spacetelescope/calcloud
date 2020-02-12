@@ -58,21 +58,25 @@ def generate_image_previews(input_path, output_dir, filename_base):
             output_paths.append(output_path)
     return output_paths
 
-
 def generate_spectral_previews(input_path, output_dir, filename_base):
-    log.warning(f"Preview file (spectral) not implemented/generated for {input_path}")
-    return []
+    before_files = [f for f in os.listdir(output_dir) if os.isfile(f)]
 
-    # cmd = [
-    #     "make_jwst_spec_previews",
-    #     "-v", "-o", output_dir, input_path
-    # ]
-    # try:
-    #     output = subprocess.check_output(cmd)
-    #     return [p for p in output.split() if filename_base in p and "fits" not in p.lower()]
-    # except Exception:
-    #     LOGGER.exception("Preview file not generated for %s", input_path)
-    #     return []
+    cmd = [
+        "make_hst_spec_previews",
+        "-v",
+        "-t png fits",
+        f"-o {output_dir}",
+        input_path
+    ]
+
+    try:
+        output = subprocess.check_output(cmd)
+        after_files = [f for f in os.listdir(output_dir) if os.isfile(f)]
+
+        return [f for f in after_files if f not in before_files]
+    except:
+        LOGGER.exception(f"Preview file not generated for {input_path}")
+        return []
 
 
 def generate_previews(input_path, output_dir, filename_base):
