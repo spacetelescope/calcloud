@@ -91,7 +91,7 @@ class InstrumentManager:
     # .............................................................
 
     def dowload(self):
-        self.divider("Retrieving data files.")
+        self.divider("Retrieving data files for:", self.download_suffixes)
         files = retrieve_observation(self.ipppssoot, suffix=self.download_suffixes)
         self.divider("Download data complete.")
         return list(sorted(files))
