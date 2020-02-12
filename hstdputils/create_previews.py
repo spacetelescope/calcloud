@@ -136,7 +136,7 @@ def main(args, outdir=None):
         output_paths = generate_previews(input_path, outdir, filename_base)
         log.info("Generated", len(output_paths), "output files")
         for output_path in output_paths:
-            if output_path.startswith("s3://"):  # is set to "none" for local use
+            if output_uri.startswith("s3://"):  # is set to "none" for local use
                 output_uri = os.path.join(args.output_uri_prefix, os.path.basename(output_path))
                 log.info("Uploading", output_path, "to", output_uri)
                 subprocess.check_call([
