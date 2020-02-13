@@ -2,17 +2,11 @@
 
 # Primary command script passed into Batch container runs
 
-# hstdp-process  s3-output-bucket   batch-name    ipppssoots....
+# hstdp-process  s3-output-bucket   batch-name    ipppssoot
 
 output_bucket=$1
 batch_name=$2
-ipppssoots=${@:3}    # starting from 3 on...
-
-processing_s3_output_dir=${output_bucket}/${batch_name}
-previews_s3_output_dir=${output_bucket}/${batch_name}/previews
-
-# previews_input_dir=${processing_s3_output_dir}   # to download from S3 output bucket
-previews_input_dir=.  # to run from local output files already present
+ipppssoot=$3
 
 source hstdputils-s3-env
 source hstdputils-cal-env
@@ -33,11 +27,17 @@ fi
 
 # =========================================================================================================
 echo ........................................ processing log ..............................................
-set -o pipefail && /usr/bin/time --verbose -o process_metrics.txt python -m hstdputils.process $output_bucket $batch_name $ipppssoots |& tee process.txt
+set -o pipefail && /usr/bin/time --verbose -o process_metrics.txt python -m hstdputils.process $output_bucket $batch_name $ipppssoot |& tee process.txt
 process_exit_status=$?
+processing_s3_output_dir=`hstdputils-get-output-path  $output_bucket $batch_name $ipppssoot`
+previews_s3_output_dir=${processing_s3_output_dir}/previews
+echo "Processing s3_output_dir is" $processing_s3_output_dir
+echo "Previews s3_output_dir is" $previews_s3_output_dir
 echo "Processing exit status ${process_exit_status}"
 
 echo ........................................ previews log ................................................
+# previews_input_dir=${processing_s3_output_dir}   # to download from S3 output bucket
+previews_input_dir=.  # to run from local output files already present
 set -o pipefail && /usr/bin/time --verbose -o preview_metrics.txt python -m hstdputils.create_previews ${previews_input_dir}  ${previews_s3_output_dir} |& tee preview.txt
 preview_exit_status=$?
 echo "Preview exit status ${preview_exit_status}"

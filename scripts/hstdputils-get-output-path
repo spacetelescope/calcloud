@@ -1,0 +1,11 @@
+#! /usr/bin/env python
+#-*-python-*-
+import sys
+
+from hstdputils import process
+
+bucket = sys.argv[1]
+batch_name = sys.argv[2]
+ipppssoot = sys.argv[3]
+
+print(process.get_output_path(bucket, batch_name, ipppssoot))
