@@ -1,4 +1,3 @@
-import os
 import sys
 import glob
 import re
@@ -8,7 +7,8 @@ from drizzlepac.hlautils.astroquery_utils import retrieve_observation
 
 from crds.bestrefs import bestrefs
 
-from . import s3
+import boto3
+
 from . import log
 
 # -----------------------------------------------------------------------------
@@ -43,8 +43,50 @@ def get_instrument(ipppssoot):
 
 # -----------------------------------------------------------------------------
 
+def get_output_path(bucket, prefix, ipppssoot):
+    """
+    >>> get_output_path("s3://temp", "none", "IC0B02020")
+    's3://temp/wfc3/IC0B02020'
+
+    >>> get_output_path("s3://temp", "batch-2020-02-13T10:33:00/IC0B02020", "IC0B02020")
+    's3://temp/batch-2020-02-13T10:33:00/wfc3/IC0B02020'
+
+    >>> get_output_path("s3://temp", "batch-2020-02-13T10:33:00", "IC0B02020")
+    's3://temp/batch-2020-02-13T10:33:00/wfc3'
+    """
+    instrument_name = get_instrument(ipppssoot)
+    if prefix in [None, "none"]:
+        prefix = instrument_name + "/" + ipppssoot
+    else:
+        if re.match(IPPPSSOOT_RE, prefix.split("/")[-1]):
+            # Only use prefix IPPPSSOOT to indicate desire for ipppsoot
+            # Use actual IPPPSSOOT to support multi-ipppssoot jobs with
+            # individualized output directories.
+
+            # remove ipppsssoot
+            prefix = "/".join(prefix.split("/")[:-1])
+
+            # Add back instrument + ipppssoot
+            prefix = prefix + "/" + instrument_name + "/" + ipppssoot
+        else:
+            prefix = prefix + "/" + instrument_name
+    return bucket + "/" + prefix
+
+# -------------------------------------------------------------
+
+def upload_filename(filename, s3_filepath):
+    client = boto3.client('s3')
+    if s3_filepath.startswith("s3://"):
+        s3_filepath = s3_filepath[5:]
+    bucket = s3_filepath.split("/")[0]
+    objectname = "/".join(s3_filepath.split("/")[1:])
+    with open(filename, "rb") as f:
+        client.upload_fileobj(f, bucket, objectname)
+
+# -----------------------------------------------------------------------------
+
 class InstrumentManager:
-    name = None # abstract class
+    instrument_name = None     # abstract class
     download_suffixes = None
     not_so_bad_err_nums = []
 
@@ -86,7 +128,7 @@ class InstrumentManager:
             err = 0
         if err:
             log.error(self.ipppssoot, "Command:", repr(cmd), "exited with error status:", err)
-            sys.exit(1) # should be 0-127,  higher err val's like 512 are truncated to 0 by shells
+            sys.exit(1)     # should be 0-127,  higher err val's like 512 are truncated to 0 by shells
 
     # .............................................................
 
@@ -119,12 +161,19 @@ class InstrumentManager:
             self.run(self.stage1, *unassoc)
             return
 
-    def output_files(self, outputs, output_bucket=None, prefix=None):
-        if output_bucket:
-            self.divider("Saving outputs:", outputs)
-            for filename in outputs:
-                log.info("Saving:", output_bucket, prefix, filename)
-                s3.upload_filename(filename, output_bucket, prefix=prefix)
+    def output_files(self, bucket=None, prefix=None):
+        # include all fits files,  including modified inputs.
+        outputs = glob.glob("*.fits")
+        outputs += glob.glob("*.tra")
+        self.divider("Saving outputs:", bucket, prefix, outputs)
+        output_path = get_output_path(bucket, prefix, self.ipppssoot)
+        paths = []
+        for filename in outputs:
+            s3_filepath = output_path + "/" + filename
+            log.info("Saving:", s3_filepath)
+            upload_filename(filename, s3_filepath)
+            paths.append(s3_filepath)
+        return paths
 
     # .............................................................
 
@@ -144,23 +193,20 @@ class InstrumentManager:
 
         self.process(input_files)
 
-        outputs = glob.glob("*.fits")  # include all files,  in particular,  modified inputs.
-        outputs += glob.glob("*.tra")
-
-        self.output_files(outputs, output_bucket, prefix)
+        outputs = self.output_files(output_bucket, prefix)
 
         return outputs
 
 # -----------------------------------------------------------------------------
 
 class AcsManager(InstrumentManager):
-    name = "acs"
+    instrument_name = "acs"
     download_suffixes = ["ASN", "RAW"]
     stage1 = "calacs.e"
     stage2 = "runastrodriz"
 
 class Wfc3Manager(InstrumentManager):
-    name = "wfc3"
+    instrument_name = "wfc3"
     download_suffixes = ["ASN", "RAW"]
     stage1 = "calwf3.e"
     stage2 = "runastrodriz"
@@ -168,7 +214,7 @@ class Wfc3Manager(InstrumentManager):
 # ............................................................................
 
 class CosManager(InstrumentManager):
-    name = "cos"
+    instrument_name = "cos"
     download_suffixes = ["ASN", "RAW", "EPC", "RAWACCUM", "RAWACCUM_A", "RAWACCUM_B", "RAWACQ", "RAWTAG", "RAWTAG_A", "RAWTAG_B"]
     stage1 = "calcos"
     stage2 = None
@@ -182,7 +228,7 @@ class CosManager(InstrumentManager):
 # ............................................................................
 
 class StisManager(InstrumentManager):
-    name = "stis"
+    instrument_name = "stis"
     download_suffixes = ["ASN", "RAW", "EPC", "TAG", "WAV"]
     stage1 = "cs0.e -tv"
     stage2 = None
@@ -205,7 +251,7 @@ MANAGERS = {
     "cos" : CosManager,
     "stis" : StisManager,
     "wfc3" : Wfc3Manager,
-    }
+}
 
 def get_instrument_manager(ipppssoot):
     instrument = get_instrument(ipppssoot)
@@ -236,6 +282,11 @@ def process_ipppssoots(ipppssoots, output_bucket=None, prefix=None):
         process(ipppssoot, output_bucket, prefix)
 
 # -----------------------------------------------------------------------------
+
+def test():
+    from hstdputils import process
+    import doctest
+    return doctest.testmod(process)
 
 if __name__ == "__main__":
     output_bucket = sys.argv[1]

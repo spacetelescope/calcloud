@@ -82,11 +82,18 @@ def generate_previews(input_path, output_dir, filename_base):
     with fits.open(input_path) as hdul:
         naxis = hdul[1].header["NAXIS"]
         ext = hdul[1].header["XTENSION"]
+
         extname = hdul[1].header["EXTNAME"].strip()
-        rootname = hdul[1].header["ROOTNAME"].strip()
+
+        try:
+            instr_char = hdul[1].header["INSTRUME"].strip()[0]
+        except Exception:
+            instr_char = filename_base[0]
+        instr_char = instr_char.lower()
+
     if naxis == 2 and ext == "BINTABLE" and extname != "ASN":
         return generate_spectral_previews(input_path, output_dir, filename_base)
-    elif naxis >= 2 and ext == "IMAGE" and rootname[0].lower() not in ["l","o"]:
+    elif naxis >= 2 and ext == "IMAGE" and instr_char not in ["l","o"]:
         return generate_image_previews(input_path, output_dir, filename_base)
     else:
         log.warning("Unable to determine FITS file type")
