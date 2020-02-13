@@ -70,7 +70,7 @@ def get_output_path(bucket, prefix, ipppssoot):
             prefix = prefix + "/" + instrument_name + "/" + ipppssoot
         else:
             prefix = prefix + "/" + instrument_name
-    return bucket + "/" + prefix
+    return bucket + "/" + prefix if bucket else prefix
 
 # -------------------------------------------------------------
 
@@ -116,8 +116,8 @@ class InstrumentManager:
     def divider(self, *args, dash=">"):
         msg = " ".join([str(a) for a in args])
         dashes = (100-len(msg)-2-5)
-        log.info(dash *(5 + len(msg) + dashes + 2))
-        log.info(dash*5, msg, dash*dashes)
+        log.info(dash * (5 + len(msg) + dashes + 2))
+        log.info(dash*5, self.ipppssoot, msg, dash*dashes)
 
     def run(self, cmd, *args):
         cmd = tuple(cmd.split()) + args  # Handle stage values with switches.
@@ -177,7 +177,7 @@ class InstrumentManager:
 
     # .............................................................
 
-    def main(self, ipppssoot, output_bucket, prefix):
+    def main(self, output_bucket, prefix):
         """Perform all processing steps for basic calibration processing:
 
         download inputs
@@ -193,7 +193,10 @@ class InstrumentManager:
 
         self.process(input_files)
 
-        outputs = self.output_files(output_bucket, prefix)
+        if output_bucket is not None:
+            outputs = self.output_files(output_bucket, prefix)
+        else:
+            outputs = []
 
         return outputs
 
@@ -271,7 +274,7 @@ def process(ipppssoot, output_bucket=None, prefix=None):
     """
     manager = get_instrument_manager(ipppssoot)
 
-    outputs = manager.main(ipppssoot, output_bucket, prefix)
+    outputs = manager.main(output_bucket, prefix)
 
     return outputs
 
