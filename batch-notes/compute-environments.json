@@ -1,9 +1,9 @@
 {
     "computeEnvironments": [
         {
-            "computeEnvironmentName": "hstdp-batch-compute-env-templated-2",
-            "computeEnvironmentArn": "arn:aws:batch:us-east-1:162808325377:compute-environment/hstdp-batch-compute-env-templated-2",
-            "ecsClusterArn": "arn:aws:ecs:us-east-1:162808325377:cluster/hstdp-batch-compute-env-templated-2_Batch_c4c26552-b73b-3ec8-bd6d-15a2d2e84f86",
+            "computeEnvironmentName": "hstdp-batch-compute-env-templated-6",
+            "computeEnvironmentArn": "arn:aws:batch:us-east-1:162808325377:compute-environment/hstdp-batch-compute-env-templated-6",
+            "ecsClusterArn": "arn:aws:ecs:us-east-1:162808325377:cluster/hstdp-batch-compute-env-templated-6_Batch_c9a5e82c-20cd-3f76-a832-5c66caf9030e",
             "type": "MANAGED",
             "state": "ENABLED",
             "status": "VALID",
@@ -13,11 +13,12 @@
                 "allocationStrategy": "BEST_FIT",
                 "minvCpus": 0,
                 "maxvCpus": 256,
-                "desiredvCpus": 16,
+                "desiredvCpus": 72,
                 "instanceTypes": [
-                    "optimal"
+                    "m5.large",
+                    "m5.xlarge",
+                    "m5.2xlarge"
                 ],
-                "imageId": "ami-07a63940735aebd38",
                 "subnets": [
                     "subnet-b29ed7d5",
                     "subnet-d2e2a88e",

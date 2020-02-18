@@ -10,7 +10,7 @@
             "computeEnvironmentOrder": [
                 {
                     "order": 0,
-                    "computeEnvironment": "arn:aws:batch:us-east-1:162808325377:compute-environment/hstdp-batch-compute-env-templated-2"
+                    "computeEnvironment": "arn:aws:batch:us-east-1:162808325377:compute-environment/hstdp-batch-compute-env-templated-6"
                 }
             ]
         }
