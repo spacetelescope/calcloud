@@ -14,6 +14,25 @@ def get_batch_name(name):
 
 IdInfo = namedtuple("IdInfo", ["ipppssoot", "instrument", "executable", "cpus", "memory", "max_seconds"])
 
+"""
+WFC3: 95 per duration 0.93 hr
+WFC3: 99 per duration 1.79 hr
+WFC3: 95 per mem 0.83 gb
+WFC3: 99 per mem 0.97 gb
+ACS: 95 per duration 3.52 hr
+ACS: 99 per duration 6.33 hr
+ACS: 95 per mem 1.08 gb
+ACS: 99 per mem 2.38 gb
+COS: 95 per duration 0.14 hr
+COS: 99 per duration 0.31 hr
+COS: 95 per mem 0.83 gb
+COS: 99 per mem 1.05 gb
+STIS: 95 per duration 0.12 hr
+STIS: 99 per duration 0.24 hr
+STIS: 95 per mem 0.64 gb
+STIS: 99 per mem 1.0 gb
+"""
+
 JOB_INFO = {
     "acs" : ("acs", "hstdp-process", 4, 4*1024, 60*60*6),
     "cos" : ("cos", "hstdp-process", 1, 2*1024, 60*20),

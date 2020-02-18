@@ -5,8 +5,8 @@
             "LaunchTemplateName": "hstdp-batch-instance-template",
             "CreateTime": "2020-02-07T14:00:09.000Z",
             "CreatedBy": "arn:aws:iam::162808325377:user/jmiller",
-            "DefaultVersionNumber": 9,
-            "LatestVersionNumber": 9,
+            "DefaultVersionNumber": 10,
+            "LatestVersionNumber": 10,
             "Tags": [
                 {
                     "Key": "CALCLOUD",
@@ -17,6 +17,70 @@
                     "Value": "HSTDP-BATCH-LAUNCH-TEMPLATE"
                 }
             ]
+        },
+        {
+            "LaunchTemplateId": "lt-0fb65f048f4670656",
+            "LaunchTemplateName": "eksctl-airflow-prototype-nodegroup-workers",
+            "CreateTime": "2019-11-18T18:50:35.000Z",
+            "CreatedBy": "arn:aws:sts::162808325377:assumed-role/airflow-prototype-k8s-control/i-01ec586093829d337",
+            "DefaultVersionNumber": 1,
+            "LatestVersionNumber": 1
+        },
+        {
+            "LaunchTemplateId": "lt-02cd3eb23a714278c",
+            "LaunchTemplateName": "Batch-lt-1b086528-f593-3661-ae35-d6a2e39186cb",
+            "CreateTime": "2020-02-13T21:46:31.000Z",
+            "CreatedBy": "arn:aws:sts::162808325377:assumed-role/AWSBatchServiceRole/aws-batch",
+            "DefaultVersionNumber": 1,
+            "LatestVersionNumber": 1
+        },
+        {
+            "LaunchTemplateId": "lt-02b4679645badc874",
+            "LaunchTemplateName": "eksctl-airflow-prototype-nodegroup-system",
+            "CreateTime": "2019-11-18T19:16:51.000Z",
+            "CreatedBy": "arn:aws:sts::162808325377:assumed-role/airflow-prototype-k8s-control/i-01ec586093829d337",
+            "DefaultVersionNumber": 1,
+            "LatestVersionNumber": 1
+        },
+        {
+            "LaunchTemplateId": "lt-0315b1f2a2ba28681",
+            "LaunchTemplateName": "Batch-lt-d4c40747-945e-3ed4-b586-18856d217545",
+            "CreateTime": "2020-02-12T22:14:56.000Z",
+            "CreatedBy": "arn:aws:sts::162808325377:assumed-role/AWSBatchServiceRole/aws-batch",
+            "DefaultVersionNumber": 1,
+            "LatestVersionNumber": 1
+        },
+        {
+            "LaunchTemplateId": "lt-07df94397c1146b8b",
+            "LaunchTemplateName": "eslavich-aws-spawner-template",
+            "CreateTime": "2019-08-23T18:47:39.000Z",
+            "CreatedBy": "arn:aws:iam::162808325377:user/eslavich",
+            "DefaultVersionNumber": 17,
+            "LatestVersionNumber": 17
+        },
+        {
+            "LaunchTemplateId": "lt-033610cd54bdbf2b4",
+            "LaunchTemplateName": "Batch-lt-50b824f4-a178-339b-9dde-9873110fe47c",
+            "CreateTime": "2020-02-13T01:03:50.000Z",
+            "CreatedBy": "arn:aws:sts::162808325377:assumed-role/AWSBatchServiceRole/aws-batch",
+            "DefaultVersionNumber": 1,
+            "LatestVersionNumber": 1
+        },
+        {
+            "LaunchTemplateId": "lt-0a70649c2c3eb0098",
+            "LaunchTemplateName": "bhayden-condor",
+            "CreateTime": "2019-11-26T20:36:07.000Z",
+            "CreatedBy": "arn:aws:iam::162808325377:user/bhayden",
+            "DefaultVersionNumber": 4,
+            "LatestVersionNumber": 5
+        },
+        {
+            "LaunchTemplateId": "lt-09a05189418cb25c6",
+            "LaunchTemplateName": "Batch-lt-c9a5e82c-20cd-3f76-a832-5c66caf9030e",
+            "CreateTime": "2020-02-12T22:12:54.000Z",
+            "CreatedBy": "arn:aws:sts::162808325377:assumed-role/AWSBatchServiceRole/aws-batch",
+            "DefaultVersionNumber": 1,
+            "LatestVersionNumber": 1
         }
     ]
 }
