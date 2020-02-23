@@ -4,8 +4,7 @@ import sys
 
 from hstdputils import process
 
-bucket = sys.argv[1]
-batch_name = sys.argv[2]
-ipppssoot = sys.argv[3]
+s3_output_path = sys.argv[1]
+ipppssoot = sys.argv[2]
 
-print(process.get_output_path(bucket, batch_name, ipppssoot))
+print(process.get_output_path(s3_output_path, ipppssoot))

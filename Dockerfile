@@ -24,8 +24,10 @@ RUN pip install awscli boto3
 # RUN pip install jupyterlab
 RUN pip install spec-plots==1.34.6
 
-ADD . /tmp/hstputils
-RUN pip install --upgrade /tmp/hstdputils && rm -rf /tmp/hstdputils
+RUN mkdir hstdputils-install
+ADD . hstdputils-install/
+RUN pip install hstdputils-install/ \
+    && rm -rf hstdputils-install/
 
 # Install fitscut
 COPY install-fitscut  .

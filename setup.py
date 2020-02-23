@@ -10,6 +10,7 @@ setup(name='hstdputils',
       license='MIT',
       packages=['hstdputils'],
       scripts=glob.glob("scripts/*"),
+      install_requires=["boto3"],
       extras_require = {
           "dev" : ["black", "flake8", "bandit"],
           },

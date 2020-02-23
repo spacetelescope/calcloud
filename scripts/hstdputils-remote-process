@@ -12,5 +12,5 @@ export CRDS_READONLY_CACHE=0
 # Set CAL code required env vars
 source hstdputils-cal-env
 
-python -m hstdputils.process none none $*
+python -m hstdputils.process none $*
 
