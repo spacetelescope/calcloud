@@ -21,9 +21,11 @@ RUN yum install -y curl rsync time
 
 RUN pip install --upgrade pip
 RUN pip install awscli boto3
-RUN pip install jupyterlab
-RUN pip install --upgrade git+https://github.com/spacetelescope/calcloud.git
+# RUN pip install jupyterlab
 RUN pip install spec-plots==1.34.6
+
+ADD . /tmp/hstputils
+RUN pip install --upgrade /tmp/hstdputils && rm -rf /tmp/hstdputils
 
 # Install fitscut
 COPY install-fitscut  .

@@ -7,7 +7,7 @@ docker_account=${2:-jaytmiller}
 
 # Docker doesn't seem to notice updates to the hstdputils github repo for pip install,
 # so blow away old image to ensure rebuild.
-docker image rm ${docker_account}/hstdp-calcloud:${tag}
+# docker image rm ${docker_account}/hstdp-calcloud:${tag}
 
 docker build -t ${docker_account}/hstdp-calcloud:${tag} .
 
