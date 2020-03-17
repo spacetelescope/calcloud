@@ -34,10 +34,10 @@ STIS: 99 per mem 1.0 gb
 """
 
 JOB_INFO = {
-    "acs" : ("acs", "hstdp-process", 4,  int(2.5*1024),  int(60*60*6.5)),
+    "acs" : ("acs", "hstdp-process", 4,  int(4*1024),  int(60*60*6.5)),
     "cos" : ("cos", "hstdp-process", 1, int(1.25*1024), int(60*20)),
     "stis" : ("stis", "hstdp-process", 1, int(1.25*1024), int(60*20)),
-    "wfc3" : ("wfc3", "hstdp-process", 4, int(1.25*1024), int(60*60*2)),
+    "wfc3" : ("wfc3", "hstdp-process", 4, int(4*1024), int(60*60*2)),
     }
 
 def id_info(ipppssoot):

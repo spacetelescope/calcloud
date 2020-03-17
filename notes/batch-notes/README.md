@@ -18,6 +18,21 @@ e.g. Batch-lt-cfba3e2e-c825-36ab-b178-7611e7622ba3
 derived from hstdp-batch-instance-template.  These seem to disappear
 when the associated cluster instances are terminated.
 
+## Mass Job Deletion (Delete the Queue)
+
+At some point you're going to want to delete all jobs in the queue.
+
+Neither the AWS console nor the CLI is good at this...  which is pretty
+stressful if you have a large cluster going haywire.
+
+Solution: Tearing down the Batch environment works well, but you need to do it
+in this order: first disable and delete the queue, then disable and delete the
+compute environment if needed.  Afterward, recreate them.  Deleting the queue
+is sufficient to terminate all jobs and it is simple to recreate the queue.
+Deleting the compute environment may be needed to minimize compute fees and
+completely shut down quickly but they should also automatically tear down after
+a brief idle period.
+
 ## Container "thin poll" exhaustion
 
 The default ECS images used by Batch keep completed Docker containers
