@@ -1,16 +1,16 @@
 from setuptools import setup
 import glob
 
-setup(name='hstdputils',
+setup(name='calcloud',
       version='0.1',
-      description='Utilities to support HST processing',
+      description='Supports running large numbers of STScI calibration jobs on AWS.',
       url='http://github.com/spacetelescope/calcloud',
-      author='Todd Miller',
-      author_email='jmiller@stsci.edu',
+      author='STScI DMD Team Octarine',
+      author_email='dmd_octarine@stsci.edu',
       license='MIT',
-      packages=['hstdputils'],
+      packages=['calcloud'],
       scripts=glob.glob("scripts/*"),
-      install_requires=["boto3"],
+      install_requires=["awscli", "boto3"],
       extras_require = {
           "dev" : ["black", "flake8", "bandit"],
           },

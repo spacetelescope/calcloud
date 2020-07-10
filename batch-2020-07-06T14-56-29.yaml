@@ -1,0 +1,8 @@
+datasets: [J8CB010B0, J8NE53ZNQ, LCYID1030, LDQHPBI9Q, O8L7SWS9Q, OCTKA6010,
+          ICB154060, IDGG23ZTQ]
+
+s3_output_bucket: s3://calcloud-hst-pipeline-outputs/
+
+job_definition: calcloud-hst-caldp-job-definition
+
+job_queue: calcloud-hst-queue

@@ -1,7 +1,0 @@
-#! /bin/bash
-
-tag=${1:-dev}
-docker_account=${2:-jaytmiller}
-
-docker push ${docker_account}/hstdp-calcloud:${tag}
-
