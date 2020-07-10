@@ -1,0 +1,44 @@
+# Notes about Airflow experiments with Batch
+
+So I don't have to start over from scratch...
+
+For installing the DEV version of airflow from github you need to do these steps:
+
+airflow db init
+
+airflow users create --role Admin --username jmiller --firstname Todd --lastname Miller --email jmiller@stsci.edu --password foo
+
+airflow webserver -p 8080
+
+airflow scheduler
+
+
+The development version of Airflow has 2nd generation support for AWS Batch so I focused my efforts there.
+
+I have a few notes for working with Airflow and Batch:
+
+GitHub here: https://github.com/apache/airflow
+
+Docs for dev version here: https://airflow.readthedocs.io/en/latest/
+
+The dev version needs some tweaks just to run the tutorial.   Trivial diffs attached.
+The dev version requires setting up an Airflow account before you can log in to the website.   
+The CLI of the dev version is substantially refactored and more like the AWS CLI.   Very different from stable.
+I was able to trick airflow into displaying dataset IDs by naming DAGs after dataset IDs.
+
+Create Airflow users like this:
+
+airflow users create --role Admin --username jmiller --firstname Todd --lastname Miller --email jmiller@stsci.edu --password foo
+
+I attached prototype Batch DAG generation code.   This codes matches DAG and Task creation to AWS Batch Airflow operator construction.
+
+I attached a prototype DAG .py file which declares many DAGs and Tasks which submit to AWS Batch when run.
+
+The prototype demonstrates displaying dataset IDs in the GUI but all
+details of working with Batch were not fully resolved.  Operators were
+instantiated into tasks but there was no evidence they were
+successfully communicating with Batch, very possibly due to missing
+Airflow + Batch environment setup.
+
+ 
+

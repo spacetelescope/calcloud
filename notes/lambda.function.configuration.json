@@ -1,0 +1,20 @@
+{
+    "FunctionName": "calcloud-hst-trigger",
+    "FunctionArn": "arn:aws:lambda:us-east-1:162808325377:function:calcloud-hst-trigger",
+    "Runtime": "python3.7",
+    "Role": "arn:aws:iam::162808325377:role/calcloud-hst-trigger-lambda-role",
+    "Handler": "lambda_function.lambda_handler",
+    "CodeSize": 1435,
+    "Description": "",
+    "Timeout": 900,
+    "MemorySize": 128,
+    "LastModified": "2020-07-08T18:43:56.627+0000",
+    "CodeSha256": "pSm3iUCjWkUM4cb8SireNL8QcWLGk54XWKJDrNaN1r8=",
+    "Version": "$LATEST",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "bab5697d-9a1c-43e7-a4cd-77811a0dbb67",
+    "State": "Active",
+    "LastUpdateStatus": "Successful"
+}

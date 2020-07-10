@@ -1,0 +1,26 @@
+{
+    "Configuration": {
+        "FunctionName": "calcloud-hst-trigger",
+        "FunctionArn": "arn:aws:lambda:us-east-1:162808325377:function:calcloud-hst-trigger",
+        "Runtime": "python3.7",
+        "Role": "arn:aws:iam::162808325377:role/calcloud-hst-trigger-lambda-role",
+        "Handler": "lambda_function.lambda_handler",
+        "CodeSize": 1435,
+        "Description": "",
+        "Timeout": 900,
+        "MemorySize": 128,
+        "LastModified": "2020-07-08T18:43:56.627+0000",
+        "CodeSha256": "pSm3iUCjWkUM4cb8SireNL8QcWLGk54XWKJDrNaN1r8=",
+        "Version": "$LATEST",
+        "TracingConfig": {
+            "Mode": "PassThrough"
+        },
+        "RevisionId": "bab5697d-9a1c-43e7-a4cd-77811a0dbb67",
+        "State": "Active",
+        "LastUpdateStatus": "Successful"
+    },
+    "Code": {
+        "RepositoryType": "S3",
+        "Location": "https://prod-04-2014-tasks.s3.us-east-1.amazonaws.com/snapshots/162808325377/calcloud-hst-trigger-ceaa8c26-2394-4e49-a59b-f69736916d50?versionId=Fm_TSAs3Hz.ICEZ2NNyZzlWFWztzA6Jy&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEIj%2F%2F%2F%2F%2F%2F%2F%2F%2F%2FwEaCXVzLWVhc3QtMSJHMEUCIAWOFJ3C%2B0k2yi5iM8%2Bm152yat%2BNYGNsyN382OXEnfF8AiEAv9UNUKWuDWiX1zhQmyEccsAqWsf5nzzk8Dr7A8DvTtMqtAMIMRAAGgw3NDk2Nzg5MDI4MzkiDPJTolnaNBg5zhN44SqRA00W4VI03Oqgo0vNzaFDWGHKftek58XFFP%2FS5Q4CI%2FStzsnqiz6jIBT%2Bfpjsh%2Bzh7LrrqL%2FPP45cONhWs064v5esplvk9ZLy01PaEO%2B2vPpAKdyUy9VpNy%2BwVtGmz80WUG3vqOPLt3Z1b8xbjVZBsYKiGlhikRYqOWtqAgtmO1ghu5LwmDb%2BdUDepJX0o4UxdtPqJnD6OAQLXDyJhChZH94Jt1n9GtwLD8fQ7t5Xse7au4pMRDpPXrh78TfGQxtVQneOHbGW3OVwXcy8K4wj2HLhAvbCUASKohyhWEWwwczsPBk99PiLakfkb8x4tGF0dWwV%2BwQ4TlZfqcZzToiJkvQypkRBtkjBX2WBxIp30DRnQyvcio6E%2F2g1HeI9rJZU%2FyXKPS6v5alPeEP7ThU7W%2Fi8G7skHuprxQGQogJNQN8faScptKokGNlVVkcvpnqo%2BamDDWBPbW%2F7rypTpavKwJSckvqkgiR902QZBpSvAyJM%2BZbPy0JZqBDqNtH9tvpuOH88sfkEBo0gasNyDxYls4CRMLGfovgFOusBcpnPhXHxNj%2F2er3k%2B5Xy8Ad7eKXEZ%2BtkHOC%2FF0NxEh8JM0KosYmfZMtaxQ%2FKHHRyqig%2FdKRYdahuzWGSosM5eFN3rFWSOYiyYr7kfIWTHHbCNefsE%2F%2BXKJGacNLG7yMtp5ktHgN5QjphZV9zP0l%2FcIh3fQkbEcNzJP%2Be4dWNje7kGogbW0Ef%2BTkZgKis6vDOFJbmHOUgCwgNCctLxV5CjquMus4QOXDp%2FDLD5IzXdeZGZrYxGvrjSNEEHVx1yXmOgtpK1GJQiH%2FuDHDKzPWJOToXJXWNMxQwgOA9tj7suoVnBRVyr5EyDSHlcA%3D%3D&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20200710T172114Z&X-Amz-SignedHeaders=host&X-Amz-Expires=600&X-Amz-Credential=ASIA25DCYHY3RU7Z6YDU%2F20200710%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=2feaf8ada9616ad84eb700c0ab96604f27bd15681b290f5dda4c210119016b2b"
+    }
+}
