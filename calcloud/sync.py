@@ -79,10 +79,10 @@ class Syncer:
         """
         log.info("Checking for batch completion.")
         n_datasets = len(all_datasets)
-        archived = self.s3_dmsgs.list_names("dataset-synced", max_messages=MAX_DATASETS_PER_BATCH)
+        synced = self.s3_dmsgs.list_names("dataset-synced", max_messages=MAX_DATASETS_PER_BATCH)
         error = self.s3_dmsgs.list_names("dataset-error", max_messages=MAX_DATASETS_PER_BATCH)
-        log.info(f"Archived={len(archived)} Error={len(error)} ExpectedTotal={n_datasets}.")
-        datasets_s3 = set(archived + error)
+        log.info(f"Synced={len(synced)} Error={len(error)} ExpectedTotal={n_datasets}.")
+        datasets_s3 = set(synced + error)
         if all_datasets == datasets_s3:
             log.info("Batch COMPLETE.")
             return True
@@ -130,7 +130,7 @@ class Syncer:
         #     return False
         # self.s3_dmsgs.pass_message("dataset-archived", dataset)
         # self.fs_dmsgs.pass_message("dataset-archived", dataset)
-        # return True
+        return True
 
     def _setup_batch(self, batch):
         """Load the contents of S3 message `batch` as either YAML or JSON depending
