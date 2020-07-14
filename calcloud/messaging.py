@@ -26,7 +26,7 @@ class Message:
         self.contents = contents
 
     def retype(self, new_type):
-        """Given `new_type`,  return a message like this one with that type instead.""""
+        """Given `new_type`,  return a message like this one with that type instead."""
         return Message(new_type, self.name, self.contents)
 
 
