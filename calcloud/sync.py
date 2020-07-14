@@ -5,14 +5,12 @@ AWS to STScI's archive ingest.
 import os
 import argparse
 import time
-import glob
-import shutil
 import json
 import traceback
 
 import yaml
 
-from calcloud import s3
+from calcloud import messaging
 from calcloud import timing
 from calcloud import log
 from calcloud import hst
@@ -21,56 +19,6 @@ from calcloud import hst
 # ----------------------------------------------------------------------
 
 MAX_DATASETS_PER_BATCH = 10**6
-
-# ----------------------------------------------------------------------
-
-
-class FsMessenger:
-    """This class implements Messenger methods needed to output
-    messages to a file system,  nominally for communicating about
-    datasets which are ready to archive.
-    """
-    def __init__(self, output_dir):
-        self.output_dir = output_dir
-
-    def data_path(self, dataset_subpath):
-        return os.path.join(self.output_dir, "data", dataset_subpath)
-
-    def message_path(self, kind, dataset):
-        """Return the path to the message file of type `kind`
-        named `dataset`.
-        """
-        return os.path.join(self.output_dir, "messages", kind, dataset[0])
-
-    def message_name(self, message_path):
-        return os.path.basename(message_path)
-
-    def send(self, kind, dataset, text=""):
-        """Send message of type `kind` with name `dataset`
-        and contents `text` which defaults to the empty string.
-        """
-        msg_path = self.message_path(kind, dataset)
-        os.makedirs(os.path.dirname(msg_path), exist_ok=True)
-        with open(msg_path, "w+") as msg:
-            msg.write(text)
-
-    def pass_message(self, old_kind, new_kind, dataset):
-        """Given the `dataset` with (dataset_name, _),  move the message
-        from type `old_kind` to type `new_kind`.
-        """
-        old_path = self.message_path(old_kind, dataset)
-        new_path = self.message_path(new_kind, dataset)
-        os.makedirs(os.path.dirname(new_path), exist_ok=True)
-        shutil.move(old_path, new_path)
-
-    def reset(self, kinds):
-        """Delete all messages of types in list `kinds`."""
-        for kind in kinds:
-            where = self.message_path(kind, "*")
-            log.info(f"Removing messages at '{where}'")
-            msgs = glob.glob(where)
-            for msg in msgs:
-                os.remove(msg)
 
 # ----------------------------------------------------------------------
 
@@ -91,7 +39,7 @@ class Syncer:
         self._s3_output_path = s3_output_path
         self._output_dir = output_dir
         self._poll_seconds = poll_seconds
-        self.s3_bmsgs = s3.S3Messenger(s3_output_path)   # batch level
+        self.s3_bmsgs = messaging.S3Messenger(s3_output_path)   # batch level
         self.s3_dmsgs = None                             # dataset level
         self.fs_dmsgs = None                             # dataset level
         self.stats = timing.TimingStats()
@@ -117,10 +65,10 @@ class Syncer:
         if batch:
             try:
                 self._archive_batch(batch)
-                self.s3_bmsgs.pass_message("batch-syncing", "batch-done", batch)
+                self.s3_bmsgs.pass_message("batch-done", batch)
             except Exception:
                 batch = self._handle_exception("Batch", batch)
-                self.s3_bmsgs.pass_message("batch-syncing", "batch-error", batch)
+                self.s3_bmsgs.pass_message("batch-error", batch)
             finally:
                 self.stats.report_stats()
         self.throttle(bool(batch))
@@ -136,7 +84,7 @@ class Syncer:
         log.info(f"Archived={len(archived)} Error={len(error)} ExpectedTotal={n_datasets}.")
         datasets_s3 = set(archived + error)
         if all_datasets == datasets_s3:
-            log.info("Batch complete.")
+            log.info("Batch COMPLETE.")
             return True
         log.info("Batch continuing...")
         return False
@@ -168,19 +116,20 @@ class Syncer:
             downloads = self.sync(dataset)
         except Exception:
             dataset = self._handle_exception("Syncing", dataset)
-            self.s3_dmsgs.pass_message("dataset-syncing", "dataset-error", dataset)
+            self.s3_dmsgs.pass_message("dataset-error", dataset)
             return False
-        self.s3_dmsgs.pass_message("dataset-syncing", "dataset-synced", dataset)
-        self.fs_dmsgs.send("dataset-synced", dataset, "\n".join(downloads)+"\n")
+        dataset = self.s3_dmsgs.pass_message("dataset-synced", dataset)
+        fs_message = messaging.Message(dataset.type, dataset.name, "\n".join(downloads)+"\n")
+        self.fs_dmsgs.send(fs_message)
         # try:
         #     self.archive(dataset, downloads)
         # except Exception:
         #     dataset = self._handle_exception("Archiving", dataset)
-        #     self.s3_dmsgs.pass_message("dataset-synced", "dataset-error", dataset)
-        #     self.fs_dmsgs.pass_message("dataset-synced", "dataset-error", dataset)
+        #     self.s3_dmsgs.pass_message("dataset-error", dataset)
+        #     self.fs_dmsgs.pass_message("dataset-error", dataset)
         #     return False
-        # self.s3_dmsgs.pass_message("dataset-synced", "dataset-archived", dataset)
-        # self.fs_dmsgs.pass_message("dataset-synced", "dataset-archived", dataset)
+        # self.s3_dmsgs.pass_message("dataset-archived", dataset)
+        # self.fs_dmsgs.pass_message("dataset-archived", dataset)
         # return True
 
     def _setup_batch(self, batch):
@@ -194,18 +143,17 @@ class Syncer:
 
         Returns [all datasets to archive in batch]
         """
-        batch_name, batch_contents = batch
-        if batch_name.endswith(".yaml"):
-            batch_info = yaml.safe_load(batch_contents)
-        elif batch_name.endswith(".json"):
-            batch_info = json.loads(batch_contents)
+        if batch.name.endswith(".yaml"):
+            batch_info = yaml.safe_load(batch.contents)
+        elif batch.name.endswith(".json"):
+            batch_info = json.loads(batch.contents)
         else:
-            raise ValueError("Unknown file type for batch: " +  repr(batch_name))
-        batch_name = batch_name.split(".")[0]  # drop extension
+            raise ValueError("Unknown file type for batch: " +  repr(batch.name))
+        batch_name = batch.name.split(".")[0]  # drop extension
         all_datasets = set(dataset_name.lower() for dataset_name in batch_info["datasets"])
         log.info(f"Starting sync for '{batch_name}' with {len(all_datasets)} datasets.")
-        self.s3_dmsgs = s3.S3Messenger(self.s3_bmsgs.data_path(batch_name))
-        self.fs_dmsgs = FsMessenger(os.path.join(self._output_dir, batch_name))
+        self.s3_dmsgs = messaging.S3Messenger(self.s3_bmsgs.data_path(batch_name))
+        self.fs_dmsgs = messaging.FsMessenger(os.path.join(self._output_dir, batch_name))
         return all_datasets
 
     def _handle_exception(self, activity, message):
@@ -214,9 +162,8 @@ class Syncer:
         """
         exc = traceback.format_exc()
         log.error(f"{activity} {message[0]} failed with:\n{exc}.")
-        message_name, contents = message
-        contents += "# " + "="*40 + "\n" + exc
-        return (message_name, contents)
+        contents = message.contents + "# " + "="*40 + "\n" + exc
+        return messaging.Message(message.type, message.name, contents)
 
     def sync(self, dataset):
         """Download the files associated with S3 message `dataset` of
@@ -227,12 +174,11 @@ class Syncer:
 
         Return [Absolute filepaths of downloaded files]
         """
-        dataset_name, _contents = dataset
-        instrument = hst.get_instrument(dataset_name)
-        s3_path = self.s3_dmsgs.data_path(instrument + "/" + dataset_name) # data dir path
-        local_path = self.fs_dmsgs.data_path(instrument + "/" + dataset_name) # data dir path
+        instrument = hst.get_instrument(dataset.name)
+        s3_path = self.s3_dmsgs.data_path(instrument + "/" + dataset.name) # data dir path
+        local_path = self.fs_dmsgs.data_path(instrument + "/" + dataset.name) # data dir path
         downloads = self.s3_dmsgs.download_directory(local_path, s3_path)
-        self._track_stats(dataset_name, downloads)
+        self._track_stats(dataset, downloads)
         return downloads
 
     # def archive(self, dataset, downloads):
@@ -247,7 +193,7 @@ class Syncer:
 
     def _track_stats(self, dataset, downloads):
         n_bytes = timing.total_size(downloads)
-        log.info(f"Downloaded {len(downloads)} files for '{dataset}' "
+        log.info(f"Downloaded {len(downloads)} files for '{dataset.name}' "
                  f"totalling {timing.human_format_number(n_bytes)}.")
         self.stats.increment("datasets")
         self.stats.increment("files", len(downloads))
@@ -265,8 +211,8 @@ class Syncer:
         self.s3_bmsgs.reset("batch-new", ["batch-syncing", "batch-done", "batch-error"])
         for batch in self.s3_bmsgs.list_names("batch-new"):
             batch_name = batch.split(".")[0]
-            self.s3_dmsgs = s3.S3Messenger(self.s3_bmsgs.data_path(batch_name))
-            self.fs_dmsgs = FsMessenger(os.path.join(self._output_dir, batch_name))
+            self.s3_dmsgs = messaging.S3Messenger(self.s3_bmsgs.data_path(batch_name))
+            self.fs_dmsgs = messaging.FsMessenger(os.path.join(self._output_dir, batch_name))
             self.s3_dmsgs.reset("dataset-processed",
                 ["dataset-syncing", "dataset-synced", "dataset-archived", "dataset-error"])
             self.fs_dmsgs.reset(["dataset-synced", "dataset-archived", "dataset-error"])
