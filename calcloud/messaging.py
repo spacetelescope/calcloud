@@ -13,6 +13,15 @@ import boto3
 from calcloud import s3
 from calcloud import log
 
+
+# -------------------------------------------------------------
+
+__all__ = [
+    "Message",
+    "S3Messenger",
+    "FsMessenger"
+]
+
 # -------------------------------------------------------------
 
 

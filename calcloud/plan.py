@@ -124,7 +124,7 @@ def planner(ipppssoots_file,  output_bucket="s3://calcloud-hst-pipeline-outputs"
     can be submitted.  `batch_name` will be extended by ISO date + time.
     """
     with open(ipppssoots_file) as f:
-        ipppssoots = f.read().split()
+        ipppssoots = [ipppssoot.lower() for ipppssoot in f.read().split()]
     for p in get_resources_tuples(ipppssoots, output_bucket, batch_name):
         print(tuple(p))  # Drop type to support literal_eval() vs. eval()
 
@@ -141,7 +141,7 @@ if __name__ == "__main__":
             print(test())
         else:
             # ipppssoots_file = sys.argv[1]
-            # output_bucket = sys.argv[2]  # 's3://calcloud-hst-pipeline-outputs/'
+            # output_bucket = sys.argv[2]  # 's3://calcloud-hst-pipeline-outputs'
             # batch_name = sys.argv[3]  #  'calcloud-hst-test-batch'
             planner(*sys.argv[1:])
     else:
