@@ -29,7 +29,6 @@ __all__ = [
     "delete_object",
     "move_object",
     "copy_object",
-    "S3Messenger",
     ]
 
 # -------------------------------------------------------------
