@@ -9,7 +9,7 @@ This set of terraform scripts will stand up an AWS Batch processing environment 
 ### Instructions
 - in `batch.tf`, in the provider object at the top, insert the name of your AWS account from your credentials file
 - in your AWS account you will need a keypair.
-- make a file in this directory called `local.tfvars` and assign the `image_tag` and `keypair` variables. `image_tag = "latest"` should work if you don't change any defaults anywhere. The `keypair` is whatever you created above. 
+- make a file in this directory called `local.tfvars` and assign the `image_tag` and `keypair` variables, as well as the `batchvpc_cidr` and `batchsn_cidr` variables. `image_tag = "latest"` should work if you don't change any defaults anywhere. The `keypair` is whatever you created above. 
 - first, we need to stand up the ECR so we have a place to push our docker image
     - `terraform plan -out base.out -target aws_ecr_repository.caldp_ecr -var-file local.tfvars`
     - `terraform apply "base.out"`
