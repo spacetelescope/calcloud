@@ -116,6 +116,11 @@ resource "aws_iam_role_policy_attachment" "ecs_instance_role" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
+resource "aws_iam_role_policy_attachment" "ecs_instance_s3" {
+  role       = aws_iam_role.ecs_instance_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
 resource "aws_iam_instance_profile" "ecs_instance_role" {
   name = "ecs_instance_role"
   role = aws_iam_role.ecs_instance_role.name
@@ -142,6 +147,11 @@ resource "aws_iam_role" "batch_job_role" {
     tags = {
         "Name" = "HSTDP-BatchJobRole"
     }
+}
+
+resource "aws_iam_role_policy_attachment" "batch_job_policy_s3" {
+  role       = aws_iam_role.batch_job_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 resource "aws_iam_role" "calcloud_lambda_role" {
