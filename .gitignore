@@ -10,3 +10,9 @@ build/
 sdist/
 dist/
 
+terraform/.terraform
+terraform/*.tfstate*
+terraform/*.txt
+terraform/*.out
+terraform/local.tfvars
+
