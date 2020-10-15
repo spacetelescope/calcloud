@@ -19,8 +19,10 @@ def submit_job(plan_tuple):
             "memory": info.memory,
             "command": [
                 info.command,
+                info.ipppssoot,
+                info.input_path,
                 info.s3_output_uri,
-                info.ipppssoot
+                info.crds_config
             ],
         },
         "timeout": {

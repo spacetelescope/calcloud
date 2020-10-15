@@ -62,7 +62,7 @@ STIS: 99 per mem 1.0 gb
 #
 # NOTE:  for the initial prototype,  the job definition is named calcloud-hst-caldp-job-definition
 JobResources = namedtuple("JobResources", [
-    "ipppssoot", "instrument", "job_name", "s3_output_uri", "vcpus", "memory", "max_seconds"
+    "ipppssoot", "instrument", "job_name", "s3_output_uri", "input_path", "crds_config", "vcpus", "memory", "max_seconds"
     ])
 
 # Conceptually the resource requirements defined here could be obtained from a database that records real-world
@@ -90,7 +90,9 @@ def get_resources(ipppssoot, output_bucket, batch_name):
     s3_output_uri = f"{output_bucket}/{batch_name}"
     instr = hst.get_instrument(ipppssoot)
     job_name = batch_name + "-" + ipppssoot
-    return JobResources(*(ipppssoot, instr, job_name, s3_output_uri,) + JOB_INFO[instr])
+    input_path = "astroquery:"
+    crds_config = "caldp-config-offsite"
+    return JobResources(*(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config) + JOB_INFO[instr])
 
 def get_resources_tuples(ipppssoots, output_bucket="s3://calcloud-hst-pipeline-outputs", batch_name="batch"):
     """
