@@ -3,14 +3,6 @@ provider "aws" {
   region  = "us-east-1"
 }
 
-variable "keypair" {
-  type = string
-}
-
-variable "image_tag"{
-  type = string
-}
-
 resource "aws_launch_template" "hstdp" {
   description             = "Template for cluster worker nodes updated to limit stopped container lifespan"
   ebs_optimized           = "false"

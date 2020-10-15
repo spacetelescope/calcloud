@@ -1,11 +1,3 @@
-variable "batchvpc_cidr" {
-  type = string
-}
-
-variable "batchsn_cidr" {
-  type = string
-}
-
 resource "aws_vpc" "batchvpc" {
   cidr_block = var.batchvpc_cidr
   enable_dns_hostnames = true
