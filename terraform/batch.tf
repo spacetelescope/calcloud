@@ -108,7 +108,7 @@ resource "aws_batch_job_definition" "calcloud" {
   type                 = "container"
   container_properties = <<CONTAINER_PROPERTIES
   { 
-    "command": ["Ref::command", "Ref::s3_output_path", "Ref::dataset"],
+    "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${aws_iam_role.batch_job_role.arn}",
@@ -122,9 +122,11 @@ resource "aws_batch_job_definition" "calcloud" {
   CONTAINER_PROPERTIES
 
   parameters = {
-    "command" = "caldp-process-aws"
+    "command" = "caldp-process"
     "dataset" = "j8cb010b0"
+    "input_path" = "astroquery:"
     "s3_output_path" = "s3://${aws_s3_bucket.calcloud.bucket}"
+    "crds_config" = "caldp-config-offsite"
   }  
 
   depends_on = [
