@@ -3,6 +3,13 @@ provider "aws" {
   region  = "us-east-1"
 }
 
+data "template_file" "userdata" {
+  template = "${file("${path.module}/user_data.sh")}"
+  vars = {
+      // Any var you need to pass to the script
+  }
+}
+
 resource "aws_launch_template" "hstdp" {
   description             = "Template for cluster worker nodes updated to limit stopped container lifespan"
   ebs_optimized           = "false"
@@ -12,7 +19,7 @@ resource "aws_launch_template" "hstdp" {
     "Name"         = "calcloud-hst-worker"
     "calcloud-hst" = "calcloud-hst-worker"
   }
-  user_data               = "Q29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9PUJPVU5EQVJZPT0iIApNSU1FLVZlcnNpb246IDEuMCAKCi0tPT1CT1VOREFSWT09Ck1JTUUtVmVyc2lvbjogMS4wIApDb250ZW50LVR5cGU6IHRleHQveC1zaGVsbHNjcmlwdDsgY2hhcnNldD0idXMtYXNjaWkiCgojIS9iaW4vYmFzaAoKZWNobyBFQ1NfRU5HSU5FX1RBU0tfQ0xFQU5VUF9XQUlUX0RVUkFUSU9OPTFtPj4vZXRjL2Vjcy9lY3MuY29uZmlnIAoKeXVtIHVwZGF0ZSAteQoKLS09PUJPVU5EQVJZPT0tLQ=="
+  user_data               = base64encode(data.template_file.userdata.rendered)
   vpc_security_group_ids  = [
         aws_security_group.batchsg.id,
   ]
