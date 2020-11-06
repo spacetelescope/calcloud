@@ -90,7 +90,7 @@ resource "aws_batch_compute_environment" "calcloud" {
       "m5.large",
       "m5.xlarge",
     ]
-    max_vcpus = 32
+    max_vcpus = 128
     min_vcpus = 0
     desired_vcpus = 0
 
@@ -147,6 +147,15 @@ resource "aws_s3_bucket" "calcloud" {
     "CALCLOUD" = "calcloud-hst-pipeline-outputs"
     "Name"     = "calcloud-hst-pipeline-outputs"
   }
+}
+
+resource "aws_s3_bucket_public_access_block" "s3_public_block" {
+  bucket = aws_s3_bucket.calcloud.id
+
+  block_public_acls   = true
+  block_public_policy = true
+  restrict_public_buckets = true
+  ignore_public_acls=true
 }
 
 
