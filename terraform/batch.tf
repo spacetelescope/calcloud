@@ -1,6 +1,19 @@
+# need a non-aliased provider to provide a default and stop terraform from prompting for a region
 provider "aws" {
   profile = "HSTRepro_Sandbox"
   region  = "us-east-1"
+}
+
+provider "aws" {
+  profile = "HSTRepro_Sandbox"
+  alias = "sandbox"
+  region  = "us-east-1"
+}
+
+provider "aws" {
+  profile = "HSTRepro_Dev"
+  alias = "dev"
+  region = "us-east-1"
 }
 
 data "template_file" "userdata" {
@@ -143,6 +156,7 @@ resource "aws_batch_job_definition" "calcloud" {
 
 resource "aws_s3_bucket" "calcloud" {
   bucket = "calcloud-hst-pipeline-outputs-sandbox"
+  provider = aws.sandbox
   tags = {
     "CALCLOUD" = "calcloud-hst-pipeline-outputs"
     "Name"     = "calcloud-hst-pipeline-outputs"
@@ -150,12 +164,13 @@ resource "aws_s3_bucket" "calcloud" {
 }
 
 resource "aws_s3_bucket_public_access_block" "s3_public_block" {
+  provider = aws.sandbox
   bucket = aws_s3_bucket.calcloud.id
 
   block_public_acls   = true
   block_public_policy = true
   restrict_public_buckets = true
-  ignore_public_acls=true
+  ignore_public_acls = true
 }
 
 
