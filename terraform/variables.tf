@@ -2,14 +2,6 @@ variable "region" {
   type = string
 }
 
-variable "bucket" {
-  type = string
-}
-
-variable "key" {
-  type = string
-}
-
 variable "batchvpc_cidr" {
   type = string
 }

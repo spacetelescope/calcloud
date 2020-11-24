@@ -2,15 +2,6 @@ provider "aws" {
   region  = var.region
 }
 
-data "terraform_remote_state" "network" {
-  backend = "s3"
-  config = {
-    bucket = var.bucket
-    key = var.key
-    region = var.region
-  }
-}
-
 data "template_file" "userdata" {
   template = "${file("${path.module}/user_data.sh")}"
   vars = {
