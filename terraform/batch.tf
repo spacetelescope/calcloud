@@ -1,6 +1,14 @@
 provider "aws" {
-  profile = "HSTRepro_Sandbox"
-  region  = "us-east-1"
+  region  = var.region
+}
+
+data "terraform_remote_state" "network" {
+  backend = "s3"
+  config = {
+    bucket = var.bucket
+    key = var.key
+    region = var.region
+  }
 }
 
 data "template_file" "userdata" {
