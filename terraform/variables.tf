@@ -1,3 +1,7 @@
+variable "region" {
+  type = string
+}
+
 variable "batchvpc_cidr" {
   type = string
 }

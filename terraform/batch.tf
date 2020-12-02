@@ -1,7 +1,6 @@
 # need a non-aliased provider to provide a default and stop terraform from prompting for a region
 provider "aws" {
-  profile = "HSTRepro_Sandbox"
-  region  = "us-east-1"
+  region  = var.region
 }
 
 provider "aws" {
