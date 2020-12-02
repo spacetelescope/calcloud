@@ -16,3 +16,4 @@ terraform/*.txt
 terraform/*.out
 terraform/local.tfvars
 
+*.DS_Store

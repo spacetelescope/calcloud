@@ -1,6 +1,5 @@
 provider "aws" {
-  profile = "HSTRepro_Sandbox"
-  region  = "us-east-1"
+  region  = var.region
 }
 
 data "template_file" "userdata" {
