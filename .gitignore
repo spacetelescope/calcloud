@@ -15,5 +15,6 @@ terraform/*.tfstate*
 terraform/*.txt
 terraform/*.out
 terraform/local.tfvars
+terraform/.terraform.lock.hcl
 
 *.DS_Store

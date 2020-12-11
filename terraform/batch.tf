@@ -132,7 +132,7 @@ resource "aws_batch_job_definition" "calcloud" {
 }
 
 resource "aws_s3_bucket" "calcloud" {
-  bucket = "calcloud-hst-pipeline-outputs-sandbox"
+  bucket = var.s3_bucket_name
   tags = {
     "CALCLOUD" = "calcloud-hst-pipeline-outputs"
     "Name"     = "calcloud-hst-pipeline-outputs"

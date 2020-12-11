@@ -25,3 +25,7 @@ variable "single_batch_subnet_id" {
 variable "aws_batch_job_role_arn" {
   type = string
 }
+
+variable "s3_bucket_name" {
+  type = string
+}
