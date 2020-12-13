@@ -2,28 +2,8 @@
 which tracks metadata like memory consumption and compute duration.
 """
 import sys
-import csv
 
 import boto3
-
-def load_blackboard(filename, delimiter="|", item_key="dataset"):
-    """Loader for dump of on-prem HST blackboard defining known resource usage.
-
-    Returns { row_dict[item_key]: row_dict, ...}
-
-    where `row_dict` is a dictionary with keys that are column names and
-    corresponding row values.
-    """
-    with open(filename) as csvfile:
-        reader = csv.reader(csvfile, delimiter=delimiter)
-        columns = tuple(col.strip() for col in reader.__next__())
-        db_dict = {}
-        for row in reader:
-            converted = tuple(convert(v) for v in row)
-            item_dict = dict(zip(columns, converted))
-            item_dict.pop('', None)
-            db_dict[item_dict[item_key]] = item_dict
-    return db_dict
 
 
 def convert(v):
@@ -136,12 +116,14 @@ class SimpleDB:
         query = f"SELECT {what} FROM `{self.domain_name}`"
         if where is not None:
             query += f" WHERE {where}"
-        paginator = self.client.get_paginator('select')
+        paginator = self.client.get_paginator("select")
         response_iterator = paginator.paginate(
             SelectExpression=query,
             ConsistentRead=consistent_read,
         )
         for resp in response_iterator:
             for item in resp["Items"]:
-                yield (('Name', item["Name"]),) + \
-                    tuple((attr["Name"], convert(attr["Value"])) for attr in item["Attributes"])
+                yield (("Name", item["Name"]),) + tuple(
+                    (attr["Name"], convert(attr["Value"]))
+                    for attr in item["Attributes"]
+                )

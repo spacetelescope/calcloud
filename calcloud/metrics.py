@@ -26,10 +26,10 @@ def load_blackboard(filename, delimiter="|", item_key="dataset"):
             item_dict = dict(zip(columns, converted))
             item_dict.pop("", None)
             db_dict[item_dict[item_key]] = {
-                item_key : item_dict[item_key],
-                "memory_megabytes": item_dict["imageSize"],
+                item_key: item_dict[item_key],
+                "memory_megabytes": math.ceil(item_dict["imageSize"] / 1024),
                 "wallclock_seconds": item_dict["jobduration"],
-                "cpus" : 1
+                "cpus": 1,
             }
     return db_dict
 
@@ -44,6 +44,9 @@ def load_db(filepath):
 
 
 def get_resources(dataset):
+    """Given ipppssoot `dataset`, return:
+    (memory_megabytes, cpus, wallclock_seconds)
+    """
     item = DB.get_item(dataset)
     memory_megabytes = item["memory_megabytes"]
     cpus = item.get("cpus", 1)  # original blackboard doesn't have these
@@ -52,6 +55,10 @@ def get_resources(dataset):
 
 
 def set_resources(dataset, memory_megabytes, cpus, wallclock_seconds):
+    """Update the resource metrics database for ipppssoot `dataset` with measured
+    values for `memory_megabytes`, `cpus` effectively used/available, and
+    `walkclock_seconds` of runtime.
+    """
     item = DB.get_item(dataset)
     item["memory_megabytes"] = memory_megabytes
     item["cpus"] = cpus
@@ -61,8 +68,16 @@ def set_resources(dataset, memory_megabytes, cpus, wallclock_seconds):
 
 # --------------------------------------------------------------------------------
 
+# This is throw-away code if the /usr/bin/time metrics turn out to be unusable.
+# It might however illustrate loading metrics from S3 in general if it turns out
+# that container-based metrics are viable in some form, e.g. based on psutils,
+# or aspects of any lambda based on CloudWatch metrics.
+
 
 def update_resources(s3_batch_path):
+    """Extract the process_metrics.txt files from every ipppssoot in a batch and
+    use them to overwrite or add a metrics database entry.
+    """
     process_metrics_s3 = [
         metric
         for metric in s3.list_directory(s3_batch_path, max_objects=10 ** 7)
@@ -77,6 +92,20 @@ def update_resources(s3_batch_path):
 
 
 def parse_time_metrics(metrics_text):
+    """Parse the verbose output of GNU /usr/bin/time included in the original
+    caldp container to extract the memory resident set size, wallclock time,
+    and CPU's utilized.
+
+    For outlier (jcl403010) with 49.6G RAM reported in the blackboard,
+    the RSS of approx 8000 reported by "time" was insufficient to run
+    the container.  2x or roughly 16000 succeeded.
+
+    Add 2x fudge here so reported numbers are directly usable and
+    metric-specific fudge is not hardcoded in the planner or
+    provisioner.  (This fudge is property of this measurement).
+
+    Returns memory_megabytes, cpus, wallclock_seconds
+    """
     for line in metrics_text.splitlines():
         line = line.strip()
         words = line.split()
@@ -85,7 +114,7 @@ def parse_time_metrics(metrics_text):
             cpus = math.ceil(int(percent) / 100)
         elif line.startswith("Maximum resident set size"):
             kilobytes = int(words[-1])
-            memory_megabytes = math.ceil(kilobytes / 1024)
+            memory_megabytes = math.ceil(kilobytes / 1024 * 2)
         elif line.startswith("Elapsed (wall clock) time"):
             parts = words[-1].split(":")
             if len(parts) == 2:

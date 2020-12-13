@@ -92,8 +92,8 @@ def get_job_resources(instr, ipppssoot):
     try:
         memory_megabytes, cpus, wallclock_seconds = metrics.get_resources(ipppssoot)
         info[0] = cpus
-        info[1] = memory_megabytes + 128    # add some overhead for AWS Batch (>= 32M) and measurement error
-        info[2] = wallclock_seconds*cpus*2  # kill time,  so too high is better than too low
+        info[1] = memory_megabytes + 512    # add some overhead for AWS Batch (>= 32M) and measurement error
+        info[2] = int(wallclock_seconds*cpus*2)  # kill time,  so too high is better than too low
     except KeyError:
         info = (36, int(70*1024), int(60*60*48))    # 36 cores,  70G/72G,  48 hours max   (c5.9xlarge)
         log.warning("Defaulting (cpu, memory, time) requirements for unknown dataset:", ipppssoot, "to", info)
