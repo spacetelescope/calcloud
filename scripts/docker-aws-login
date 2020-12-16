@@ -1,0 +1,6 @@
+#! /bin/bash -eu
+
+ECR_ARN=$1   # get this from the ECR console or Terraform state, e.g 1234567890.dkr.ecr.us-east-1.amazonaws.com/caldp
+
+aws ecr get-login-password --region us-east-1 | docker login --password-stdin --username AWS $ECR_ARN
+

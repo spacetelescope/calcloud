@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 data "template_file" "userdata" {
-  template = "${file("${path.module}/user_data.sh")}"
+  template = file("${path.module}/user_data.sh")
   vars = {
       // Any var you need to pass to the script
   }
@@ -68,6 +68,7 @@ resource "aws_batch_job_queue" "batch_queue" {
 }
 
 resource "aws_batch_compute_environment" "calcloud" {
+  compute_environment_name  = "calcloud-hst"
   type = "MANAGED"
   service_role = aws_iam_role.aws_batch_service_role.arn
   depends_on = [
@@ -105,7 +106,7 @@ resource "aws_ecr_repository" "caldp_ecr" {
 }
 
 data "aws_ecr_image" "caldp_latest" {
-  repository_name = "${aws_ecr_repository.caldp_ecr.name}"
+  repository_name = aws_ecr_repository.caldp_ecr.name
   image_tag = var.image_tag
 }
 
