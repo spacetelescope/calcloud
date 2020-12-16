@@ -13,6 +13,8 @@ from collections import namedtuple
 from . import plan
 from .plan import JobResources
 
+OUTLIER_THRESHHOLD_MEGABYTES = 8192-128  # m5.large - 128M ~overhead
+
 JobEnv = namedtuple(
     "JobEnv", ("job_queue", "job_definition", "command"))
 
@@ -36,7 +38,11 @@ def get_plan(job_resources):
     return Plan(*(job_resources + env))
 
 def get_environment(job_resources):
-    return JobEnv("calcloud-hst-queue", "calcloud-hst-caldp-job-definition", "caldp-process")
+    job_resources = JobResources(*job_resources)
+    if job_resources.memory <= OUTLIER_THRESHHOLD_MEGABYTES:
+        return JobEnv("calcloud-hst-queue", "calcloud-hst-caldp-job-definition", "caldp-process")
+    else:
+        return JobEnv("calcloud-hst-outlier-queue", "calcloud-hst-caldp-job-definition", "caldp-process")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

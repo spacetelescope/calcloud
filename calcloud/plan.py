@@ -6,9 +6,12 @@ set of ipppssoots can be assigned to well tuned processing resources.
 """
 import sys
 import datetime
+import math
 from collections import namedtuple
 
-from calcloud import hst
+from . import hst
+from . import metrics
+from . import log
 
 # ----------------------------------------------------------------------
 
@@ -78,6 +81,24 @@ JOB_INFO = { # cores, memory M, time secs
     "wfc3" : (4, int(4*1024), int(60*60*2)),
     }
 
+def get_job_resources(instr, ipppssoot):
+    """Given the instrument `instr` and dataset id `ipppssoot`...
+
+    Return  required resources (cores, memory in M,  seconds til kill)
+
+    Note that these are "required" and still need to be matched to "available".
+    """
+    info = list(JOB_INFO[instr.lower()])
+    try:
+        memory_megabytes, cpus, wallclock_seconds = metrics.get_resources(ipppssoot)
+        info[0] = cpus
+        info[1] = memory_megabytes + 512    # add some overhead for AWS Batch (>= 32M) and measurement error
+        info[2] = int(wallclock_seconds*cpus*2)  # kill time,  so too high is better than too low
+    except KeyError:
+        info = (36, int(70*1024), int(60*60*48))    # 36 cores,  70G/72G,  48 hours max   (c5.9xlarge)
+        log.warning("Defaulting (cpu, memory, time) requirements for unknown dataset:", ipppssoot, "to", info)
+    return tuple(info)
+
 def get_resources(ipppssoot, output_bucket, batch_name):
     """Given an HST IPPPSSOOT ID,  return information used to schedule it as a batch job.
 
@@ -86,13 +107,13 @@ def get_resources(ipppssoot, output_bucket, batch_name):
 
     Returns:  JobResources named tuple
     """
-    ipppssoot = ipppssoot.upper()
+    ipppssoot = ipppssoot.lower()
     s3_output_uri = f"{output_bucket}/{batch_name}"
     instr = hst.get_instrument(ipppssoot)
     job_name = batch_name + "-" + ipppssoot
     input_path = "astroquery:"
     crds_config = "caldp-config-offsite"
-    return JobResources(*(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config) + JOB_INFO[instr])
+    return JobResources(*(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config) + get_job_resources(instr, ipppssoot))
 
 def get_resources_tuples(ipppssoots, output_bucket="s3://calcloud-hst-pipeline-outputs", batch_name="batch"):
     """
@@ -104,9 +125,6 @@ def get_resources_tuples(ipppssoots, output_bucket="s3://calcloud-hst-pipeline-o
 
     - ipppssoot to process
     - Where to put outputs:  's3://calcloud-hst-pipeline-outputs/batch-10-2020-01-31T14-48-20/stis/O8JHG2NNQ'
-    - job queue
-    - job definition
-    - The executable to run in the container: 'hstdp-process'
     - Required cores:  1
     - Required memory: 512
     - CPU seconds til kill: 300
