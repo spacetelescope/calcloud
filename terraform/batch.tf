@@ -13,14 +13,13 @@ resource "aws_launch_template" "hstdp" {
   description             = "Template for cluster worker nodes updated to limit stopped container lifespan"
   ebs_optimized           = "false"
   image_id                = "ami-07a63940735aebd38" # this is an amazon ECS community AMI
-  key_name                = var.keypair
   tags                    = {
     "Name"         = "calcloud-hst-worker"
     "calcloud-hst" = "calcloud-hst-worker"
   }
   user_data               = base64encode(data.template_file.userdata.rendered)
   vpc_security_group_ids  = [
-        aws_security_group.batchsg.id,
+        var.batchsg_id,
   ]
   block_device_mappings {
     device_name = "/dev/xvda"
@@ -34,7 +33,7 @@ resource "aws_launch_template" "hstdp" {
             }
   }
   iam_instance_profile {
-    arn = aws_iam_instance_profile.ecs_instance_role.arn
+    arn = var.ecs_instance_role_arn
   }
   monitoring {
     enabled = true
@@ -70,21 +69,17 @@ resource "aws_batch_job_queue" "batch_queue" {
 resource "aws_batch_compute_environment" "calcloud" {
   compute_environment_name  = "calcloud-hst"
   type = "MANAGED"
-  service_role = aws_iam_role.aws_batch_service_role.arn
-  depends_on = [
-    aws_iam_role_policy_attachment.aws_batch_service_role,
-  ]
+  service_role = var.aws_batch_service_role_arn
 
   compute_resources {
     allocation_strategy = "BEST_FIT"
-    ec2_key_pair = var.keypair
-    instance_role = aws_iam_instance_profile.ecs_instance_role.arn
+    instance_role = var.ecs_instance_role_arn
     type = "EC2"
     bid_percentage = 0
     tags = {}
-    subnets             = [aws_subnet.batch_sn.id]
+    subnets             = [var.single_batch_subnet_id]
     security_group_ids  = [
-      aws_security_group.batchsg.id,
+      var.batchsg_id,
     ]
     instance_type = [
       "m5.large",
@@ -118,7 +113,7 @@ resource "aws_batch_job_definition" "calcloud" {
     "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
-    "jobRoleArn": "${aws_iam_role.batch_job_role.arn}",
+    "jobRoleArn": "${var.aws_batch_job_role_arn}",
     "memory": 2560,
     "mountPoints": [],
     "resourceRequirements": [],
@@ -135,14 +130,10 @@ resource "aws_batch_job_definition" "calcloud" {
     "s3_output_path" = "s3://${aws_s3_bucket.calcloud.bucket}"
     "crds_config" = "caldp-config-offsite"
   }  
-
-  depends_on = [
-    aws_iam_role_policy_attachment.aws_batch_service_role
-  ]
 }
 
 resource "aws_s3_bucket" "calcloud" {
-  bucket = "calcloud-hst-pipeline-outputs-sandbox"
+  bucket = var.s3_bucket_name
   tags = {
     "CALCLOUD" = "calcloud-hst-pipeline-outputs"
     "Name"     = "calcloud-hst-pipeline-outputs"
@@ -157,5 +148,3 @@ resource "aws_s3_bucket_public_access_block" "s3_public_block" {
   restrict_public_buckets = true
   ignore_public_acls=true
 }
-
-
