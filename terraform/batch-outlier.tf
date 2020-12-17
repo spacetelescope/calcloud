@@ -11,21 +11,17 @@ resource "aws_batch_job_queue" "batch_outlier_queue" {
 resource "aws_batch_compute_environment" "calcloud_outlier" {
   compute_environment_name = "calcloud-hst-outlier"
   type = "MANAGED"
-  service_role = aws_iam_role.aws_batch_service_role.arn
-  depends_on = [
-    aws_iam_role_policy_attachment.aws_batch_service_role,
-  ]
+  service_role = var.aws_batch_job_role_arn
 
   compute_resources {
     allocation_strategy = "BEST_FIT"
-    ec2_key_pair = var.keypair
-    instance_role = aws_iam_instance_profile.ecs_instance_role.arn
+    instance_role = var.ecs_instance_role_arn
     type = "EC2"
     bid_percentage = 0
     tags = {}
-    subnets             = [aws_subnet.batch_sn.id]
+    subnets             = [var.single_batch_subnet_id]
     security_group_ids  = [
-      aws_security_group.batchsg.id,
+      var.batchsg_id,
     ]
     instance_type = [
        "c5.9xlarge",      #  36 cores, 72G ram
