@@ -1,31 +1,16 @@
-variable "region" {
-  type = string
-}
-
-variable "batchsg_id" {
-  type = string
-}
-
-variable "ecs_instance_role_arn" {
-  type = string
-}
-
-variable "aws_batch_service_role_arn" {
-  type = string
-}
-
 variable "image_tag" {
   type = string
+  default = "latest"
 }
 
-variable "single_batch_subnet_id" {
+variable "environment" {
+  description = "Override to environment value provided by SSM,  takes precedence if specified."
   type = string
+  default = null
 }
 
-variable "aws_batch_job_role_arn" {
+variable region {
+  description = "AWS region"
   type = string
-}
-
-variable "s3_bucket_name" {
-  type = string
+  default = "us-east-1"
 }

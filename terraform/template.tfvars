@@ -1,8 +1,6 @@
+# latest is default
 image_tag = "latest"
-region = "us-east-1"
-batchsg_id = "your-sg-id-here"
-ecs_instance_role_arn = "arn:aws:iam::your-account-id:instance-profile/your-role-name"
-aws_batch_service_role_arn = "arn:aws:iam::your-account-id:role/your-role-name"
-single_batch_subnet_id = "subnet-your-subnet-id"
-aws_batch_job_role_arn = "arn:aws:iam::your-account-id:role/your-job-role"
-s3_bucket_name = "your-s3-bucket-name"
+
+# SSM provides a default account value overriden by this,  e.g. sb, dev, test, prod, sb-bhayden, ...
+environment = "your-unique-suffix"
+
