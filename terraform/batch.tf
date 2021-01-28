@@ -126,16 +126,16 @@ resource "aws_batch_job_definition" "calcloud" {
     "command" = "caldp-process"
     "dataset" = "j8cb010b0"
     "input_path" = "astroquery:"
-    "s3_output_path" = "s3://${aws_s3_bucket.calcloud.bucket}"
+    "s3_output_path" = "s3://${aws_s3_bucket.calcloud.bucket}/outputs"
     "crds_config" = "caldp-config-offsite"
   }
 }
 
 resource "aws_s3_bucket" "calcloud" {
-  bucket = "calcloud-hst-pipeline-outputs${local.environment}"
+  bucket = "calcloud-processing${local.environment}"
   tags = {
-    "CALCLOUD" = "calcloud-hst-pipeline-outputs${local.environment}"
-    "Name"     = "calcloud-hst-pipeline-outputs${local.environment}"
+    "CALCLOUD" = "calcloud-processing${local.environment}"
+    "Name"     = "calcloud-processing${local.environment}"
   }
 }
 
