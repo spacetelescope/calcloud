@@ -112,7 +112,7 @@ resource "aws_batch_job_definition" "calcloud" {
     "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
-    "jobRoleArn": data.aws_ssm_parameter.batch_job_role.value,
+    "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
     "memory": 2560,
     "mountPoints": [],
     "resourceRequirements": [],
