@@ -10,17 +10,18 @@ data "template_file" "userdata" {
 }
 
 resource "aws_launch_template" "hstdp" {
+  name = "calcloud-hst-worker${local.environment}"
   description             = "Template for cluster worker nodes updated to limit stopped container lifespan"
   ebs_optimized           = "false"
-  image_id                = "ami-07a63940735aebd38" # this is an amazon ECS community AMI
+  image_id                = data.aws_ssm_parameter.batch_ami_id.value
   tags                    = {
-    "Name"         = "calcloud-hst-worker"
-    "calcloud-hst" = "calcloud-hst-worker"
+    "Name"         = "calcloud-hst-worker${local.environment}"
+    "calcloud-hst" = "calcloud-hst-worker${local.environment}"
   }
   user_data               = base64encode(data.template_file.userdata.rendered)
-  vpc_security_group_ids  = [
-        var.batchsg_id,
-  ]
+
+  vpc_security_group_ids  = local.batch_sgs
+
   block_device_mappings {
     device_name = "/dev/xvda"
 
@@ -33,7 +34,7 @@ resource "aws_launch_template" "hstdp" {
             }
   }
   iam_instance_profile {
-    arn = var.ecs_instance_role_arn
+    arn = data.aws_ssm_parameter.ecs_instance_role.value
   }
   monitoring {
     enabled = true
@@ -42,45 +43,43 @@ resource "aws_launch_template" "hstdp" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      "Name" = "calcloud-hst-worker"
-      "calcloud-hst" = "calcloud-hst-worker"
+      "Name" = "calcloud-hst-worker${local.environment}"
+      "calcloud-hst" = "calcloud-hst-worker${local.environment}"
     }
   }
 
   tag_specifications {
     resource_type = "volume"
     tags = {
-      "Name" = "calcloud-hst-worker"
-      "calcloud-hst" = "calcloud-hst-worker"
+      "Name" = "calcloud-hst-worker${local.environment}"
+      "calcloud-hst" = "calcloud-hst-worker${local.environment}"
     }
   }
 }
 
 resource "aws_batch_job_queue" "batch_queue" {
+  name = "calcloud-hst-queue${local.environment}"
   compute_environments = [
     aws_batch_compute_environment.calcloud.arn
   ]
-  name = "calcloud-hst-queue"
   priority = 10
   state = "ENABLED"
-  
+
 }
 
 resource "aws_batch_compute_environment" "calcloud" {
-  compute_environment_name  = "calcloud-hst"
+  compute_environment_name  = "calcloud-hst${local.environment}"
   type = "MANAGED"
-  service_role = var.aws_batch_service_role_arn
+  service_role = data.aws_ssm_parameter.batch_service_role.value
 
   compute_resources {
     allocation_strategy = "BEST_FIT"
-    instance_role = var.ecs_instance_role_arn
+    instance_role = data.aws_ssm_parameter.ecs_instance_role.value
     type = "EC2"
     bid_percentage = 0
     tags = {}
-    subnets             = [var.single_batch_subnet_id]
-    security_group_ids  = [
-      var.batchsg_id,
-    ]
+    subnets             = local.batch_subnet_ids
+    security_group_ids  = local.batch_sgs
     instance_type = [
       "m5.large",
       "m5.xlarge",
@@ -97,7 +96,7 @@ resource "aws_batch_compute_environment" "calcloud" {
 }
 
 resource "aws_ecr_repository" "caldp_ecr" {
-  name                 = "caldp"
+  name                 = "caldp${local.environment}"
 }
 
 data "aws_ecr_image" "caldp_latest" {
@@ -106,14 +105,14 @@ data "aws_ecr_image" "caldp_latest" {
 }
 
 resource "aws_batch_job_definition" "calcloud" {
-  name                 = "calcloud-hst-caldp-job-definition"
+  name                 = "calcloud-hst-caldp-job-definition${local.environment}"
   type                 = "container"
   container_properties = <<CONTAINER_PROPERTIES
-  { 
+  {
     "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
-    "jobRoleArn": "${var.aws_batch_job_role_arn}",
+    "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
     "memory": 2560,
     "mountPoints": [],
     "resourceRequirements": [],
@@ -127,16 +126,16 @@ resource "aws_batch_job_definition" "calcloud" {
     "command" = "caldp-process"
     "dataset" = "j8cb010b0"
     "input_path" = "astroquery:"
-    "s3_output_path" = "s3://${aws_s3_bucket.calcloud.bucket}"
+    "s3_output_path" = "s3://${aws_s3_bucket.calcloud.bucket}/outputs"
     "crds_config" = "caldp-config-offsite"
-  }  
+  }
 }
 
 resource "aws_s3_bucket" "calcloud" {
-  bucket = var.s3_bucket_name
+  bucket = "calcloud-processing${local.environment}"
   tags = {
-    "CALCLOUD" = "calcloud-hst-pipeline-outputs"
-    "Name"     = "calcloud-hst-pipeline-outputs"
+    "CALCLOUD" = "calcloud-processing${local.environment}"
+    "Name"     = "calcloud-processing${local.environment}"
   }
 }
 
