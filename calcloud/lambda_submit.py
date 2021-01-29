@@ -7,12 +7,12 @@ from . import submit
 import boto3
 
 # bucket name will need to be env variable?
-def main(ipppssoots_file, bucket="s3://calcloud-hst-pipeline-outputs-sandbox", batch_name="batch"):
+def main(ipppssoots_file, bucket="s3://calcloud-hst-pipeline-outputs-sandbox"):
     # reproduces plan.planner tuples that would normally be dumped to file
     with open(ipppssoots_file) as f:
         ipppssoots = [ipppssoot.lower() for ipppssoot in f.read().split()]
         
-    planned_resource_tuples = plan.get_resources_tuples(ipppssoots, bucket, batch_name)
+    planned_resource_tuples = plan.get_resources_tuples(ipppssoots, bucket)
 
     # reproduces the printed output of provision
     provisioned_resource_tuples = provision.get_plan_tuples(planned_resource_tuples)
