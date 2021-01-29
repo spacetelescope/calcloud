@@ -3,6 +3,9 @@ import boto3
 from datetime import datetime
 import re
 
+import warnings
+warnings.warn("this lambda handler will be removed soon", DeprecationWarning, stacklevel=1)
+
 DATASET_RE = re.compile(r"^[A-Za-z0-9\-\.]{1,128}$")
 
 def lambda_handler(event, context):
