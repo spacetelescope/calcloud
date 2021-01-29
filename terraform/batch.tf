@@ -2,6 +2,16 @@ provider "aws" {
   region  = var.region
 }
 
+resource "random_string" "env_name" {
+  # see https://github.com/hashicorp/terraform-provider-aws/pull/2347#issuecomment-345292890
+  # regarding the need for a random string in the compute-env name to avoid
+  # issues recreating them. They must be created before the old
+  # one can be destroyed, so they need unique names.
+  length = 5
+  special = false
+  upper = false
+}
+
 data "template_file" "userdata" {
   template = file("${path.module}/user_data.sh")
   vars = {
@@ -68,7 +78,7 @@ resource "aws_batch_job_queue" "batch_queue" {
 }
 
 resource "aws_batch_compute_environment" "calcloud" {
-  compute_environment_name  = "calcloud-hst${local.environment}"
+  compute_environment_name  = "calcloud-hst${local.environment}-${random_string.env_name.result}"
   type = "MANAGED"
   service_role = data.aws_ssm_parameter.batch_service_role.value
 
@@ -80,10 +90,7 @@ resource "aws_batch_compute_environment" "calcloud" {
     tags = {}
     subnets             = local.batch_subnet_ids
     security_group_ids  = local.batch_sgs
-    instance_type = [
-      "m5.large",
-      "m5.xlarge",
-    ]
+    instance_type = ["optimal"]
     max_vcpus = 128
     min_vcpus = 0
     desired_vcpus = 0
@@ -92,7 +99,10 @@ resource "aws_batch_compute_environment" "calcloud" {
       launch_template_id = aws_launch_template.hstdp.id
     }
   }
-  lifecycle { ignore_changes = [compute_resources.0.desired_vcpus] }
+  lifecycle { 
+    ignore_changes = [compute_resources.0.desired_vcpus]
+    create_before_destroy = true 
+  }
 }
 
 resource "aws_ecr_repository" "caldp_ecr" {

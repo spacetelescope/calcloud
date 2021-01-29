@@ -8,6 +8,7 @@ jobs, provision first creates the environment in which they'll be processed.
 """
 import sys
 import ast
+import os
 from collections import namedtuple
 
 from . import plan
@@ -39,10 +40,14 @@ def get_plan(job_resources):
 
 def get_environment(job_resources):
     job_resources = JobResources(*job_resources)
+    job_definition = os.environ['JOBDEFINITION']
+    normal_queue = os.environ['NORMALQUEUE']
+    outlier_queue = os.environ['OUTLIERQUEUE']
+
     if job_resources.memory <= OUTLIER_THRESHHOLD_MEGABYTES:
-        return JobEnv("calcloud-hst-queue", "calcloud-hst-caldp-job-definition", "caldp-process")
+        return JobEnv(normal_queue, job_definition, "caldp-process")
     else:
-        return JobEnv("calcloud-hst-outlier-queue", "calcloud-hst-caldp-job-definition", "caldp-process")
+        return JobEnv(outlier_queue, job_definition, "caldp-process")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:

@@ -2,6 +2,7 @@
 
 import sys
 import ast
+import os
 
 import boto3
 
@@ -32,7 +33,7 @@ def submit_job(plan_tuple):
     client = boto3.client("batch")
     return client.submit_job(**job)
 
-def submit(ipppssoots, s3_output_bucket="s3://calcloud-hst-pipeline-outputs"):
+def submit(ipppssoots, s3_output_bucket=f"s3://{os.environ['S3_PROCESSING_BUCKET']}"):
     """Given a list of ipppssoots,  submit jobs so that all are processed by the batch
     system.
 

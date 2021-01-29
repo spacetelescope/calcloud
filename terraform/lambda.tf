@@ -40,7 +40,10 @@ module "lambda_function" {
   lambda_role = "arn:aws:iam::218835028644:role/bhayden-lambda-role"
 
   environment_variables = {
-    Serverless = "Terraform"
+    JOBDEFINITION = aws_batch_job_definition.calcloud.name,
+    NORMALQUEUE = aws_batch_job_queue.batch_queue.name,
+    OUTLIERQUEUE = aws_batch_job_queue.batch_outlier_queue.name,
+    S3_PROCESSING_BUCKET = aws_s3_bucket.calcloud.id
   }
 
   tags = {

@@ -4,15 +4,18 @@ This is intended for use in an AWS Lambda function where there is no user potent
 from . import plan 
 from . import provision
 from . import submit
+import os
 import boto3
 
 # bucket name will need to be env variable?
-def main(ipppssoots_file, bucket="s3://calcloud-hst-pipeline-outputs-sandbox"):
+def main(ipppssoots_file, bucket_name=os.environ['S3_PROCESSING_BUCKET']):
     # reproduces plan.planner tuples that would normally be dumped to file
     with open(ipppssoots_file) as f:
         ipppssoots = [ipppssoot.lower() for ipppssoot in f.read().split()]
         
-    planned_resource_tuples = plan.get_resources_tuples(ipppssoots, bucket)
+    bucket = f"s3://{bucket_name}"
+    input_path = f"{bucket}/inputs"
+    planned_resource_tuples = plan.get_resources_tuples(ipppssoots, bucket, input_path)
 
     # reproduces the printed output of provision
     provisioned_resource_tuples = provision.get_plan_tuples(planned_resource_tuples)
@@ -28,7 +31,6 @@ def main(ipppssoots_file, bucket="s3://calcloud-hst-pipeline-outputs-sandbox"):
             continue
         
         # pass the message
-        bucket_name = bucket[5:]
         old_file_key = f'messages/placed-{p.ipppssoot}'
         new_file_key = f'messages/submit-{p.ipppssoot}'
         s3_client.Object(bucket_name,new_file_key).copy_from(CopySource=f"{bucket_name}/{old_file_key}")
