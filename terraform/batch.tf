@@ -146,6 +146,7 @@ resource "aws_batch_job_definition" "calcloud" {
 
 resource "aws_s3_bucket" "calcloud" {
   bucket = "calcloud-processing${local.environment}"
+  force_destroy = true
   tags = {
     "CALCLOUD" = "calcloud-processing${local.environment}"
     "Name"     = "calcloud-processing${local.environment}"
