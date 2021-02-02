@@ -107,6 +107,9 @@ resource "aws_batch_compute_environment" "calcloud" {
 
 resource "aws_ecr_repository" "caldp_ecr" {
   name                 = "caldp${local.environment}"
+  image_scanning_configuration {
+    scan_on_push = true
+  }
 }
 
 data "aws_ecr_image" "caldp_latest" {
