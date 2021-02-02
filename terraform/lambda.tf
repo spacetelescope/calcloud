@@ -6,7 +6,7 @@ module "lambda_function" {
   # the path is relative to the path inside the lambda env, not in the local filesystem. 
   handler       = "s3_trigger_handler.lambda_handler"
   runtime       = "python3.6"
-  publish       = true
+  publish       = false
   timeout       = 30
 
   source_path = [
