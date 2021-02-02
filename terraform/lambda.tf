@@ -37,7 +37,7 @@ module "lambda_function" {
   # existing role for the lambda
   # will need to parametrize when ITSD takes over role creation. 
   # for now this role was created by hand in the console, it is not terraform managed
-  lambda_role = "arn:aws:iam::218835028644:role/bhayden-lambda-role"
+  lambda_role = data.aws_ssm_parameter.lambda_submit_role.value
 
   environment_variables = {
     JOBDEFINITION = aws_batch_job_definition.calcloud.name,
