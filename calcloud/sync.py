@@ -15,6 +15,9 @@ from calcloud import timing
 from calcloud import log
 from calcloud import hst
 
+import warnings
+warnings.warn("The sync module is deprecated and will soon be removed", DeprecationWarning, stacklevel=1)
+
 
 # ----------------------------------------------------------------------
 

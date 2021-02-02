@@ -2,6 +2,7 @@
 
 import sys
 import ast
+import os
 
 import boto3
 
@@ -32,7 +33,7 @@ def submit_job(plan_tuple):
     client = boto3.client("batch")
     return client.submit_job(**job)
 
-def submit(ipppssoots, s3_output_bucket="s3://calcloud-hst-pipeline-outputs", batch_name="batch"):
+def submit(ipppssoots, s3_output_bucket=f"s3://{os.environ['S3_PROCESSING_BUCKET']}"):
     """Given a list of ipppssoots,  submit jobs so that all are processed by the batch
     system.
 
@@ -42,15 +43,13 @@ def submit(ipppssoots, s3_output_bucket="s3://calcloud-hst-pipeline-outputs", ba
         List of ipppssoot dataset names for processing
     s3_output_bucket : str
         AWS S3 bucket name in which outputs will be stored (in subdirecrtories)
-    batch_name : str
-        Identifying string for this submission.
 
     Returns
     -------
     List of JSON dicts returned by the Batch client submit_job() method.
     """
     plans = provision.get_plan_tuples(
-        ipppssoots, s3_output_bucket, batch_name)
+        ipppssoots, s3_output_bucket)
     jobs = [submit_job(p) for p in plans]
     return jobs
 

@@ -30,3 +30,7 @@ data aws_ssm_parameter vpc {
    name = "vpc"
 }
 
+data aws_ssm_parameter lambda_submit_role {
+  name = "/iam/roles/calcloud_lambda_submit"
+}
+

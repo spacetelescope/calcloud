@@ -7,6 +7,7 @@ set of ipppssoots can be assigned to well tuned processing resources.
 import sys
 import datetime
 import math
+import os
 from collections import namedtuple
 
 from . import hst
@@ -15,11 +16,11 @@ from . import log
 
 # ----------------------------------------------------------------------
 
-def get_batch_name(name):
-    when = datetime.datetime.now().isoformat()
-    when = when.replace(":","-")
-    when = when.replace(".","-")
-    return name + "-" + when[:-7]   # drop subseconds
+# def get_batch_name(name):
+#     when = datetime.datetime.now().isoformat()
+#     when = when.replace(":","-")
+#     when = when.replace(".","-")
+#     return name + "-" + when[:-7]   # drop subseconds
 
 # One key function of JOB_DEFINITION appears to be indelible declaration of Docker image.
 # New image == new definition required.
@@ -93,13 +94,13 @@ def get_job_resources(instr, ipppssoot):
         memory_megabytes, cpus, wallclock_seconds = metrics.get_resources(ipppssoot)
         info[0] = cpus
         info[1] = memory_megabytes + 512    # add some overhead for AWS Batch (>= 32M) and measurement error
-        info[2] = int(wallclock_seconds*cpus*2)  # kill time,  so too high is better than too low
+        info[2] = max(int(wallclock_seconds*cpus*6),120)  # kill time,  so too high is better than too low
     except KeyError:
-        info = (36, int(70*1024), int(60*60*48))    # 36 cores,  70G/72G,  48 hours max   (c5.9xlarge)
+        info = (32, int(64*1024), int(60*60*48))    # 32 cores,  64G/72G,  48 hours max   (c5.9xlarge)
         log.warning("Defaulting (cpu, memory, time) requirements for unknown dataset:", ipppssoot, "to", info)
     return tuple(info)
 
-def get_resources(ipppssoot, output_bucket, batch_name):
+def get_resources(ipppssoot, output_bucket, input_path):
     """Given an HST IPPPSSOOT ID,  return information used to schedule it as a batch job.
 
     Conceptually resource requirements can be tailored to individual IPPPSSOOTs driven
@@ -108,16 +109,16 @@ def get_resources(ipppssoot, output_bucket, batch_name):
     Returns:  JobResources named tuple
     """
     ipppssoot = ipppssoot.lower()
-    s3_output_uri = f"{output_bucket}/{batch_name}"
+    s3_output_uri = f"{output_bucket}/outputs/{ipppssoot}"
     instr = hst.get_instrument(ipppssoot)
-    job_name = batch_name + "-" + ipppssoot
-    input_path = "astroquery:"
+    job_name = ipppssoot
+    input_path = input_path
     crds_config = "caldp-config-offsite"
     return JobResources(*(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config) + get_job_resources(instr, ipppssoot))
 
-def get_resources_tuples(ipppssoots, output_bucket="s3://calcloud-hst-pipeline-outputs", batch_name="batch"):
+def get_resources_tuples(ipppssoots, output_bucket=f"s3://{os.environ['S3_PROCESSING_BUCKET']}", input_path=f"s3://{os.environ['S3_PROCESSING_BUCKET']}"):
     """
-    Given an S3 `output_bucket` name string, a `batch_name` string,
+    Given an S3 `output_bucket` name string,
     and a list of IPPPSSOOT dataset IDs `ipppssoots`, get_resources_tuples() return a list of JobResources()
     tuples such that each IPPPSSOOT is handled once.
 
@@ -133,19 +134,18 @@ def get_resources_tuples(ipppssoots, output_bucket="s3://calcloud-hst-pipeline-o
     >> pprint(get_resources_tuples(["O8JHG2NNQ", "O8T9JEHXQ", "O4QPKTDCQ", "O6DCAQK9Q"]))  # doctest: +ELLIPSIS
 
     """
-    batch_name = get_batch_name(batch_name)   # same batch for all ipppssoots
-    return [get_resources(ipppssoot, output_bucket, batch_name) for ipppssoot in ipppssoots
+    return [get_resources(ipppssoot, output_bucket, input_path) for ipppssoot in ipppssoots
             if hst.IPPPSSOOT_RE.match(ipppssoot.upper())]
 
-def planner(ipppssoots_file,  output_bucket="s3://calcloud-hst-pipeline-outputs", batch_name="batch"):
-    """Given a set of ipppssoots in `ipppssoots_file` seperated by spaces or newlines,
-    as well as an `output_bucket` and `batch_name` to define how the jobs are named and
+def planner(ipppssoots_file,  output_bucket=f"s3://{os.environ['S3_PROCESSING_BUCKET']}", input_path=f"s3://{os.environ['S3_PROCESSING_BUCKET']}"):
+    """Given a set of ipppssoots in `ipppssoots_file` separated by spaces or newlines,
+    as well as an `output_bucket` to define how the jobs are named and
     where outputs should be stored,  print out the associated batch resources tuples which
-    can be submitted.  `batch_name` will be extended by ISO date + time.
+    can be submitted.
     """
     with open(ipppssoots_file) as f:
         ipppssoots = [ipppssoot.lower() for ipppssoot in f.read().split()]
-    for p in get_resources_tuples(ipppssoots, output_bucket, batch_name):
+    for p in get_resources_tuples(ipppssoots, output_bucket, input_path):
         print(tuple(p))  # Drop type to support literal_eval() vs. eval()
 
 # ----------------------------------------------------------------------
