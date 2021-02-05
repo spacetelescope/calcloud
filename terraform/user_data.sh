@@ -9,6 +9,4 @@ Content-Type: text/x-shellscript; charset="us-ascii"
 
 echo ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION=1m>>/etc/ecs/ecs.config 
 
-yum update -y
-
 --==BOUNDARY==--
