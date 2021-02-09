@@ -49,15 +49,17 @@ def lambda_handler(event, context):
         # must loop over job statuses and queues
         for q in queues:
             for jobStatus in jobStatuses:
-            # nextJobToken allows pagination of the list_jobs call. We initialize it with a dummy value
+                # nextJobToken allows pagination of the list_jobs call. We initialize it with a dummy value
                 nextJobToken = "0"
                 # we will set nextJobToken to false when it is not returned by list_jobs anymore
                 while nextJobToken:
                     if nextJobToken is not "0":
-                        jobs = batch.list_jobs(jobQueue=q, jobStatus=jobStatus, nextToken=nextJobToken, maxResults=maxJobResults)
+                        jobs = batch.list_jobs(
+                            jobQueue=q, jobStatus=jobStatus, nextToken=nextJobToken, maxResults=maxJobResults
+                        )
                     else:
                         jobs = batch.list_jobs(jobQueue=q, jobStatus=jobStatus, maxResults=maxJobResults)
-                    nextJobToken = jobs.get('nextToken', False)
+                    nextJobToken = jobs.get("nextToken", False)
 
                     print(f"handling {len(jobs['jobSummaryList'])} jobs from {q} in {jobStatus} status...")
                     for j in jobs["jobSummaryList"]:
@@ -65,17 +67,17 @@ def lambda_handler(event, context):
 
                         submitDate = int(j["createdAt"] / 1000.0)
 
-                        jobStartDate = int(j.get('startedAt', default_timestamp) / 1000.0)
-                        completionDate = int(j.get('startedAt', default_timestamp) / 1000.0)
+                        jobStartDate = int(j.get("startedAt", default_timestamp) / 1000.0)
+                        completionDate = int(j.get("startedAt", default_timestamp) / 1000.0)
 
                         jobDuration = int(completionDate - jobStartDate)
                         imageSize = 0
                         jobState = jobStatus
 
                         # if the job hasn't started container doesn't seem to be in the keys
-                        container = j.get('container', {})
-                        exitCode = container.get('exitCode', 0)
-                        exitReason = container.get('reason', j.get('statusReason', 'None'))
+                        container = j.get("container", {})
+                        exitCode = container.get("exitCode", 0)
+                        exitReason = container.get("reason", j.get("statusReason", "None"))
 
                         dataset = j["jobName"].split("-")[-1]
 
@@ -103,10 +105,7 @@ def lambda_handler(event, context):
     with open(filename, "rb") as f:
         s3.upload_fileobj(f, os.environ["BUCKET"], "blackboard/blackboardAWS.snapshot")
 
-    response = gateway.refresh_cache(FileShareARN=os.environ['FILESHARE'],
-        FolderList=['/blackboard/'],
-        Recursive=True
-    )
+    response = gateway.refresh_cache(FileShareARN=os.environ["FILESHARE"], FolderList=["/blackboard/"], Recursive=True)
 
     print(response)
 
