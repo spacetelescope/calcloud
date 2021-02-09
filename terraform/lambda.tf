@@ -91,12 +91,13 @@ module "calcloud_lambda_blackboard" {
   # will need to parametrize when ITSD takes over role creation. 
   # for now this role was created by hand in the console, it is not terraform managed
   # lambda_role = data.aws_ssm_parameter.lambda_submit_role.value
-  lambda_role = "arn:aws:iam::218835028644:role/bhayden-lambda-role"
+  lambda_role = data.aws_ssm_parameter.lambda_blackboard_role.value
 
   environment_variables = {
     # comma delimited list of job queues, because batch can only list jobs per queue
     JOBQUEUES="${aws_batch_job_queue.batch_queue.name},${aws_batch_job_queue.batch_outlier_queue.name}"
     BUCKET="${aws_s3_bucket.calcloud.id}"
+    FILESHARE=data.aws_ssm_parameter.file_share_arn.value
   }
 
   tags = {

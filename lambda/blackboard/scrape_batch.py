@@ -3,8 +3,9 @@ def lambda_handler(event, context):
     import os
     import uuid
     import datetime
+    import time
 
-    print(event)
+    # print(event)
 
     # various metadata definitions
     inst_map = {"i": "wfc3", "j": "acs", "o": "stis", "l": "cos"}
@@ -31,86 +32,82 @@ def lambda_handler(event, context):
 
     default_timestamp = 0
 
+    tnew = time.time()
+
     s3 = boto3.client("s3")
-    client = boto3.client("batch")
+    batch = boto3.client("batch")
+    gateway = boto3.client("storagegateway")
+    maxJobResults = 1000
+
+    # somehow need to batch up the describe_jobs call
+
+    jobIds = []
     with open(filename, "w") as fout:
         # write the header
         out_str = "|".join(header_names) + "\n"
         fout.write(out_str)
         # must loop over job statuses and queues
-        for jobStatus in jobStatuses:
-            for q in queues:
-                jobs = client.list_jobs(jobQueue=q, jobStatus=jobStatus)
-                for j in jobs["jobSummaryList"]:
-                    print(j)  # gets it into cloudWatch; remove later
-                    job_keys = j.keys()
-
-                    jobId = j["jobId"]
-                    job_meta = client.describe_jobs(
-                        jobs=[
-                            jobId,
-                        ]
-                    )  # max of 100 jobs here so we'll just have to do one at a time I guess
-                    print(job_meta)  # gets it into cloudWatch; remove later
-
-                    # submitDate = datetime.datetime.fromtimestamp(int(j['createdAt']/1000.0))
-                    # jobStartDate = datetime.datetime.fromtimestamp(int(j['startedAt']/1000.0))
-                    # completionDate = datetime.datetime.fromtimestamp(int(j['stoppedAt']/1000.0))
-                    submitDate = int(j["createdAt"] / 1000.0)
-
-                    # if the job hasn't started the start/stop keys won't exist.
-                    if "startedAt" in job_keys:
-                        jobStartDate = int(j["startedAt"] / 1000.0)
+        for q in queues:
+            for jobStatus in jobStatuses:
+            # nextJobToken allows pagination of the list_jobs call. We initialize it with a dummy value
+                nextJobToken = "0"
+                # we will set nextJobToken to false when it is not returned by list_jobs anymore
+                while nextJobToken:
+                    if nextJobToken is not "0":
+                        jobs = batch.list_jobs(jobQueue=q, jobStatus=jobStatus, nextToken=nextJobToken, maxResults=maxJobResults)
                     else:
-                        jobStartDate = default_timestamp
-                    if "stoppedAt" in job_keys:
-                        completionDate = int(j["stoppedAt"] / 1000.0)
-                    else:
-                        completionDate = default_timestamp
+                        jobs = batch.list_jobs(jobQueue=q, jobStatus=jobStatus, maxResults=maxJobResults)
+                    nextJobToken = jobs.get('nextToken', False)
 
-                    jobDuration = int(completionDate - jobStartDate)
-                    imageSize = 0
-                    jobState = jobStatus
+                    print(f"handling {len(jobs['jobSummaryList'])} jobs from {q} in {jobStatus} status...")
+                    for j in jobs["jobSummaryList"]:
+                        jobId = j["jobId"]
 
-                    # if the job hasn't started container doesn't seem to be in the keys
-                    if "container" in job_keys:
-                        exitCode = j["container"]["exitCode"]
-                        # presumably if the job hasn't exited the reason is not in the container object either
-                        if "reason" in j["container"].keys():
-                            exitReason = j["container"]["reason"]
-                        else:
-                            # if the user kills the job it goes here; good generic status reason
-                            exitReason = j["statusReason"]
-                    else:
-                        # exit code is 0 when job hasn't started
-                        exitCode = 0
-                        exitReason = j["statusReason"]
+                        submitDate = int(j["createdAt"] / 1000.0)
 
-                    dataset = j["jobName"].split("-")[-1]
+                        jobStartDate = int(j.get('startedAt', default_timestamp) / 1000.0)
+                        completionDate = int(j.get('startedAt', default_timestamp) / 1000.0)
 
-                    # log stream isn't made until job is running
-                    if "logStreamName" in job_meta["jobs"][0]["container"].keys():
-                        LogStream = job_meta["jobs"][0]["container"]["logStreamName"]
-                    else:
+                        jobDuration = int(completionDate - jobStartDate)
+                        imageSize = 0
+                        jobState = jobStatus
+
+                        # if the job hasn't started container doesn't seem to be in the keys
+                        container = j.get('container', {})
+                        exitCode = container.get('exitCode', 0)
+                        exitReason = container.get('reason', j.get('statusReason', 'None'))
+
+                        dataset = j["jobName"].split("-")[-1]
+
+                        # getting the LogStream requires calling describe_jobs which is very slow.
+                        # for the time being we provide a None value, in the hopes we can find
+                        # a way to get it into the metadata in the future.
                         LogStream = "None"
-                    s3Path = f"{job_meta['jobs'][0]['container']['command'][3]}"
-                    out_list = [
-                        jobId,
-                        submitDate,
-                        jobStartDate,
-                        completionDate,
-                        jobDuration,
-                        imageSize,
-                        jobState,
-                        exitCode,
-                        exitReason,
-                        dataset,
-                        LogStream,
-                        s3Path,
-                    ]
-                    fout.write("|".join(map(str, out_list)) + "\n")
+                        s3Path = f"{os.environ['BUCKET']}/outputs/{dataset}/"
+                        out_list = [
+                            jobId,
+                            submitDate,
+                            jobStartDate,
+                            completionDate,
+                            jobDuration,
+                            imageSize,
+                            jobState,
+                            exitCode,
+                            exitReason,
+                            dataset,
+                            LogStream,
+                            s3Path,
+                        ]
+                        fout.write("|".join(map(str, out_list)) + "\n")
 
     with open(filename, "rb") as f:
         s3.upload_fileobj(f, os.environ["BUCKET"], "blackboard/blackboardAWS.snapshot")
+
+    response = gateway.refresh_cache(FileShareARN=os.environ['FILESHARE'],
+        FolderList=['/blackboard/'],
+        Recursive=True
+    )
+
+    print(response)
 
     return None
