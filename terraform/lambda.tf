@@ -150,7 +150,7 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
 resource "aws_cloudwatch_event_rule" "every_five_minutes" {
   name                = "every-five-minutes"
   description         = "Fires every five minutes"
-  schedule_expression = "rate(1 minute)"
+  schedule_expression = "rate(5 minutes)"
 }
 
 resource "aws_cloudwatch_event_target" "every_five_minutes" {
