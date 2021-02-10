@@ -4,8 +4,14 @@ def lambda_handler(event, context):
     import uuid
     import datetime
     import time
+    from botocore.config import Config
 
-    # print(event)
+    config = Config(
+        retries = {
+        'max_attempts': 100,
+        'mode': 'adaptive'
+        }
+    )
 
     # various metadata definitions
     inst_map = {"i": "wfc3", "j": "acs", "o": "stis", "l": "cos"}
@@ -34,9 +40,9 @@ def lambda_handler(event, context):
 
     tnew = time.time()
 
-    s3 = boto3.client("s3")
-    batch = boto3.client("batch")
-    gateway = boto3.client("storagegateway")
+    s3 = boto3.client("s3", config=config)
+    batch = boto3.client("batch", config=config)
+    gateway = boto3.client("storagegateway", config=config)
     maxJobResults = 1000
 
     # somehow need to batch up the describe_jobs call

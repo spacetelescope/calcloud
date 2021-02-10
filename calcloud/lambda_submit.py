@@ -6,6 +6,15 @@ from . import provision
 from . import submit
 import os
 import boto3
+from botocore.config import Config
+
+config = Config(
+    retries = {
+    'max_attempts': 100,
+    'mode': 'adaptive'
+    }
+)
+
 
 # bucket name will need to be env variable?
 def main(ipppssoots_file, bucket_name=os.environ['S3_PROCESSING_BUCKET']):
@@ -20,7 +29,7 @@ def main(ipppssoots_file, bucket_name=os.environ['S3_PROCESSING_BUCKET']):
     # reproduces the printed output of provision
     provisioned_resource_tuples = provision.get_plan_tuples(planned_resource_tuples)
     
-    s3_client = boto3.resource('s3')
+    s3_client = boto3.resource('s3', config=config)
 
     # submits the jobs
     for p in provisioned_resource_tuples:
