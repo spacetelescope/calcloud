@@ -59,16 +59,3 @@ resource "aws_lambda_permission" "allow_bucket" {
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.calcloud.arn
 }
-
-# for s3 event trigger for submit lambda
-resource "aws_s3_bucket_notification" "bucket_notification" {
-  bucket = aws_s3_bucket.calcloud.id
-
-  lambda_function {
-    lambda_function_arn = module.calcloud_lambda_submit.this_lambda_function_arn
-    events              = ["s3:ObjectCreated:Put"]
-    filter_prefix       = "messages/placed-"
-  }
-
-  depends_on = [aws_lambda_permission.allow_bucket]
-}

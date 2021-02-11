@@ -16,3 +16,19 @@ resource "aws_s3_bucket_public_access_block" "s3_lambda_public_block" {
   restrict_public_buckets = true
   ignore_public_acls=true
 }
+
+# for s3 event trigger
+# this is in common because multiple lambdas need to be defined in a single
+# aws_s3_bucket_notification objects; multiples can't exist together.
+# see terraform docs for aws_s3_bucket_notification
+resource "aws_s3_bucket_notification" "bucket_notification" {
+  bucket = aws_s3_bucket.calcloud.id
+
+  lambda_function {
+    lambda_function_arn = module.calcloud_lambda_submit.this_lambda_function_arn
+    events              = ["s3:ObjectCreated:Put"]
+    filter_prefix       = "messages/placed-"
+  }
+
+  depends_on = [aws_lambda_permission.allow_bucket]
+}
