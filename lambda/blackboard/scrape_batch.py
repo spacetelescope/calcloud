@@ -4,6 +4,7 @@ def lambda_handler(event, context):
     import uuid
     import datetime
     import time
+    from calcloud import batch
 
     # print(event)
 
@@ -35,9 +36,9 @@ def lambda_handler(event, context):
     tnew = time.time()
 
     s3 = boto3.client("s3")
-    batch = boto3.client("batch")
+    # batch = boto3.client("batch")
     gateway = boto3.client("storagegateway")
-    maxJobResults = 1000
+    maxJobResults = 100
 
     # somehow need to batch up the describe_jobs call
 
@@ -49,20 +50,12 @@ def lambda_handler(event, context):
         # must loop over job statuses and queues
         for q in queues:
             for jobStatus in jobStatuses:
-                # nextJobToken allows pagination of the list_jobs call. We initialize it with a dummy value
-                nextJobToken = "0"
-                # we will set nextJobToken to false when it is not returned by list_jobs anymore
-                while nextJobToken:
-                    if nextJobToken is not "0":
-                        jobs = batch.list_jobs(
-                            jobQueue=q, jobStatus=jobStatus, nextToken=nextJobToken, maxResults=maxJobResults
-                        )
-                    else:
-                        jobs = batch.list_jobs(jobQueue=q, jobStatus=jobStatus, maxResults=maxJobResults)
-                    nextJobToken = jobs.get("nextToken", False)
+                jobs_iterator = batch._list_jobs_iterator(q,jobStatus,PageSize=maxJobResults)
 
-                    print(f"handling {len(jobs['jobSummaryList'])} jobs from {q} in {jobStatus} status...")
-                    for j in jobs["jobSummaryList"]:
+                for page in jobs_iterator:
+                    jobs = page["jobSummaryList"]
+                    print(f"handling {len(jobs)} jobs from {q} in {jobStatus} status...")
+                    for j in jobs:
                         jobId = j["jobId"]
 
                         submitDate = int(j["createdAt"] / 1000.0)

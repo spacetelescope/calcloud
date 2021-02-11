@@ -7,7 +7,7 @@ import argparse
 import json
 import datetime
 
-import yaml
+# import yaml
 
 import boto3
 
@@ -29,6 +29,10 @@ def _list_jobs(queue, status):
         jobs.extend(page["jobSummaryList"])
     return [_format_job_listing(job) for job in jobs]
 
+def _list_jobs_iterator(queue,status,PageSize=10):
+    batch = boto3.client("batch")
+    paginator = batch.get_paginator("list_jobs")
+    return paginator.paginate(jobQueue=queue, jobStatus=status, PaginationConfig={'PageSize': PageSize})
 
 def _format_job_listing(job):
     revised = dict(job)
@@ -65,7 +69,8 @@ def _get_outputter(output_format):
         if output_format == "json":
             print(json.dumps(results, sort_keys=True, indent=4, separators=(',', ': ')))
         else:
-            print(yaml.dump(results))
+            raise NotImplementedError
+            # print(yaml.dump(results))
     return func
 
 
@@ -85,7 +90,7 @@ def main(args=None):
         '--job-statuses', dest='job_statuses', nargs='+', default=JOB_STATUSES,
         help="Job statuses to list jobs for: SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED")
     parser.add_argument(
-        '--format',  dest='format', choices=('json', 'yaml'), default='yaml',
+        '--format',  dest='format', choices=('json', 'yaml'), default='json',
         help='Output format for results.')
     parsed = parser.parse_args(args)
     outputter = _get_outputter(parsed.format)
