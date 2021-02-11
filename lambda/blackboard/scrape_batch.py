@@ -47,7 +47,7 @@ def lambda_handler(event, context):
         # must loop over job statuses and queues
         for q in queues:
             for jobStatus in jobStatuses:
-                jobs_iterator = batch._list_jobs_iterator(q,jobStatus,PageSize=maxJobResults)
+                jobs_iterator = batch._list_jobs_iterator(q, jobStatus, PageSize=maxJobResults)
 
                 for page in jobs_iterator:
                     jobs = page["jobSummaryList"]
