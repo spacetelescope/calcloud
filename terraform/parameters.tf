@@ -34,3 +34,11 @@ data aws_ssm_parameter lambda_submit_role {
   name = "/iam/roles/calcloud_lambda_submit"
 }
 
+data aws_ssm_parameter lambda_blackboard_role {
+  name = "/iam/roles/calcloud_lambda_blackboard"
+}
+
+data aws_ssm_parameter file_share_arn {
+  name = "/gateway/fileshare"
+}
+
