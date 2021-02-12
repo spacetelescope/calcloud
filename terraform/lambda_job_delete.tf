@@ -14,6 +14,13 @@ module "calcloud_lambda_deleteJob" {
       # this is the lambda itself. The code in path will be placed directly into the lambda execution path
       path = "${path.module}/../lambda/JobDelete"
       pip_requirements = false
+    },
+    {
+      # calcloud for the package. We don't need to install boto3 and whatnot so we leave out the pip requirements
+      # in the zip it will be installed into a directory called calcloud
+      path = "${path.module}/../calcloud"
+      prefix_in_zip = "calcloud"
+      pip_requirements = false
     }
   ]
 

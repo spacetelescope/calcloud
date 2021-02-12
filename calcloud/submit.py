@@ -7,15 +7,8 @@ import os
 import boto3
 from botocore.config import Config
 
-config = Config(
-    retries = {
-    'max_attempts': 100,
-    'mode': 'adaptive'
-    }
-)
-
-
 from . import provision
+from . import common
 
 def submit_job(plan_tuple):
     """Given a job description `plan_tuple` from the planner,  submit a job to AWS batch."""
@@ -39,7 +32,7 @@ def submit_job(plan_tuple):
             "attemptDurationSeconds": info.max_seconds,
         },
     }
-    client = boto3.client("batch", config=config)
+    client = boto3.client("batch", config=common.retry_config)
     return client.submit_job(**job)
 
 def submit(ipppssoots, s3_output_bucket=f"s3://{os.environ['S3_PROCESSING_BUCKET']}"):

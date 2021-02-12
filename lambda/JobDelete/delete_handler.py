@@ -1,35 +1,18 @@
 def lambda_handler(event, context):
     import boto3
     import os
-    from botocore.config import Config
+    from calcloud import batch
+    from calcloud import common
 
-    def get_list_of_jobs(q, jobStatus, nextJobToken, maxJobResults = 100):
-        if nextJobToken is not "0":
-            jobs = batch.list_jobs(
-                jobQueue=q, jobStatus=jobStatus, nextToken=nextJobToken, maxResults=maxJobResults
-            )
-        else:
-            jobs = batch.list_jobs(jobQueue=q, jobStatus=jobStatus, maxResults=maxJobResults)
-        nextJobToken = jobs.get("nextToken", False)
-        return jobs, nextJobToken
-
-    # we need some mitigation of potential API rate restrictions for the Batch API
-    config = Config(
-        retries = {
-        'max_attempts': 100,
-        'mode': 'adaptive'
-        }
-    )
-
-    s3 = boto3.client("s3", config=config)
-    batch = boto3.client("batch", config=config)
-
+    s3 = boto3.client("s3", config=common.retry_config)
+    local_batch_client = boto3.client("batch", config=common.retry_config)
     cancelStates = ["RUNNING","SUBMITTED","PENDING","RUNNABLE","STARTING"]
     queues = os.environ["JOBQUEUES"].split(",")
     # these types of messages on any deleted ipppssoot will be deleted
     cleanup_messages = ['processing-', 'submit-', 'processed-', 'error-']
     # this will be the final state message for any deleted ipppssoot
     deleted_message = 'terminated-'
+    maxJobResults = 100
 
     print(event)
 
@@ -43,24 +26,26 @@ def lambda_handler(event, context):
 
     # will be set if we hit a job to cancel, otherwise we won't enter the block to transition messages
     affected_dataset = False
+    # because we have to individually loop over states while jobs are moving through them,
+    # sometimes they transition while we're doing something else and we miss them.
+    # so in the cancel-all state we'll loop over the states a few times as a crude failsafe
+    if ipst == "all":
+        cancelStates *= 3
     # list_jobs requires a queue and a state (otherwise it will only return running state)
-    # so we really have no choice but a nested loop of some sort
+    # so we really have no choice but a nested loop
     for q in queues:
         for jobStatus in cancelStates:
-            # nextJobToken allows pagination of the list_jobs call. We initialize it with a dummy value
-            nextJobToken = "0"
-            # we will set nextJobToken to false when it is not returned by list_jobs anymore
-            while nextJobToken:
-                jobs, nextJobToken = get_list_of_jobs(q, jobStatus, nextJobToken)
-                print(f"handling {len(jobs['jobSummaryList'])} jobs from {q} in {jobStatus} status...")
-
-                for j in jobs["jobSummaryList"]:
+            jobs_iterator = batch._list_jobs_iterator(q, jobStatus, PageSize=maxJobResults)
+            for page in jobs_iterator:
+                jobs = page["jobSummaryList"]
+                print(f"handling {len(jobs)} jobs from {q} in {jobStatus} status...")
+                for j in jobs:
                     jobId = j["jobId"]
                     # this makes pretty rigid assumptions about job name and will probably need to be modified in the future, i.e. when HAP comes to the cloud
                     dataset = j["jobName"].split("-")[-1]
 
                     if (dataset == ipst):
-                        response = batch.terminate_job(jobId=jobId, reason=cancel_reason)
+                        response = local_batch_client.terminate_job(jobId=jobId, reason=cancel_reason)
                         print(response)
                         print(f"terminate response: {response['ResponseMetadata']['HTTPStatusCode']}: {jobId} - {dataset}")
                         if response['ResponseMetadata']['HTTPStatusCode'] == 200:

@@ -6,13 +6,12 @@ import sys
 import argparse
 import json
 import datetime
-
-# import yaml
-
 import boto3
+from botocore.config import Config
+from . import common
+
 
 JOB_STATUSES = tuple("SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED".split("|"))
-
 
 def list_jobs(queue, collect_statuses=JOB_STATUSES):
     jobs = []
@@ -22,7 +21,7 @@ def list_jobs(queue, collect_statuses=JOB_STATUSES):
 
 
 def _list_jobs(queue, status):
-    batch = boto3.client("batch")
+    batch = boto3.client("batch", config=common.retry_config)
     paginator = batch.get_paginator("list_jobs")
     page_iterator = paginator.paginate(jobQueue=queue, jobStatus=status)
     jobs = []
@@ -32,7 +31,7 @@ def _list_jobs(queue, status):
 
 
 def _list_jobs_iterator(queue, status, PageSize=10):
-    batch = boto3.client("batch")
+    batch = boto3.client("batch", config=common.retry_config)
     paginator = batch.get_paginator("list_jobs")
     return paginator.paginate(jobQueue=queue, jobStatus=status, PaginationConfig={"PageSize": PageSize})
 
@@ -59,7 +58,7 @@ def describe_jobs_of_queue(queue, statuses=JOB_STATUSES):
 
 
 def describe_jobs(job_names):
-    batch = boto3.client("batch")
+    batch = boto3.client("batch",config=common.retry_config)
     descriptions = []
     for i in range(0, len(job_names), 100):
         block = batch.describe_jobs(jobs=job_names[i : i + 100])
