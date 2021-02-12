@@ -2,7 +2,7 @@ import re
 
 # -----------------------------------------------------------------------------
 
-IPPPSSOOT_RE = re.compile(r"^[IJLOijlo][A-Z0-9]{8,8}$")
+IPPPSSOOT_RE = re.compile(r"^[IJLOijlo][a-zA-Z0-9]{8,8}$")
 
 # Note: only ACS, COS, STIS, and WFC3 are initially supported
 IPPPSSOOT_INSTR = {
