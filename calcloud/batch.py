@@ -7,11 +7,12 @@ import argparse
 import json
 import datetime
 
-import yaml
+# import yaml
 
 import boto3
 
-JOB_STATUSES = tuple('SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED'.split("|"))
+JOB_STATUSES = tuple("SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED".split("|"))
+
 
 def list_jobs(queue, collect_statuses=JOB_STATUSES):
     jobs = []
@@ -28,6 +29,12 @@ def _list_jobs(queue, status):
     for page in page_iterator:
         jobs.extend(page["jobSummaryList"])
     return [_format_job_listing(job) for job in jobs]
+
+
+def _list_jobs_iterator(queue, status, PageSize=10):
+    batch = boto3.client("batch")
+    paginator = batch.get_paginator("list_jobs")
+    return paginator.paginate(jobQueue=queue, jobStatus=status, PaginationConfig={"PageSize": PageSize})
 
 
 def _format_job_listing(job):
@@ -55,7 +62,7 @@ def describe_jobs(job_names):
     batch = boto3.client("batch")
     descriptions = []
     for i in range(0, len(job_names), 100):
-        block = batch.describe_jobs(jobs=job_names[i:i+100])
+        block = batch.describe_jobs(jobs=job_names[i : i + 100])
         descriptions.extend(block["jobs"])
     return descriptions
 
@@ -63,38 +70,43 @@ def describe_jobs(job_names):
 def _get_outputter(output_format):
     def func(results):
         if output_format == "json":
-            print(json.dumps(results, sort_keys=True, indent=4, separators=(',', ': ')))
+            print(json.dumps(results, sort_keys=True, indent=4, separators=(",", ": ")))
         else:
-            print(yaml.dump(results))
+            raise NotImplementedError
+            # print(yaml.dump(results))
+
     return func
 
 
 def main(args=None):
-    parser = argparse.ArgumentParser(
-        description='Perform AWS Batch functions on arbitrary numbers of jobs, etc.')
+    parser = argparse.ArgumentParser(description="Perform AWS Batch functions on arbitrary numbers of jobs, etc.")
+    parser.add_argument("command", choices=("list-jobs", "describe-jobs"), help="Batch function to perform.")
     parser.add_argument(
-        'command', choices=('list-jobs', 'describe-jobs'),
-        help='Batch function to perform.')
+        "--job-queue",
+        dest="job_queue",
+        type=str,
+        default=None,
+        help="Name of Batch queue to list or describe jobs for.",
+    )
+    parser.add_argument("--job-names", dest="job_names", type=list, default=None, help="Names of jobs to describe.")
     parser.add_argument(
-        '--job-queue', dest='job_queue', type=str, default=None,
-        help="Name of Batch queue to list or describe jobs for.")
+        "--job-statuses",
+        dest="job_statuses",
+        nargs="+",
+        default=JOB_STATUSES,
+        help="Job statuses to list jobs for: SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED",
+    )
     parser.add_argument(
-        '--job-names', dest='job_names', type=list, default=None,
-        help="Names of jobs to describe.")
-    parser.add_argument(
-        '--job-statuses', dest='job_statuses', nargs='+', default=JOB_STATUSES,
-        help="Job statuses to list jobs for: SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED")
-    parser.add_argument(
-        '--format',  dest='format', choices=('json', 'yaml'), default='yaml',
-        help='Output format for results.')
+        "--format", dest="format", choices=("json", "yaml"), default="json", help="Output format for results."
+    )
     parsed = parser.parse_args(args)
     outputter = _get_outputter(parsed.format)
-    if  parsed.command == "list-jobs":
+    if parsed.command == "list-jobs":
         outputter(list_jobs(parsed.job_queue))
     elif parsed.command == "describe-jobs":
         if parsed.job_names is not None:
             outputter(describe_jobs(parsed.job_names))
-        elif parsed.job_queue is not  None:
+        elif parsed.job_queue is not None:
             outputter(describe_jobs_of_queue(parsed.job_queue, parsed.job_statuses))
 
 

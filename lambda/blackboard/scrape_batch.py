@@ -4,17 +4,9 @@ def lambda_handler(event, context):
     import uuid
     import datetime
     import time
-    from botocore.config import Config
-
-    config = Config(
-        retries = {
-        'max_attempts': 100,
-        'mode': 'adaptive'
-        }
-    )
+    from calcloud import batch
 
     # various metadata definitions
-    inst_map = {"i": "wfc3", "j": "acs", "o": "stis", "l": "cos"}
     jobStatuses = ["FAILED", "SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING", "SUCCEEDED"]
     # these are the column names in the blackboardAWS table in the owl DB on-premise
     header_names = [
@@ -32,22 +24,20 @@ def lambda_handler(event, context):
         "S3Path",
     ]
 
+    # job queues need to be looped over separately
     queues = os.environ["JOBQUEUES"].split(",")
-
+    # use a random tmp filename just in case there's ever a time where two lambdas end up running together
+    # that won't matter for the snapshot, generally, but the tmp file could get wonky without unique filenames
     filename = f"/tmp/{str(uuid.uuid4())}"
 
+    # some params that could be tuned over time
     default_timestamp = 0
+    maxJobResults = 100
 
-    tnew = time.time()
+    # we need s3 to upload the snapshot, and storagegateway to refresh the cache
+    s3 = boto3.client("s3")
+    gateway = boto3.client("storagegateway")
 
-    s3 = boto3.client("s3", config=config)
-    batch = boto3.client("batch", config=config)
-    gateway = boto3.client("storagegateway", config=config)
-    maxJobResults = 1000
-
-    # somehow need to batch up the describe_jobs call
-
-    jobIds = []
     with open(filename, "w") as fout:
         # write the header
         out_str = "|".join(header_names) + "\n"
@@ -55,20 +45,12 @@ def lambda_handler(event, context):
         # must loop over job statuses and queues
         for q in queues:
             for jobStatus in jobStatuses:
-                # nextJobToken allows pagination of the list_jobs call. We initialize it with a dummy value
-                nextJobToken = "0"
-                # we will set nextJobToken to false when it is not returned by list_jobs anymore
-                while nextJobToken:
-                    if nextJobToken is not "0":
-                        jobs = batch.list_jobs(
-                            jobQueue=q, jobStatus=jobStatus, nextToken=nextJobToken, maxResults=maxJobResults
-                        )
-                    else:
-                        jobs = batch.list_jobs(jobQueue=q, jobStatus=jobStatus, maxResults=maxJobResults)
-                    nextJobToken = jobs.get("nextToken", False)
+                jobs_iterator = batch._list_jobs_iterator(q, jobStatus, PageSize=maxJobResults)
 
-                    print(f"handling {len(jobs['jobSummaryList'])} jobs from {q} in {jobStatus} status...")
-                    for j in jobs["jobSummaryList"]:
+                for page in jobs_iterator:
+                    jobs = page["jobSummaryList"]
+                    print(f"handling {len(jobs)} jobs from {q} in {jobStatus} status...")
+                    for j in jobs:
                         jobId = j["jobId"]
 
                         submitDate = int(j["createdAt"] / 1000.0)
@@ -91,6 +73,7 @@ def lambda_handler(event, context):
                         # for the time being we provide a None value, in the hopes we can find
                         # a way to get it into the metadata in the future.
                         LogStream = "None"
+                        # writing out the status of the job
                         s3Path = f"{os.environ['BUCKET']}/outputs/{dataset}/"
                         out_list = [
                             jobId,
