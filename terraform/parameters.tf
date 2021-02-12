@@ -38,6 +38,10 @@ data aws_ssm_parameter lambda_blackboard_role {
   name = "/iam/roles/calcloud_lambda_blackboard"
 }
 
+data aws_ssm_parameter lambda_delete_role {
+  name = "/iam/roles/calcloud_lambda_delete"
+}
+
 data aws_ssm_parameter file_share_arn {
   name = "/gateway/fileshare"
 }
