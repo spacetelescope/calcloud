@@ -13,6 +13,7 @@ from . import common
 
 JOB_STATUSES = tuple("SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED".split("|"))
 
+
 def list_jobs(queue, collect_statuses=JOB_STATUSES):
     jobs = []
     for status in collect_statuses:
@@ -58,7 +59,7 @@ def describe_jobs_of_queue(queue, statuses=JOB_STATUSES):
 
 
 def describe_jobs(job_names):
-    batch = boto3.client("batch",config=common.retry_config)
+    batch = boto3.client("batch", config=common.retry_config)
     descriptions = []
     for i in range(0, len(job_names), 100):
         block = batch.describe_jobs(jobs=job_names[i : i + 100])

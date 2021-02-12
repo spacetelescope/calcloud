@@ -10,6 +10,7 @@ from botocore.config import Config
 from . import provision
 from . import common
 
+
 def submit_job(plan_tuple):
     """Given a job description `plan_tuple` from the planner,  submit a job to AWS batch."""
     info = provision.Plan(*plan_tuple)
@@ -20,13 +21,7 @@ def submit_job(plan_tuple):
         "containerOverrides": {
             "vcpus": info.vcpus,
             "memory": info.memory,
-            "command": [
-                info.command,
-                info.ipppssoot,
-                info.input_path,
-                info.s3_output_uri,
-                info.crds_config
-            ],
+            "command": [info.command, info.ipppssoot, info.input_path, info.s3_output_uri, info.crds_config],
         },
         "timeout": {
             "attemptDurationSeconds": info.max_seconds,
@@ -34,6 +29,7 @@ def submit_job(plan_tuple):
     }
     client = boto3.client("batch", config=common.retry_config)
     return client.submit_job(**job)
+
 
 def submit(ipppssoots, s3_output_bucket=f"s3://{os.environ['S3_PROCESSING_BUCKET']}"):
     """Given a list of ipppssoots,  submit jobs so that all are processed by the batch
@@ -50,10 +46,10 @@ def submit(ipppssoots, s3_output_bucket=f"s3://{os.environ['S3_PROCESSING_BUCKET
     -------
     List of JSON dicts returned by the Batch client submit_job() method.
     """
-    plans = provision.get_plan_tuples(
-        ipppssoots, s3_output_bucket)
+    plans = provision.get_plan_tuples(ipppssoots, s3_output_bucket)
     jobs = [submit_job(p) for p in plans]
     return jobs
+
 
 def submit_plans(plan_file):
     """Given a file `plan_file` defining job plan tuples one-per-line,
@@ -67,6 +63,7 @@ def submit_plans(plan_file):
     for line in f.readlines():
         job_plan = ast.literal_eval(line)
         print(submit_job(job_plan))
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
