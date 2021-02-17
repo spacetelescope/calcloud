@@ -34,7 +34,7 @@ __all__ = [
 
 DEFAULT_S3_CLIENT = boto3.client("s3")
 
-DEFAULT_S3_BUCKET = os.environ["S3_PROCESSING_BUCKET"]
+DEFAULT_S3_BUCKET = os.environ.get("S3_PROCESSING_BUCKET","calcloud-undefined-bucket")
 
 # -------------------------------------------------------------
 
