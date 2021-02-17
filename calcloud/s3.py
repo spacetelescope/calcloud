@@ -9,11 +9,8 @@ broken apart internally like this:
 """
 import os
 import os.path
-import tempfile
 
 import boto3
-
-from calcloud import log
 
 # -------------------------------------------------------------
 
@@ -21,15 +18,23 @@ __all__ = [
     "s3_split_path",
     "download_filepath",
     "upload_filepath",
-    "download_directory",
+    "download_objects",
     # "upload_directory",
-    "list_directory",
+    "list_objects",
     "get_object",
     "put_object",
     "delete_object",
     "move_object",
     "copy_object",
-    ]
+    "DEFAULT_S3_CLIENT",
+    "DEFAULT_S3_BUCKET",
+]
+
+# -------------------------------------------------------------
+
+DEFAULT_S3_CLIENT = boto3.client("s3")
+
+DEFAULT_S3_BUCKET = os.environ["S3_PROCESSING_BUCKET"]
 
 # -------------------------------------------------------------
 
@@ -62,9 +67,10 @@ def _s3_setup(client, s3_filepath):
 
     Returns client, bucket_name, object_name
     """
-    client = client or boto3.client('s3')
+    client = client or boto3.client("s3")
     bucket_name, object_name = s3_split_path(s3_filepath)
     return client, bucket_name, object_name
+
 
 # -------------------------------------------------------------
 
@@ -128,16 +134,17 @@ def copy_object(s3_filepath_from, s3_filepath_to, client=None):
     ------
     None
     """
-    client = client or boto3.client('s3')
+    client = client or boto3.client("s3")
     from_bucket_name, from_object_name = s3_split_path(s3_filepath_from)
     to_bucket_name, to_object_name = s3_split_path(s3_filepath_to)
     return client.copy_object(
         Bucket=to_bucket_name,
         Key=to_object_name,
         CopySource={
-            'Bucket': from_bucket_name,
-            'Key': from_object_name,
-        })
+            "Bucket": from_bucket_name,
+            "Key": from_object_name,
+        },
+    )
 
 
 def move_object(s3_filepath_from, s3_filepath_to, client=None):
@@ -158,14 +165,15 @@ def move_object(s3_filepath_from, s3_filepath_to, client=None):
     ------
     None
     """
-    client = client or boto3.client('s3')
+    client = client or boto3.client("s3")
     copy_object(s3_filepath_from, s3_filepath_to, client)
     delete_object(s3_filepath_from, client)
 
 
 # -------------------------------------------------------------
 
-def download_directory(dirpath, s3_dirpath, max_objects=1000, client=None):
+
+def download_objects(dirpath, s3_dirpath, max_objects=1000, client=None):
     """Given `s3_dirpath` s3 directory to download, copy it to a local file system
     at `dirpath`.
 
@@ -189,7 +197,7 @@ def download_directory(dirpath, s3_dirpath, max_objects=1000, client=None):
     """
     client = client or boto3.client("s3")
     downloads = []
-    for s3_filepath in list_directory(s3_dirpath, max_objects=max_objects, client=client):
+    for s3_filepath in list_objects(s3_dirpath, max_objects=max_objects, client=client):
         local_filepath = os.path.abspath(s3_filepath.replace(s3_dirpath, dirpath))
         download_filepath(local_filepath, s3_filepath, client)
         downloads.append(local_filepath)
@@ -216,8 +224,8 @@ def upload_directory(dirpath, s3_dirpath):
     raise NotImplementedError("upload_directory hasn't been implemented yet.")
 
 
-def list_directory(s3_prefix, client=None, max_objects=1, exclude_prefix=True):
-    """Given `s3_dirpath_prefix` s3 bucket and prefix to list, return the full
+def list_objects(s3_prefix, client=None, max_objects=10 ** 6):
+    """Given `s3_dirpath_prefix` s3 bucket and prefix to list, yield the full
     s3 paths of every object in the associated bucket which match the prefix.
 
     Parameters
@@ -229,35 +237,20 @@ def list_directory(s3_prefix, client=None, max_objects=1, exclude_prefix=True):
         Optional boto3 s3 client to re-use for multiple files.
     max_objects : int
         Max number of S3 objects to return.
-    exclude_prefix : bool
-        Do not include the path for the empty s3 directory.
 
-    Returns
+    Iterates
     ------
-    [ full_s3_object_path, ... ]  :  list( str )
-        list of full s3 paths of objects matching `s3_dirpath_prefix`.
+    [ full_s3_object_path, ... ]  :  iter( [ str ] )
+        list of full s3 paths of objects matching `s3_prefix` except
+        `s3_prefix` itself.
     """
-    msgs = []
-    for i in range(max_objects, 0, -1000):
-        count = min(i, 1000)
-        if count:
-            block = _list_directory(s3_prefix, client, count, exclude_prefix)
-            msgs.extend(block)
-            if len(block)< 1000:
-                break
-        else:
-            break
-    return msgs
-
-
-def _list_directory(s3_prefix, client=None, max_objects=1, exclude_prefix=True):
-    """Handle one block of up to 1000 objects for list_directory."""
     client, bucket_name, prefix = _s3_setup(client, s3_prefix)
-    response = client.list_objects(
-        Bucket=bucket_name, Prefix=prefix, MaxKeys=max_objects)
-    return ["s3://" + bucket_name + "/" + result["Key"]
-            for result in response.get("Contents", [])
-            if result["Key"] != prefix or not exclude_prefix]
+    paginator = client.get_paginator("list_objects_v2")
+    config = {"MaxItems": max_objects, "PageSize": max_objects}
+    for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix, PaginationConfig=config):
+        for result in page.get("Contents", []):
+            listed = "s3://" + bucket_name + "/" + result["Key"]
+            yield listed
 
 
 def get_object(s3_filepath, client=None, encoding="utf-8"):
@@ -313,4 +306,3 @@ def delete_object(s3_filepath, client=None):
     """
     client, bucket_name, object_name = _s3_setup(client, s3_filepath)
     return client.delete_object(Bucket=bucket_name, Key=object_name)
-
