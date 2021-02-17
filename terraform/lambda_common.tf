@@ -30,5 +30,14 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
     filter_prefix       = "messages/placed-"
   }
 
-  depends_on = [aws_lambda_permission.allow_bucket]
+  lambda_function {
+    lambda_function_arn = module.calcloud_lambda_deleteJob.this_lambda_function_arn
+    events              = ["s3:ObjectCreated:Put"]
+    filter_prefix       = "messages/cancel-"
+  }
+
+  depends_on = [
+    aws_lambda_permission.allow_bucket,
+    aws_lambda_permission.allow_bucket_deleteLambda
+  ]
 }

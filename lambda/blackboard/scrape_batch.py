@@ -6,8 +6,6 @@ def lambda_handler(event, context):
     import time
     from calcloud import batch
 
-    # print(event)
-
     # various metadata definitions
     jobStatuses = ["FAILED", "SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING", "SUCCEEDED"]
     # these are the column names in the blackboardAWS table in the owl DB on-premise
