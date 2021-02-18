@@ -19,8 +19,16 @@ def submit_job(plan_tuple):
         "jobQueue": info.job_queue,
         "jobDefinition": info.job_definition,
         "containerOverrides": {
-            "vcpus": info.vcpus,
-            "memory": info.memory,
+            "resourceRequirements": [
+                {
+                    "value": f"{info.memory}",
+                    "type": "MEMORY"
+                },
+                {
+                    "value": f"{info.vcpus}",
+                    "type": "VCPU"
+                }
+            ],
             "command": [info.command, info.ipppssoot, info.input_path, info.s3_output_uri, info.crds_config],
         },
         "timeout": {
