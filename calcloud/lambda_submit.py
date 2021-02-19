@@ -13,7 +13,7 @@ import os
 def main(ipppssoots_file, bucket_name=os.environ["S3_PROCESSING_BUCKET"]):
 
     messages = io.get_message_api(bucket_name)
-    control = io.get_message_api(bucket_name)
+    control = io.get_control_api(bucket_name)
 
     bucket = f"s3://{bucket_name}"
     input_path = f"{bucket}/inputs"
