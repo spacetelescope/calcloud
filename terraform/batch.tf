@@ -142,6 +142,13 @@ resource "aws_s3_bucket" "calcloud" {
     "CALCLOUD" = "calcloud-processing${local.environment}"
     "Name"     = "calcloud-processing${local.environment}"
   }
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm     = "AES256"
+      }
+    }
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "s3_public_block" {
@@ -151,4 +158,33 @@ resource "aws_s3_bucket_public_access_block" "s3_public_block" {
   block_public_policy = true
   restrict_public_buckets = true
   ignore_public_acls=true
+}
+
+# ssl requests policy
+resource "aws_s3_bucket_policy" "ssl_only_processing" {
+  bucket = aws_s3_bucket.calcloud.id
+
+  # Terraform's "jsonencode" function converts a
+  # Terraform expression's result to valid JSON syntax.
+  policy = jsonencode({
+    Id = "SSLPolicy",
+    Version = "2012-10-17",
+    Statement = [
+        {
+            Sid = "AllowSSLRequestsOnly",
+            Action = "s3:*",
+            Effect = "Deny",
+            Principal = "*",
+            Resource = [
+                aws_s3_bucket.calcloud.arn,
+                "${aws_s3_bucket.calcloud.arn}/*"
+            ],
+            Condition = {
+                Bool = {
+                     "aws:SecureTransport" = "false"
+                }
+            }
+        }
+    ]
+  })
 }

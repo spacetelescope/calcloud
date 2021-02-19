@@ -4,7 +4,43 @@ resource "aws_s3_bucket" "calcloud_lambda_envs" {
   tags = {
     "Name"     = "calcloud-lambda-envs${local.environment}"
   }
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm     = "AES256"
+      }
+    }
+  }
   force_destroy = true
+}
+
+# ssl requests policy
+resource "aws_s3_bucket_policy" "ssl_only_lambda_envs" {
+  bucket = aws_s3_bucket.calcloud_lambda_envs.id
+
+  # Terraform's "jsonencode" function converts a
+  # Terraform expression's result to valid JSON syntax.
+  policy = jsonencode({
+    Id = "SSLPolicy",
+    Version = "2012-10-17",
+    Statement = [
+        {
+            Sid = "AllowSSLRequestsOnly",
+            Action = "s3:*",
+            Effect = "Deny",
+            Principal = "*",
+            Resource = [
+                aws_s3_bucket.calcloud_lambda_envs.arn,
+                "${aws_s3_bucket.calcloud_lambda_envs.arn}/*"
+            ],
+            Condition = {
+                Bool = {
+                     "aws:SecureTransport" = "false"
+                }
+            }
+        }
+    ]
+  })
 }
 
 # locks down the lambda env bucket
