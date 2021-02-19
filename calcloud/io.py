@@ -214,6 +214,8 @@ class MessageApi(S3Api):
     >>> MSG.delete("all")
     """
 
+    add_trigger_types = ["processed"]
+
     def path(self, prefix):
         """Message `prefix` should always start with at least the `type` aspect of
         a type-ipppssoot message id,  or 'all' types.
@@ -224,6 +226,8 @@ class MessageApi(S3Api):
         parts = prefix.split("-")
         if parts[0] not in MESSAGE_TYPES + ["all"]:
             raise ValueError("Invalid message type for prefix: " + repr(prefix))
+        if parts[0] in self.add_trigger_types and len(parts)==2:   #  XXXXX whoop whoop whoop,  .trigger hack!!
+            prefix += ".trigger"
         return self.s3_path + "/" + prefix
 
     def expand_prefix(self, prefix):
