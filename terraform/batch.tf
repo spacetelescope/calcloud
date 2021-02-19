@@ -37,7 +37,7 @@ resource "aws_launch_template" "hstdp" {
 
   ebs {
     delete_on_termination = "true"
-    encrypted             = "false"
+    encrypted             = "true"
     iops                  = 0
     volume_size           = 150
     volume_type           = "gp2"
@@ -78,7 +78,7 @@ resource "aws_batch_job_queue" "batch_queue" {
 }
 
 resource "aws_batch_compute_environment" "calcloud" {
-  compute_environment_name  = "calcloud-hst${local.environment}-${random_string.env_name.result}"
+  compute_environment_name_prefix = "calcloud-hst${local.environment}-"
   type = "MANAGED"
   service_role = data.aws_ssm_parameter.batch_service_role.value
 
@@ -97,6 +97,7 @@ resource "aws_batch_compute_environment" "calcloud" {
 
     launch_template {
       launch_template_id = aws_launch_template.hstdp.id
+      version = "$Latest"
     }
   }
   lifecycle { 
