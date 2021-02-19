@@ -24,11 +24,14 @@ def main(ipppssoots_file, bucket_name=os.environ["S3_PROCESSING_BUCKET"]):
 
         try:
             ctrl_msg = control.get(ipppssoot)
-            ctrl_msg["retries"] += 1
         except control.client.exceptions.NoSuchKey:
-            ctrl_msg = dict(retries=0)
+            ctrl_msg = dict()
 
-        resources = plan.get_resources(ipppssoot, bucket, input_path, ctrl_msg["retries"])
+        # memory_retries is incremented in the batch failure event if it's a memory fail
+        if "memory_retries" not in ctrl_msg:
+            ctrl_msg["memory_retries"] = 0
+
+        resources = plan.get_resources(ipppssoot, bucket, input_path, ctrl_msg["memory_retries"])
 
         provisioned = provision.get_plan(resources)
 
@@ -40,5 +43,4 @@ def main(ipppssoots_file, bucket_name=os.environ["S3_PROCESSING_BUCKET"]):
             continue
 
         control.put(ipppssoot, ctrl_msg)
-
         messages.move("placed-" + ipppssoot, "submit-" + ipppssoot)
