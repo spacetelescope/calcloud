@@ -30,7 +30,7 @@ def main(ipppssoots_file, bucket_name=os.environ["S3_PROCESSING_BUCKET"]):
 
         resources = plan.get_resources(ipppssoot, bucket, input_path, ctrl_msg["retries"])
 
-        provisioned = provision.get_plan_tuple(resources)
+        provisioned = provision.get_plan(resources)
 
         try:
             response = submit.submit_job(provisioned)
