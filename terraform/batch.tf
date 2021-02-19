@@ -2,16 +2,6 @@ provider "aws" {
   region  = var.region
 }
 
-resource "random_string" "env_name" {
-  # see https://github.com/hashicorp/terraform-provider-aws/pull/2347#issuecomment-345292890
-  # regarding the need for a random string in the compute-env name to avoid
-  # issues recreating them. They must be created before the old
-  # one can be destroyed, so they need unique names.
-  length = 5
-  special = false
-  upper = false
-}
-
 data "template_file" "userdata" {
   template = file("${path.module}/user_data.sh")
   vars = {
@@ -37,7 +27,7 @@ resource "aws_launch_template" "hstdp" {
 
   ebs {
     delete_on_termination = "true"
-    encrypted             = "false"
+    encrypted             = "true"
     iops                  = 0
     volume_size           = 150
     volume_type           = "gp2"
@@ -78,7 +68,7 @@ resource "aws_batch_job_queue" "batch_queue" {
 }
 
 resource "aws_batch_compute_environment" "calcloud" {
-  compute_environment_name  = "calcloud-hst${local.environment}-${random_string.env_name.result}"
+  compute_environment_name_prefix = "calcloud-hst${local.environment}-"
   type = "MANAGED"
   service_role = data.aws_ssm_parameter.batch_service_role.value
 
@@ -97,6 +87,7 @@ resource "aws_batch_compute_environment" "calcloud" {
 
     launch_template {
       launch_template_id = aws_launch_template.hstdp.id
+      version = "$Latest"
     }
   }
   lifecycle { 
@@ -151,6 +142,13 @@ resource "aws_s3_bucket" "calcloud" {
     "CALCLOUD" = "calcloud-processing${local.environment}"
     "Name"     = "calcloud-processing${local.environment}"
   }
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm     = "AES256"
+      }
+    }
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "s3_public_block" {
@@ -160,4 +158,33 @@ resource "aws_s3_bucket_public_access_block" "s3_public_block" {
   block_public_policy = true
   restrict_public_buckets = true
   ignore_public_acls=true
+}
+
+# ssl requests policy
+resource "aws_s3_bucket_policy" "ssl_only_processing" {
+  bucket = aws_s3_bucket.calcloud.id
+
+  # Terraform's "jsonencode" function converts a
+  # Terraform expression's result to valid JSON syntax.
+  policy = jsonencode({
+    Id = "SSLPolicy",
+    Version = "2012-10-17",
+    Statement = [
+        {
+            Sid = "AllowSSLRequestsOnly",
+            Action = "s3:*",
+            Effect = "Deny",
+            Principal = "*",
+            Resource = [
+                aws_s3_bucket.calcloud.arn,
+                "${aws_s3_bucket.calcloud.arn}/*"
+            ],
+            Condition = {
+                Bool = {
+                     "aws:SecureTransport" = "false"
+                }
+            }
+        }
+    ]
+  })
 }

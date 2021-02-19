@@ -94,8 +94,12 @@ def lambda_handler(event, context):
     with open(filename, "rb") as f:
         s3.upload_fileobj(f, os.environ["BUCKET"], "blackboard/blackboardAWS.snapshot")
 
-    response = gateway.refresh_cache(FileShareARN=os.environ["FILESHARE"], FolderList=["/blackboard/"], Recursive=True)
+    try:
+        response = gateway.refresh_cache(FileShareARN=os.environ["FILESHARE"], FolderList=["/blackboard/"], Recursive=True)
+        print(response)
+    except Exception as exc:
+        print(str(exc))
 
-    print(response)
+    
 
     return None
