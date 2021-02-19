@@ -42,6 +42,10 @@ data aws_ssm_parameter lambda_delete_role {
   name = "/iam/roles/calcloud_lambda_delete"
 }
 
+data aws_ssm_parameter lambda_cloudwatch_role {
+  name = "/iam/roles/calcloud_lambda_cloudWatchLogs"
+}
+
 data aws_ssm_parameter file_share_arn {
   name = "/gateway/fileshare"
 }
