@@ -39,6 +39,6 @@ def main(ipppssoots_file, bucket_name=os.environ["S3_PROCESSING_BUCKET"]):
             print(e)
             continue
 
-        control.put(ctrl_msg)
+        control.put(ipppssoot, ctrl_msg)
 
         messages.move("placed-" + ipppssoot, "submit-" + ipppssoot)
