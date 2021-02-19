@@ -2,16 +2,6 @@ provider "aws" {
   region  = var.region
 }
 
-resource "random_string" "env_name" {
-  # see https://github.com/hashicorp/terraform-provider-aws/pull/2347#issuecomment-345292890
-  # regarding the need for a random string in the compute-env name to avoid
-  # issues recreating them. They must be created before the old
-  # one can be destroyed, so they need unique names.
-  length = 5
-  special = false
-  upper = false
-}
-
 data "template_file" "userdata" {
   template = file("${path.module}/user_data.sh")
   vars = {
