@@ -15,9 +15,9 @@ def lambda_handler(event, context):
     print(bucket_name, message, ipst)
 
     comm = io.get_io_bundle(bucket_name)
-    comm.control.delete("all-" + ipst)
+    comm.control.delete(ipst)
+    comm.outputs.delete(ipst)
     comm.messages.delete("all-" + ipst)
-    comm.outputs.delete("all-" + ipst)
 
     lambda_submit.main(ipst, bucket_name)
 
