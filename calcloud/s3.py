@@ -42,7 +42,7 @@ def get_default_client():
     return DEFAULT_S3_CLIENT
 
 
-DEFAULT_BUCKET = os.environ.get("S3_PROCESSING_BUCKET", "calcloud-undefined-bucket")
+DEFAULT_BUCKET = os.environ.get("S3_PROCESSING_BUCKET", "s3://calcloud-UNDEFINED-bucket")
 
 # -------------------------------------------------------------
 
