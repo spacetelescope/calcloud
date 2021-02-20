@@ -99,7 +99,7 @@ def _get_job_resources(instr, ipppssoot, retries=0):
         info[1] = memory_megabytes + 512  # add some overhead for AWS Batch (>= 32M) and measurement error
         info[2] = max(int(wallclock_seconds * cpus * 6), 120)  # kill time,  BEWARE:  THIS LOOKS WRONG
     except KeyError:
-        info = (32, 64*1024, int(60 * 60 * 48))  # 32 cores,  64G/72G,  48 hours max   (c5.9xlarge)
+        info = (32, 64 * 1024, int(60 * 60 * 48))  # 32 cores,  64G/72G,  48 hours max   (c5.9xlarge)
         log.warning("Defaulting (cpu, memory, time) requirements for unknown dataset:", ipppssoot, "to", info)
     return tuple(info)
 

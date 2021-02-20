@@ -256,7 +256,7 @@ class MessageIo(S3Io):
         if prefix.endswith("-all"):
             prefix = prefix[: -len("-all")]
         if prefix == "all" or prefix.startswith("all-"):
-            ipppssoot = prefix[len("all-") :]
+            ipppssoot = prefix[len("all-"):]
             for type in MESSAGE_TYPES:
                 yield f"{type}-{ipppssoot}" if ipppssoot else type
         else:
