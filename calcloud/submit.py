@@ -1,4 +1,4 @@
-"""This module supports submitting job plan tuples to AWS Batch for processing."""
+""This module supports submitting job plan tuples to AWS Batch for processing."""
 
 import sys
 import ast
@@ -39,7 +39,7 @@ def submit_job(plan_tuple):
     return client.submit_job(**job)
 
 
-def submit(ipppssoots, s3_output_bucket=f"s3://{os.environ['S3_PROCESSING_BUCKET']}"):
+def submit(ipppssoots, s3_output_bucket=s3.DEFAULT_BUCKET):
     """Given a list of ipppssoots,  submit jobs so that all are processed by the batch
     system.
 
