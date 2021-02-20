@@ -5,12 +5,12 @@ The idea behind creating resourcess is to generate enough information such that 
 set of ipppssoots can be assigned to well tuned processing resources.
 """
 import sys
-import os
 from collections import namedtuple
 
 from . import hst
 from . import metrics
 from . import log
+from . import s3
 
 # ----------------------------------------------------------------------
 
