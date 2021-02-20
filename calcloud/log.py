@@ -178,9 +178,9 @@ class HstdpLogger:
     def set_verbose(self, level=True):
         assert -3 <= level <= 100, "verbosity level must be in range -3..100"
         old_verbose = self.verbose_level
-        if level == True:
+        if level is True:
             level = DEFAULT_VERBOSITY_LEVEL
-        elif level == False:
+        elif not level:
             level = 0
         self.verbose_level = level
         return old_verbose
