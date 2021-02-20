@@ -41,6 +41,7 @@ module "calcloud_lambda_batchEvents" {
 
   environment_variables = {
     JOBQUEUES="${aws_batch_job_queue.batch_queue.name},${aws_batch_job_queue.batch_outlier_queue.name}"
+    MAX_MEMORY_RETRIES="4"
   }
 
   tags = {
