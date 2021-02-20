@@ -328,16 +328,16 @@ class ControlIo(S3Io):
 class IoBundle:
     """Bundle all the I/O branches into one package."""
 
-    def __init__(self, bucket=s3.DEFAULT_S3_BUCKET, client=None):
-        self.client = client or s3.get_default_client()
+    def __init__(self, bucket=s3.DEFAULT_BUCKET, client=None):
         self.bucket = bucket
+        self.client = client or s3.get_default_client()
         self.messages = MessageIo("s3://" + self.bucket + "/messages", self.client)
         self.inputs = InputsIo("s3://" + self.bucket + "/inputs", self.client)
         self.outputs = OutputsIo("s3://" + self.bucket + "/outputs", self.client)
         self.control = ControlIo("s3://" + self.bucket + "/control", self.client)
 
 
-def get_io_bundle(bucket=s3.DEFAULT_S3_BUCKET, client=None):
+def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):
     return IoBundle(bucket, client)
 
 
