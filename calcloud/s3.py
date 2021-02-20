@@ -27,7 +27,7 @@ __all__ = [
     "move_object",
     "copy_object",
     "get_default_client",
-    "DEFAULT_S3_BUCKET",
+    "DEFAULT_BUCKET",
 ]
 
 # -------------------------------------------------------------
@@ -42,7 +42,7 @@ def get_default_client():
     return DEFAULT_S3_CLIENT
 
 
-DEFAULT_S3_BUCKET = os.environ.get("S3_PROCESSING_BUCKET", "calcloud-undefined-bucket")
+DEFAULT_BUCKET = os.environ.get("S3_PROCESSING_BUCKET", "calcloud-undefined-bucket")
 
 # -------------------------------------------------------------
 
