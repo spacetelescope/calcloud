@@ -32,9 +32,7 @@ class DynamoDB:
         self.table_name = table_name
         self.primary_key = primary_key
         self.dynamodb = boto3.resource("dynamodb")
-        self.table = (
-            self.open_db()
-        )  #  Assume it's terraform'ed already and fail if not.
+        self.table = self.open_db()  # Assume it's terraform'ed already and fail if not.
 
         # try:
         #     self.table = self.open_db()

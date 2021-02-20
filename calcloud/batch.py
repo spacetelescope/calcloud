@@ -2,12 +2,10 @@
 particularly pagination for the list and describe jobs functions which let
 them act on job counts > 100 jobs.
 """
-import sys
 import argparse
 import json
 import datetime
 import boto3
-from botocore.config import Config
 from . import common
 
 

@@ -47,6 +47,7 @@ def get_resources(dataset):
     """Given ipppssoot `dataset`, return:
     (memory_megabytes, cpus, wallclock_seconds)
     """
+    raise KeyError("Forced get_resources error for", dataset)
     item = DB.get_item(dataset)
     memory_megabytes = item["memory_megabytes"]
     cpus = item.get("cpus", 1)  # original blackboard doesn't have these
@@ -79,9 +80,7 @@ def update_resources(s3_batch_path):
     use them to overwrite or add a metrics database entry.
     """
     process_metrics_s3 = [
-        metric
-        for metric in s3.list_directory(s3_batch_path, max_objects=10 ** 7)
-        if "process_metric" in metric
+        metric for metric in s3.list_directory(s3_batch_path, max_objects=10 ** 7) if "process_metric" in metric
     ]
     for s3_path in process_metrics_s3:
         log.info("Processing metrics for", s3_path)
@@ -129,9 +128,7 @@ def parse_time_metrics(metrics_text):
 # --------------------------------------------------------------------------------
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print(
-            "usage: python -m calcloud.metrics  <blackboard_dump_file>", file=sys.stderr
-        )
+        print("usage: python -m calcloud.metrics  <blackboard_dump_file>", file=sys.stderr)
         sys.exit(1)
     else:
         load_db(sys.argv[1])

@@ -11,7 +11,6 @@ import ast
 import os
 from collections import namedtuple
 
-from . import plan
 from .plan import JobResources
 
 # -------------------------------------------------------------------------------
@@ -69,8 +68,7 @@ def _main(resource_file):
 
     for line in handle.read().splitlines():
         resource_tup = ast.literal_eval(line)
-        plan = get_plan(resource_tup)
-        print(tuple(plan))
+        print(tuple(get_plan(resource_tup)))
 
 
 if __name__ == "__main__":
