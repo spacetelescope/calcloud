@@ -39,4 +39,4 @@ def lambda_handler(event, context):
         comm.outputs.delete(ipst)
         comm.messages.delete(f"all-{ipst}")
         if comm.inputs.listl(ipst):
-            lambda_submit.main(ipst)
+            lambda_submit.main(ipst, bucket_name)
