@@ -12,12 +12,11 @@ def lambda_handler(event, context):
     fail_reason = event["detail"]["attempts"][0]["container"]["reason"]
     exit_code = event["detail"]["attempts"][0]["container"]["exitCode"]
 
-    messages = io.get_message_api(bucket)
-    control = io.get_control_api(bucket)
+    comm = io.get_io_bundle(bucket)
 
     try:
-        ctrl_msg = control.get(ipppssoot)
-    except control.client.exceptions.NoSuchKey:
+        ctrl_msg = comm.control.get(ipppssoot)
+    except comm.control.client.exceptions.NoSuchKey:
         ctrl_msg = dict()
 
     ctrl_msg["ipppssoot"] = ipppssoot
@@ -32,10 +31,10 @@ def lambda_handler(event, context):
         ctrl_msg["memory_retries"] = 0
     if fail_reason.startswith("OutOfMemoryError:") and ctrl_msg["memory_retries"] < 4:
         ctrl_msg["memory_retries"] += 1
-        control.put(ipppssoot, ctrl_msg)  # XXXX control setup must precede rescue message
+        comm.control.put(ipppssoot, ctrl_msg)  # XXXX control setup must precede rescue message
         print("Automatic rescue with retry count", ctrl_msg["memory_retries"])
-        messages.put("rescue-" + ipppssoot)
+        comm.messages.put("rescue-" + ipppssoot)
     else:
-        control.put(ipppssoot, ctrl_msg)
+        comm.control.put(ipppssoot, ctrl_msg)
 
     print(ctrl_msg)
