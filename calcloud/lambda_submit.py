@@ -33,7 +33,8 @@ def main(ipppssoot, bucket_name):
         ctrl_msg["job_id"] = response["jobId"]
     except Exception as e:
         print(e)
+        comm.messages.put("error-" + ipppssoot)
         return
 
     comm.control.put(ipppssoot, ctrl_msg)
-    comm.messages.move("placed-" + ipppssoot, "submit-" + ipppssoot)
+    comm.messages.put("submit-" + ipppssoot)
