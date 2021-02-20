@@ -13,6 +13,7 @@ def lambda_handler(event, context):
     exit_code = event["detail"]["attempts"][0]["container"]["exitCode"]
 
     comm = io.get_io_bundle(bucket)
+    comm.messages.delete("all-" + ipppssoot)
 
     try:
         ctrl_msg = comm.control.get(ipppssoot)
@@ -29,12 +30,19 @@ def lambda_handler(event, context):
     #  XXXXX Automatic rescue with increasing memory retry count
     if "memory_retries" not in ctrl_msg:
         ctrl_msg["memory_retries"] = 0
-    if fail_reason.startswith("OutOfMemoryError:") and ctrl_msg["memory_retries"] < 4:
-        ctrl_msg["memory_retries"] += 1
-        comm.control.put(ipppssoot, ctrl_msg)  # XXXX control setup must precede rescue message
-        print("Automatic rescue with retry count", ctrl_msg["memory_retries"])
-        comm.messages.put("rescue-" + ipppssoot)
+    
+    continuation_type = "error-"
+    if fail_reason.startswith("OutOfMemoryError:"):
+        if ctrl_msg["memory_retries"] < os.environ["MAX_MEMORY_RETRIES"]:
+            print("Automatic rescue of", ipppssoot, "with memory retry count", ctrl_msg["memory_retries"])
+            ctrl_msg["memory_retries"] += 1
+            continuation_type = "rescue-"
+        else:
+            print("Automatic memory retries for", ipppssoot, "exhausted at", ctrl_msg["memory_retries"])
     else:
-        comm.control.put(ipppssoot, ctrl_msg)
-
+        print("Failure for", ipppssoot, "no automatic retry for", fail_reason)
+        
+    # XXXX Since retry count used in planning, control output must precede rescue message
+    comm.control.put(ipppssoot, ctrl_msg)
+    comm.messages.put("error-" + ipppssoot)
     print(ctrl_msg)
