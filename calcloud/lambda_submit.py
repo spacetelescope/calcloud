@@ -1,5 +1,8 @@
-""" This module stitches the plan/provision/submit process together in a way that doesn't require intermediate files to be written to disk. 
-This is intended for use in an AWS Lambda function where there is no user potentially intervening in each step """
+"""This module stitches the plan/provision/submit process together in
+a way that doesn't require intermediate files to be written to disk.
+This is intended for use in an AWS Lambda function where there is no
+user potentially intervening in each step
+"""
 
 from . import plan
 from . import provision
