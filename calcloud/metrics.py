@@ -47,7 +47,7 @@ def get_resources(dataset):
     """Given ipppssoot `dataset`, return:
     (memory_megabytes, cpus, wallclock_seconds)
     """
-    raise KeyError("Forced get_resources error for", dataset)
+    # raise KeyError("Forced get_resources error for", dataset)
     item = DB.get_item(dataset)
     memory_megabytes = item["memory_megabytes"]
     cpus = item.get("cpus", 1)  # original blackboard doesn't have these
