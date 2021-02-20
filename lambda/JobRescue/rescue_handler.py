@@ -34,7 +34,7 @@ def lambda_handler(event, context):
             fail_ipsts |= ipsts
         for this in fail_ipsts:
             comm.messages.put(f"rescue-{this}")
-            comm.messages.delete("rescue-all")
+        comm.messages.delete("rescue-all")
     else:
         comm.outputs.delete(ipst)
         comm.messages.delete(f"all-{ipst}")
