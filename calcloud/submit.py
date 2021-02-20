@@ -1,14 +1,13 @@
-""This module supports submitting job plan tuples to AWS Batch for processing."""
+"""This module supports submitting job plan tuples to AWS Batch for processing."""
 
 import sys
 import ast
-import os
 
 import boto3
-from botocore.config import Config
 
 from . import provision
 from . import common
+from . import s3
 
 
 def submit_job(plan_tuple):
@@ -20,14 +19,8 @@ def submit_job(plan_tuple):
         "jobDefinition": info.job_definition,
         "containerOverrides": {
             "resourceRequirements": [
-                {
-                    "value": f"{info.memory}",
-                    "type": "MEMORY"
-                },
-                {
-                    "value": f"{info.vcpus}",
-                    "type": "VCPU"
-                }
+                {"value": f"{info.memory}", "type": "MEMORY"},
+                {"value": f"{info.vcpus}", "type": "VCPU"},
             ],
             "command": [info.command, info.ipppssoot, info.input_path, info.s3_output_uri, info.crds_config],
         },

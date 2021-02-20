@@ -134,8 +134,8 @@ def get_resources(ipppssoot, output_bucket, input_path, retries=0):
 
 def _planner(
     ipppssoots_file,
-        output_bucket=s3.DEFAULT_BUCKET + "/outputs",
-        input_path=s3.DEFAULT_BUCKET,
+    output_bucket=s3.DEFAULT_BUCKET + "/outputs",
+    input_path=s3.DEFAULT_BUCKET,
 ):
     """Given a set of ipppssoots in `ipppssoots_file` separated by spaces or newlines,
     as well as an `output_bucket` to define how the jobs are named and
