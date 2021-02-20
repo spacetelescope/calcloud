@@ -28,13 +28,13 @@ def lambda_handler(event, context):
 
     comm = io.get_io_bundle(bucket_name)
     if ipst == "all":
+        comm.messages.delete("rescue-all")
         fail_ipsts = set()
         for type in RESCUE_TYPES:
             ipsts = [msg.split("-")[-1] for msg in comm.messages.list(f"{type}-all")]
             fail_ipsts |= ipsts
         for this in fail_ipsts:
             comm.messages.put(f"rescue-{this}")
-        comm.messages.delete("rescue-all")
     else:
         comm.outputs.delete(ipst)
         comm.messages.delete(f"all-{ipst}")
