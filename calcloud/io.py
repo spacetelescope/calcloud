@@ -94,7 +94,10 @@ class S3Io:
         component of each listed object.
         """
         for s3_path in self.list_s3(prefixes):
-            yield s3_path.split("/")[-1]
+            object = s3_path.split("/")[-1]
+            if object.endswith(".trigger"):         #  XXXX Undo trigger hack
+                object = object[:-len(".trigger")]
+            yield object
 
     def listl(self, prefixes="all"):
         """Return the outputs of list() as a list,  mainly for testing since list()
@@ -175,48 +178,80 @@ class MessageIo(S3Io):
 
     >>> comm = get_io_bundle()
 
-    >>> comm.messages.put(['cancel-lcw303cjq', 'error-lcw303cjq', 'placed-lcw303cjq', 'rescue-lcw303cjq']);
+    put() enables sending a message or sequence of messages which should be fully specified
+    including the full ipppssoot.   Specified as a string or list the message payload(s) are 
+    defaulted to the empty string:
+
+    >>> comm.messages.put(['cancel-lcw303cjq', 'error-lcw303cjq', 'processed-lcw303cjq', 'rescue-lcw303cjq']);
     >>> comm.messages.listl()
-    ['cancel-lcw303cjq', 'error-lcw303cjq', 'placed-lcw303cjq', 'rescue-lcw303cjq']
+    ['cancel-lcw303cjq', 'error-lcw303cjq', 'processed-lcw303cjq', 'rescue-lcw303cjq']
+
+    list_s3() yields the fully qualified S3 paths matching the given prefix(es) that exist on S3:
 
     >>> list(comm.messages.list_s3("error")) #doctest: +ELLIPSIS
     ['s3://.../messages/error-lcw303cjq']
 
+    listl() is primarily a test method which returns the list of messages matching prefix(es):
+
     >>> comm.messages.listl("rescue")
     ['rescue-lcw303cjq']
 
+    delete(type) removes all messages of type:
+
     >>> comm.messages.delete("rescue");
     >>> comm.messages.listl()
-    ['cancel-lcw303cjq', 'error-lcw303cjq', 'placed-lcw303cjq']
+    ['cancel-lcw303cjq', 'error-lcw303cjq', 'processed-lcw303cjq']
+
+    The "all" or "" messages expand to all existing messages:
 
     >>> comm.messages.delete("all");
     >>> comm.messages.listl()
     []
 
+    expand_all("all-ipppssoot") is expanded into type-ipppssoot for every type 
+    in MESSAGE_TYPES regardless of the existence of the message on S3:
+    
     >>> list(comm.messages.expand_all('all-lcw303cjq'))
     ['placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'error-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq']
+
+    The all-ipppssoot message is expanded to every type-ipppssoot:
 
     >>> comm.messages.put(['cancel-lcw303cjq', 'error-lcw303cjq', 'rescue-lcw304cjq']);
     >>> comm.messages.delete('all-lcw303cjq');
     >>> comm.messages.listl()
     ['rescue-lcw304cjq']
 
+    The type-all message is expanded into every type-ipppssoot combination and is really
+    equivalent to searching for S3 prefix "type".
+
     >>> comm.messages.put(['error-lcw303cjq', 'error-lcw304cjq', 'error-lcw305cjq']);  comm.messages.listl()
     ['error-lcw303cjq', 'error-lcw304cjq', 'error-lcw305cjq', 'rescue-lcw304cjq']
     >>> comm.messages.delete('error-all');  comm.messages.listl()
     ['rescue-lcw304cjq']
 
-    >>> comm.messages.move('rescue-lcw304cjq', 'terminated-lcw304cjq'); comm.messages.listl();
-    ['terminated-lcw304cjq']
+    Methods list() and listl() report 'processed' messages without the .trigger suffix:
 
-    >>> comm.messages.delete("all")
+    >>> comm.messages.move('rescue-lcw304cjq', 'processed-lcw304cjq'); comm.messages.listl();
+    ['processed-lcw304cjq']
+
+    On S3,  .trigger is appended to the 'processed-ipppssoot' message:
+
+    >>> com.messages.list_s3('processed-lcw304cjq') #doctest: +ELLIPSIS
+    ['s3://.../messages/processed-lcw303cjq.trigger']
+
+    >>> comm.messages.delete("all");  comm.messages.list_s3()
+    []
     """
 
     add_trigger_types = ["processed"]
 
     def path(self, prefix):
-        """Message `prefix` should always start with at least the `type` aspect of
-        a type-ipppssoot message id,  or 'all' types.
+        """Converts `prefix` to an appropriate fully specified S3 path, which
+        may designate an individual type-ipppssoot message or a more ambiguous
+        partial key.
+
+        Message `prefix` should always start with at least the `type` aspect of
+        a type-ipppssoot message id,  or 'all'.
 
         >>> comm = get_io_bundle()
         >>> comm.messages.path('rescue-lcw304cjq')  #doctest: +ELLIPSIS
@@ -225,8 +260,8 @@ class MessageIo(S3Io):
         parts = prefix.split("-")
         if parts[0] not in MESSAGE_TYPES + ["all"]:
             raise ValueError("Invalid message type for prefix: " + repr(prefix))
-        # if parts[0] in self.add_trigger_types and len(parts) == 2:  # XXXXX whoop whoop whoop,  .trigger hack!!
-        #     prefix += ".trigger"
+        if parts[0] in self.add_trigger_types and len(parts) == 2:  # XXXXX add .trigger hack!!
+            prefix += ".trigger"
         return self.s3_path + "/" + prefix
 
     def expand_prefix(self, prefix):
@@ -239,14 +274,26 @@ class MessageIo(S3Io):
         4. "all ipppssoots of one type"   when prefix="{type}-{all}" also equivalent to "{type}"
 
         >>> comm = get_io_bundle()
+
+        Used w/o -ipppssoot,  "all" expands into the all message types, which when used as S3 object
+        key prefixes, match all ipppssoots of each type:
+
         >>> list(comm.messages.expand_all('all'))
         ['placed', 'submit', 'processing', 'processed', 'error', 'ingesterror', 'ingested', 'terminated', 'cancel', 'rescue']
+
+        The message 'all-ipppssoot' expands into a sequence of type-ipppssoot messages for each
+        type in MESSAGE_TYPES:
 
         >>> list(comm.messages.expand_all('all-lcw303cjq'))
         ['placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'error-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq']
 
+        A fully specified type-ipppsoot message expands to itself:
+
         >>> list(comm.messages.expand_all('rescue-lcw304cjq'))
         ['rescue-lcw304cjq']
+
+        Since expand_all() operates regardless of S3 content,  the 'type-all' messsage expands
+        to the search prefix 'type' suitable for listing all ipppsoots of 'type':
 
         >>> list(comm.messages.expand_all('rescue-all'))
         ['rescue']
@@ -278,6 +325,7 @@ class OutputsIo(S3Io):
     outputs store.
 
     >>> comm = get_io_bundle()
+
     >>> comm.outputs.put({'lcw303cjq/something.fits': 'some contents'})
     >>> comm.outputs.get('lcw303cjq/something.fits')
     'some contents'
