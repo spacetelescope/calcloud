@@ -60,7 +60,7 @@ def describe_jobs(job_names):
     batch = boto3.client("batch", config=common.retry_config)
     descriptions = []
     for i in range(0, len(job_names), 100):
-        block = batch.describe_jobs(jobs=job_names[i: i + 100])
+        block = batch.describe_jobs(jobs=job_names[i : i + 100])
         descriptions.extend(block["jobs"])
     return descriptions
 

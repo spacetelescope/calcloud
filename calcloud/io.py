@@ -95,8 +95,8 @@ class S3Io:
         """
         for s3_path in self.list_s3(prefixes):
             object = s3_path.split("/")[-1]
-            if object.endswith(".trigger"):         #  XXXX Undo trigger hack
-                object = object[:-len(".trigger")]
+            if object.endswith(".trigger"):  #  XXXX Undo trigger hack
+                object = object[: -len(".trigger")]
             yield object
 
     def listl(self, prefixes="all"):
@@ -179,7 +179,7 @@ class MessageIo(S3Io):
     >>> comm = get_io_bundle()
 
     put() enables sending a message or sequence of messages which should be fully specified
-    including the full ipppssoot.   Specified as a string or list the message payload(s) are 
+    including the full ipppssoot.   Specified as a string or list the message payload(s) are
     defaulted to the empty string:
 
     >>> comm.messages.put(['cancel-lcw303cjq', 'error-lcw303cjq', 'processed-lcw303cjq', 'rescue-lcw303cjq']);
@@ -208,9 +208,9 @@ class MessageIo(S3Io):
     >>> comm.messages.listl()
     []
 
-    expand_all("all-ipppssoot") is expanded into type-ipppssoot for every type 
+    expand_all("all-ipppssoot") is expanded into type-ipppssoot for every type
     in MESSAGE_TYPES regardless of the existence of the message on S3:
-    
+
     >>> list(comm.messages.expand_all('all-lcw303cjq'))
     ['placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'error-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq']
 
@@ -303,7 +303,7 @@ class MessageIo(S3Io):
         if prefix.endswith("-all"):
             prefix = prefix[: -len("-all")]
         if prefix == "all" or prefix.startswith("all-"):
-            ipppssoot = prefix[len("all-"):]
+            ipppssoot = prefix[len("all-") :]
             for type in MESSAGE_TYPES:
                 yield f"{type}-{ipppssoot}" if ipppssoot else type
         else:
