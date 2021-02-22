@@ -18,6 +18,8 @@ resource "aws_s3_bucket" "calcloud_lambda_envs" {
 resource "aws_s3_bucket_policy" "ssl_only_lambda_envs" {
   bucket = aws_s3_bucket.calcloud_lambda_envs.id
 
+  depends_on = [aws_s3_bucket_public_access_block.s3_lambda_public_block]
+
   # Terraform's "jsonencode" function converts a
   # Terraform expression's result to valid JSON syntax.
   policy = jsonencode({
