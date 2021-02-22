@@ -61,7 +61,6 @@ docker push ${CALDP_DOCKER_IMAGE}
 
 # deploy rest of terraform
 cd ../calcloud-${CALCLOUD_VER}/terraform
-awsudo $ADMIN_ARN terraform plan
 # manual confirmation required
 awsudo $ADMIN_ARN terraform apply
 
