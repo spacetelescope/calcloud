@@ -164,6 +164,8 @@ resource "aws_s3_bucket_public_access_block" "s3_public_block" {
 resource "aws_s3_bucket_policy" "ssl_only_processing" {
   bucket = aws_s3_bucket.calcloud.id
 
+  depends_on = [aws_s3_bucket_public_access_block.s3_public_block]
+
   # Terraform's "jsonencode" function converts a
   # Terraform expression's result to valid JSON syntax.
   policy = jsonencode({
