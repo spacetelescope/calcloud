@@ -5,7 +5,6 @@ user potentially intervening in each step
 """
 
 from . import plan
-from . import provision
 from . import submit
 from . import io
 
@@ -27,12 +26,11 @@ def main(ipppssoot, bucket_name):
     if "memory_retries" not in ctrl_msg:
         ctrl_msg["memory_retries"] = 0
 
-    resources = plan.get_resources(ipppssoot, bucket, input_path, ctrl_msg["memory_retries"])
-
-    provisioned = provision.get_plan(resources)
+    p = plan.get_plan(ipppssoot, bucket, input_path, ctrl_msg["memory_retries"])
+    print("Job Plan:", p)
 
     try:
-        response = submit.submit_job(provisioned)
+        response = submit.submit_job(p)
         ctrl_msg["job_id"] = response["jobId"]
     except Exception as e:
         print(e)
