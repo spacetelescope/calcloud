@@ -15,9 +15,8 @@ def lambda_handler(event, context):
     print(bucket_name, message, ipst)
 
     comm = io.get_io_bundle(bucket_name)
-    comm.control.delete(ipst)
-    comm.outputs.delete(ipst)
-    comm.messages.delete("all-" + ipst)
+
+    comm.control.delete(ipst)  # biggest difference between "place" and "rescue"
 
     lambda_submit.main(ipst, bucket_name)
 

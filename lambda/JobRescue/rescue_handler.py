@@ -2,16 +2,6 @@ from calcloud import io
 from calcloud import hst
 from calcloud import lambda_submit
 
-# XXXXX TODO add memory adjustments based on CONTROL folder and
-# ipppssoot.
-#
-# jobId initial memory allocation should be stored here during
-# submission, each subsequent run should increment the retry count
-# during rescue which implies required memory when the job is
-# re-submitted after placing.
-#
-# The rescue function should use the job ID to search for job failure
-# status and conditionally adjust memory if applicable.
 
 RESCUE_TYPES = ["error", "terminated"]
 
@@ -36,7 +26,7 @@ def lambda_handler(event, context):
         for this in fail_ipsts:
             comm.messages.put(f"rescue-{this}")
     else:
-        comm.outputs.delete(ipst)
-        comm.messages.delete(f"all-{ipst}")
-        if comm.inputs.listl(ipst):
+        if comm.inputs.listl(ipst): # lambda_submit.main clears outputs and all messages
             lambda_submit.main(ipst, bucket_name)
+        else:
+            print("No inputs for", ipst, "cannot rescue.")

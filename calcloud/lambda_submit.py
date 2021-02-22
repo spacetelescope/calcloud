@@ -1,7 +1,18 @@
-"""This module stitches the plan/provision/submit process together in
-a way that doesn't require intermediate files to be written to disk.
-This is intended for use in an AWS Lambda function where there is no
-user potentially intervening in each step
+"""This module is the primary path for job submission,  for both initial "placed"
+submissions and "rescue" submissions which are triggered by the corresponding
+lambdas.
+
+The key difference between "placed" and "rescue" submissions is that
+rescue submissions track failure metadata in a control file,
+e.g. retry count, while placed submissions clear all messages and
+control data.
+
+Another primary source of control information is the batch event
+lambda which responds to CloudWatch failure events for Batch jobs.
+For the first several retries, the fail event increments the retry
+counter, stores other metadata, and triggers a rescue.  After a few
+retries not documented here, the failure lambda stops attempting to
+rescue.   This info is all stored in a control file.
 """
 
 from . import plan
@@ -17,6 +28,10 @@ def main(ipppssoot, bucket_name):
     input_path = f"{bucket}/inputs"
 
     ipppssoot = ipppssoot.lower()
+
+    comm.outputs.delete(ipst)          
+    comm.messages.delete(f"all-{ipst}")
+
     try:
         ctrl_msg = comm.control.get(ipppssoot)
     except comm.control.client.exceptions.NoSuchKey:
@@ -27,6 +42,7 @@ def main(ipppssoot, bucket_name):
         ctrl_msg["memory_retries"] = 0
 
     p = plan.get_plan(ipppssoot, bucket, input_path, ctrl_msg["memory_retries"])
+    
     print("Job Plan:", p)
 
     try:
