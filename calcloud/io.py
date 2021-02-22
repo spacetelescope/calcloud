@@ -236,10 +236,10 @@ class MessageIo(S3Io):
 
     On S3,  .trigger is appended to the 'processed-ipppssoot' message:
 
-    >>> com.messages.list_s3('processed-lcw304cjq') #doctest: +ELLIPSIS
-    ['s3://.../messages/processed-lcw303cjq.trigger']
+    >>> list(comm.messages.list_s3('processed-lcw304cjq')) #doctest: +ELLIPSIS
+    ['s3://.../messages/processed-lcw304cjq.trigger']
 
-    >>> comm.messages.delete("all");  comm.messages.list_s3()
+    >>> comm.messages.delete("all");  list(comm.messages.list_s3())
     []
     """
 
