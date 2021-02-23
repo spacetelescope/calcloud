@@ -26,6 +26,8 @@ def lambda_handler(event, context):
         for this in fail_ipsts:
             comm.messages.put(f"rescue-{this}")
     else:
+        comm.outputs.delete(ipst)
+        comm.messages.delete(f"all-{ipst}")
         if comm.inputs.listl(ipst): # lambda_submit.main clears outputs and all messages
             lambda_submit.main(ipst, bucket_name)
         else:
