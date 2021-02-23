@@ -16,8 +16,9 @@ def lambda_handler(event, context):
 
     comm = io.get_io_bundle(bucket_name)
 
-    comm.control.delete(ipst)  # biggest difference between "place" and "rescue"
-
+    comm.control.delete(ipst)  # biggest difference between "placed" and "rescue"
+    comm.messages.delete("placed-" + ipst)
+    
     lambda_submit.main(ipst, bucket_name)
 
     return None
