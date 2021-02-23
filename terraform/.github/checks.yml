@@ -1,0 +1,61 @@
+name: code checks
+
+on: [push, pull_request]
+
+jobs:
+  bandit:
+    name: run bandit
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: set up python 3.6.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6.10
+
+      - name: install dependencies
+        run: pip install bandit
+
+      - name: checkout code
+        uses: actions/checkout@v2
+
+      - name: run bandit security checks
+        run: bandit -ll -r calcloud
+
+  black:
+    name: run black
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: set up python 3.6.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6.10
+
+      - name: install dependencies
+        run: pip install black
+
+      - name: checkout code
+        uses: actions/checkout@v2
+
+      - name: run black style checks
+        run: black --check calcloud calcloud/lambda
+
+  flake8:
+    name: run flake8
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: set up python 3.6.10
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6.10
+
+      - name: install dependencies
+        run: pip install flake8
+
+      - name: checkout code
+        uses: actions/checkout@v2
+
+      - name: run flake8 python lint checks
+        run: flake8 --count --max-line-length=120 --exclude docs
