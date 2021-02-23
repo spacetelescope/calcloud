@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: run black style checks
-        run: black --check calcloud calcloud/lambda
+        run: black --check calcloud lambda
 
   flake8:
     name: run flake8
