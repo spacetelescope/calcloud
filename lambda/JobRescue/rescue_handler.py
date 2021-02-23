@@ -30,7 +30,7 @@ def lambda_handler(event, context):
         print("Rescuing", ipst)
         comm.outputs.delete(ipst)
         comm.messages.delete(f"all-{ipst}")
-        if comm.inputs.listl(ipst): # lambda_submit.main clears outputs and all messages
+        if comm.inputs.listl(ipst):
             lambda_submit.main(ipst, bucket_name)
         else:
             print("No inputs for", ipst, "cannot rescue.")
