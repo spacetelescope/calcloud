@@ -9,7 +9,7 @@ __pycache__/
 build/
 sdist/
 dist/
-
+.tox/
 terraform/.terraform
 terraform/*.tfstate*
 terraform/*.txt
