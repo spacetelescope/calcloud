@@ -47,10 +47,11 @@ def get_instrument(ipppssoot):
     else:
         return IPPPSSOOT_INSTR.get(ipppssoot.upper()[0])
 
+
 # -----------------------------------------------------------------------------
 
 
-def get_output_path(output_uri,  ipppssoot):
+def get_output_path(output_uri, ipppssoot):
     """Given an `output_uri` string which nominally defines an S3 bucket and
     directory base path,  and an `ipppssoot` dataset name,  generate a full
     S3 output path where outputs from processing `ipppssoot` should be stored.

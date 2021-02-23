@@ -26,15 +26,23 @@ __all__ = [
     "delete_object",
     "move_object",
     "copy_object",
-    "DEFAULT_S3_CLIENT",
-    "DEFAULT_S3_BUCKET",
+    "get_default_client",
+    "DEFAULT_BUCKET",
 ]
 
 # -------------------------------------------------------------
 
-DEFAULT_S3_CLIENT = boto3.client("s3")
+DEFAULT_S3_CLIENT = None
 
-DEFAULT_S3_BUCKET = os.environ.get("S3_PROCESSING_BUCKET","calcloud-undefined-bucket")
+
+def get_default_client():
+    global DEFAULT_S3_CLIENT
+    if DEFAULT_S3_CLIENT is None:
+        DEFAULT_S3_CLIENT = boto3.client("s3")
+    return DEFAULT_S3_CLIENT
+
+
+DEFAULT_BUCKET = os.environ.get("S3_PROCESSING_BUCKET", "s3://calcloud-UNDEFINED-bucket")
 
 # -------------------------------------------------------------
 

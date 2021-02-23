@@ -63,12 +63,13 @@ import pprint
 
 DEFAULT_VERBOSITY_LEVEL = 50
 
+
 class HstdpLogger:
     def __init__(self, name="HSTDP", enable_console=True, level=logging.DEBUG, enable_time=True):
         self.name = name
 
         self.handlers = []  # logging handlers, used e.g. to add console or file output streams
-        self.filters = []   # simple HSTDP filters, used e.g. to mutate message text
+        self.filters = []  # simple HSTDP filters, used e.g. to mutate message text
 
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
@@ -89,18 +90,22 @@ class HstdpLogger:
         # verbose_level handles HSTDP verbosity,  defaulting to 0 for no debug
         try:
             verbose_level = os.environ.get("HSTDP_VERBOSITY", 0)
-            self.verbose_level =  int(verbose_level)
+            self.verbose_level = int(verbose_level)
         except Exception:
-            warning("Bad format for HSTDP_VERBOSITY =", repr(verbose_level),
-                        "Use e.g. -1 to squelch info, 0 for no debug,  50 for default debug output. 100 max debug.")
+            warning(
+                "Bad format for HSTDP_VERBOSITY =",
+                repr(verbose_level),
+                "Use e.g. -1 to squelch info, 0 for no debug,  50 for default debug output. 100 max debug.",
+            )
             self.verbose_level = DEFAULT_VERBOSITY_LEVEL
 
     def set_formatter(self, enable_time=True, enable_msg_count=True):
         """Set the formatter attribute of `self` to a logging.Formatter and return it."""
         self.formatter = logging.Formatter(
-            '{}%(levelname)s -%(message)s'.format(
+            "{}%(levelname)s -%(message)s".format(
                 "%(asctime)s - " if enable_time else "",
-                ))
+            )
+        )
         for handler in self.handlers:
             handler.setFormatter(self.formatter)
         return self.formatter
@@ -171,11 +176,11 @@ class HstdpLogger:
         self.errors = self.warnings = self.infos = self.debugs = 0
 
     def set_verbose(self, level=True):
-        assert -3 <= level <= 100,  "verbosity level must be in range -3..100"
+        assert -3 <= level <= 100, "verbosity level must be in range -3..100"
         old_verbose = self.verbose_level
-        if level == True:
+        if level is True:
             level = DEFAULT_VERBOSITY_LEVEL
-        elif level == False:
+        elif not level:
             level = 0
         self.verbose_level = level
         return old_verbose
@@ -209,6 +214,7 @@ class HstdpLogger:
         error("(FATAL)", *args, **keys)
         sys.exit(-1)  # FATAL == totally unambiguous
 
+
 THE_LOGGER = HstdpLogger("HSTDP")
 
 info = THE_LOGGER.info
@@ -231,21 +237,26 @@ remove_stream_handler = THE_LOGGER.remove_stream_handler
 
 format = THE_LOGGER.format
 
+
 def increment_errors(N=1):
     """Increment the error count by N without issuing a log message."""
     THE_LOGGER.errors += N
+
 
 def errors():
     """Return the global count of errors."""
     return THE_LOGGER.errors
 
+
 def warnings():
     """Return the global count of errors."""
     return THE_LOGGER.warnings
 
+
 def infos():
     """Return the global count of infos."""
     return THE_LOGGER.infos
+
 
 def set_test_mode():
     """Route log messages to standard output for testing with doctest."""
@@ -253,13 +264,16 @@ def set_test_mode():
     add_console_handler(stream=sys.stdout)
     set_log_time(False)
 
+
 def set_log_time(enable_time=False):
     """Set the flag for including time in log messages.  Ignore HSTDP_LOG_TIME."""
     THE_LOGGER.set_formatter(enable_time)
 
+
 # ===========================================================================
 
 ADD_LOG_MSG_COUNT = False
+
 
 def set_add_log_msg_count(flag):
     global ADD_LOG_MSG_COUNT
@@ -267,32 +281,40 @@ def set_add_log_msg_count(flag):
     ADD_LOG_MSG_COUNT = flag
     return old_flag
 
+
 def get_add_log_msg_count():
     return ADD_LOG_MSG_COUNT
 
+
 # ===========================================================================
+
 
 class PP:
     """A wrapper to defer pretty printing until after it's known a verbose
     message will definitely be output.
     """
+
     def __init__(self, ppobj):
         self.ppobj = ppobj
 
     def __str__(self):
         return pprint.pformat(self.ppobj)
 
+
 class Deferred:
     """A wrapper to delay calling a callable until after it's known a verbose
     message will definitely be output.
     """
+
     def __init__(self, ppobj):
         self.ppobj = ppobj
 
     def __str__(self):
         return str(self.ppobj())
 
+
 # ===========================================================================
+
 
 def standard_status():
     """Print out errors, warnings, and infos."""
@@ -301,13 +323,17 @@ def standard_status():
     info(warnings, "warnings")
     info(infos, "infos")
 
+
 # ==============================================================================
+
 
 def srepr(obj):
     """Return the repr() of the str() of obj"""
     return repr(str(obj))
 
+
 # ==============================================================================
+
 
 def divider(name="", char="-", n=75, func=info, **keys):
     """Create a log divider line consisting of `char` repeated `n` times
@@ -316,16 +342,20 @@ def divider(name="", char="-", n=75, func=info, **keys):
     """
     if name:
         n2 = (n - len(name) - 2) // 2
-        func(char*n2, name, char*n2, **keys)
+        func(char * n2, name, char * n2, **keys)
     else:
-        func(char*n, **keys)
+        func(char * n, **keys)
+
 
 # ===================================================================
+
 
 def test():
     from calcloud import log
     import doctest
+
     return doctest.testmod(log)
+
 
 if __name__ == "__main__":
     print(test())

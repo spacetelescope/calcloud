@@ -2,32 +2,24 @@
 
 import sys
 import ast
-import os
 
 import boto3
-from botocore.config import Config
 
-from . import provision
+from . import plan
 from . import common
 
 
 def submit_job(plan_tuple):
     """Given a job description `plan_tuple` from the planner,  submit a job to AWS batch."""
-    info = provision.Plan(*plan_tuple)
+    info = plan.Plan(*plan_tuple)
     job = {
         "jobName": info.job_name,
         "jobQueue": info.job_queue,
         "jobDefinition": info.job_definition,
         "containerOverrides": {
             "resourceRequirements": [
-                {
-                    "value": f"{info.memory}",
-                    "type": "MEMORY"
-                },
-                {
-                    "value": f"{info.vcpus}",
-                    "type": "VCPU"
-                }
+                {"value": f"{info.memory}", "type": "MEMORY"},
+                {"value": f"{info.vcpus}", "type": "VCPU"},
             ],
             "command": [info.command, info.ipppssoot, info.input_path, info.s3_output_uri, info.crds_config],
         },
@@ -37,26 +29,6 @@ def submit_job(plan_tuple):
     }
     client = boto3.client("batch", config=common.retry_config)
     return client.submit_job(**job)
-
-
-def submit(ipppssoots, s3_output_bucket=f"s3://{os.environ['S3_PROCESSING_BUCKET']}"):
-    """Given a list of ipppssoots,  submit jobs so that all are processed by the batch
-    system.
-
-    Parameters
-    ----------
-    ipppssoots : list of str
-        List of ipppssoot dataset names for processing
-    s3_output_bucket : str
-        AWS S3 bucket name in which outputs will be stored (in subdirecrtories)
-
-    Returns
-    -------
-    List of JSON dicts returned by the Batch client submit_job() method.
-    """
-    plans = provision.get_plan_tuples(ipppssoots, s3_output_bucket)
-    jobs = [submit_job(p) for p in plans]
-    return jobs
 
 
 def submit_plans(plan_file):
