@@ -29,8 +29,8 @@ def main(ipppssoot, bucket_name):
 
     ipppssoot = ipppssoot.lower()
 
-    comm.outputs.delete(ipst)          
-    comm.messages.delete(f"all-{ipst}")
+    comm.outputs.delete(ipppssoot)
+    comm.messages.delete(f"all-{ipppssoot}")
 
     try:
         ctrl_msg = comm.control.get(ipppssoot)
