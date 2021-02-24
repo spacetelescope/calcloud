@@ -3,59 +3,57 @@ name: code checks
 on: [push, pull_request]
 
 jobs:
-  bandit:
-    name: run bandit
+  flake8:
+    name: run flake8
     runs-on: ubuntu-18.04
-
     steps:
-      - name: set up python 3.6.10
+      - name: set up python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: 3.6.10
-
-      - name: install dependencies
-        run: pip install bandit
+          python-version: 3.8
 
       - name: checkout code
         uses: actions/checkout@v2
 
-      - name: run bandit security checks
-        run: bandit -ll -r calcloud
+      - name: install dependencies
+        run: pip install .[dev]
+
+      - name: run flake8 static code analysis
+        run: tox -e flake8
 
   black:
     name: run black
     runs-on: ubuntu-18.04
-
     steps:
-      - name: set up python 3.6.10
+      - name: set up python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: 3.6.10
-
-      - name: install dependencies
-        run: pip install black
+          python-version: 3.8
 
       - name: checkout code
         uses: actions/checkout@v2
 
-      - name: run black style checks
-        run: black --check calcloud lambda
+      - name: install dependencies
+        run: pip install .[dev]
 
-  flake8:
-    name: run flake8
+      - name: run black code formatting
+        run: tox -e black
+
+  bandit:
+    name: run bandit
     runs-on: ubuntu-18.04
-
     steps:
-      - name: set up python 3.6.10
+      - name: set up python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: 3.6.10
-
-      - name: install dependencies
-        run: pip install flake8
+          python-version: 3.8
 
       - name: checkout code
         uses: actions/checkout@v2
 
-      - name: run flake8 python lint checks
-        run: flake8 --count --max-line-length=120 --exclude docs
+      - name: install dependencies
+        run: pip install .[dev]
+
+      - name: run bandit security checks
+        run: tox -e bandit
+

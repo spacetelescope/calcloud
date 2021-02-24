@@ -46,6 +46,7 @@ Plan = namedtuple("Plan", JobResources._fields + JobEnv._fields)
 # infrastructure allocation strategies.   The signature of the get_plan()
 # function is the main thing to worry about changing externally.
 
+
 def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0):
     """Given the resource requirements for a job,  map them onto appropriate
     requirements and Batch infrastructure needed to process the job.
@@ -123,6 +124,7 @@ def _get_job_resources(instr, ipppssoot, retries=0):
 def test():
     import doctest
     from calcloud import plan
+
     return doctest.testmod(plan, optionflags=doctest.ELLIPSIS)
 
 
