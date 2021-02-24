@@ -3,15 +3,14 @@ def lambda_handler(event, context):
     import os
     from calcloud import batch
     from calcloud import common
+    from calcloud import io
 
-    s3 = boto3.client("s3", config=common.retry_config)
-    local_batch_client = boto3.client("batch", config=common.retry_config)
-    cancelStates = ["RUNNING", "SUBMITTED", "PENDING", "RUNNABLE", "STARTING"]
-    queues = os.environ["JOBQUEUES"].split(",")
     # these types of messages on any deleted ipppssoot will be deleted
     cleanup_messages = ["processing-", "submit-", "processed-", "error-"]
-    # this will be the final state message for any deleted ipppssoot
-    deleted_message = "terminated-"
+    # these Batch job status states are cancellable
+    cancelStates = ["RUNNING", "SUBMITTED", "PENDING", "RUNNABLE", "STARTING"]
+    local_batch_client = boto3.client("batch", config=common.retry_config)
+    queues = os.environ["JOBQUEUES"].split(",")
     maxJobResults = 100
 
     print(event)
@@ -23,6 +22,8 @@ def lambda_handler(event, context):
     cancel_reason = f"operator posted {message} message"
 
     print(f"received {message}")
+
+    comm = io.get_io_bundle(bucket_name)
 
     # will be set if we hit a job to cancel, otherwise we won't enter the block to transition messages
     affected_dataset = False
@@ -53,28 +54,10 @@ def lambda_handler(event, context):
                         if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
                             affected_dataset = dataset
                     elif ipst == "all":
-                        new_cancel_message = f"/tmp/cancel-{dataset}"
-                        # upload_fileobj doesn't accept a write buffer, so we have to write and then open as read to upload
-                        # probably a better way to do this
-                        with open(new_cancel_message, "wb") as f:
-                            pass
-                        with open(new_cancel_message, "rb") as f:
-                            s3.upload_fileobj(f, bucket_name, f"messages/cancel-{dataset}")
-                        os.remove(new_cancel_message)
+                        comm.messages.put(f"cancel-{dataset}")
 
     if affected_dataset:
-        # cleanup other now-unwanted messages
         for cm in cleanup_messages:
-            cleanup_message = f"messages/{cm}{affected_dataset}"
-            s3.delete_object(Bucket=bucket_name, Key=cleanup_message)
-
-        # post final state message
-        tmp_message_name = f"/tmp/{deleted_message}{affected_dataset}"
-        with open(tmp_message_name, "wb") as f:
-            pass
-        with open(tmp_message_name, "rb") as f:
-            s3.upload_fileobj(f, bucket_name, f"messages/{deleted_message}{affected_dataset}")
-        os.remove(tmp_message_name)
-
-    # clean up the cancel message
-    s3.delete_object(Bucket=bucket_name, Key=message)
+            comm.messages.delete(f"{cm}-{affected_dataset}")
+        comm.messages.put(f"terminated-{affected_dataset}")
+        comm.messages.delete(f"cancel-{affected_dataset}")
