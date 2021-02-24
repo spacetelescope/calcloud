@@ -39,7 +39,7 @@ def main(ipppssoot, bucket_name):
         ctrl_msg["memory_retries"] = 0
 
     p = plan.get_plan(ipppssoot, bucket, input_path, ctrl_msg["memory_retries"])
-    
+
     print("Job Plan:", p)
 
     try:

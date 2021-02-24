@@ -18,7 +18,7 @@ def lambda_handler(event, context):
 
     comm.control.delete(ipst)  # biggest difference between "placed" and "rescue"
     comm.messages.delete("placed-" + ipst)
-    
+
     lambda_submit.main(ipst, bucket_name)
 
     return None

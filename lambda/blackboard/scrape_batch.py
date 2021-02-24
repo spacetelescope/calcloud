@@ -2,8 +2,6 @@ def lambda_handler(event, context):
     import boto3
     import os
     import uuid
-    import datetime
-    import time
     from calcloud import batch
 
     # various metadata definitions
@@ -95,11 +93,11 @@ def lambda_handler(event, context):
         s3.upload_fileobj(f, os.environ["BUCKET"], "blackboard/blackboardAWS.snapshot")
 
     try:
-        response = gateway.refresh_cache(FileShareARN=os.environ["FILESHARE"], FolderList=["/blackboard/"], Recursive=True)
+        response = gateway.refresh_cache(
+            FileShareARN=os.environ["FILESHARE"], FolderList=["/blackboard/"], Recursive=True
+        )
         print(response)
     except Exception as exc:
         print(str(exc))
-
-    
 
     return None

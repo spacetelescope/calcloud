@@ -95,7 +95,7 @@ class S3Io:
         """
         for s3_path in self.list_s3(prefixes):
             object = s3_path.split("/")[-1]
-            if object.endswith(".trigger"):  #  XXXX Undo trigger hack
+            if object.endswith(".trigger"):  # XXXX Undo trigger hack
                 object = object[: -len(".trigger")]
             yield object
 
