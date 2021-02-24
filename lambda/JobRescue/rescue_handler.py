@@ -3,7 +3,7 @@ from calcloud import hst
 from calcloud import lambda_submit
 
 
-RESCUE_TYPES = ["error", "terminated"]
+RESCUE_TYPES = ["error"]
 
 
 def lambda_handler(event, context):
