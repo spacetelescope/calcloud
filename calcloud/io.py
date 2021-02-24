@@ -7,6 +7,7 @@ import doctest
 import json
 
 from calcloud import s3
+from calcloud import hst
 
 # -------------------------------------------------------------
 
@@ -308,6 +309,22 @@ class MessageIo(S3Io):
                 yield f"{type}-{ipppssoot}" if ipppssoot else type
         else:
             yield prefix
+
+    def delete(self, prefixes):  # dangerous to support 'all' as default
+        """Given typical message prefixes, locate and delete the corresponding objects,
+        which are nominally S3 files of some kind.
+
+        Fully qualified messages of form type-ipppssoot are deleted immediately without
+        any check to determine they exist first.
+        """
+        for prefix in self.expand_all(prefixes):
+            parts = prefix.split("-")
+            if len(parts) == 2 and parts[0] in MESSAGE_TYPES and hst.IPPPSSOOT_RE.match(parts[1]):
+                # these don't have self.s3_path added yet
+                s3.delete_object(self.path(prefix), client=self.client)
+            else:
+                for path in self.list_s3(prefix):
+                    s3.delete_object(path, client=self.client)
 
 
 class InputsIo(S3Io):
