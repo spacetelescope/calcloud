@@ -77,7 +77,7 @@ class S3Io:
             for expanded in self.expand_prefix(prefix):
                 yield expanded
 
-    def list_s3(self, prefixes="all"):
+    def list_s3(self, prefixes="all", max_objects=s3.MAX_LIST_OBJECTS):
         """Given S3 `prefixes` described earlier, generate the sequence of
         full S3 paths corresponding to those prefixes,  list each path in
         S3,  and generate a single combined sequence of list results.
@@ -87,14 +87,14 @@ class S3Io:
         to list multiple objects.
         """
         for expanded in self.expand_all(prefixes):
-            yield from s3.list_objects(self.path(expanded), client=self.client)
+            yield from s3.list_objects(self.path(expanded), client=self.client, max_objects=max_objects)
 
-    def list(self, prefixes="all"):
+    def list(self, prefixes="all", max_objects=s3.MAX_LIST_OBJECTS):
         """Given S3 `prefixes` described earlier, use list_s3() to generate a
         sequence of listed objects and yield only the final prefix
         component of each listed object.
         """
-        for s3_path in self.list_s3(prefixes):
+        for s3_path in self.list_s3(prefixes, max_objects=max_objects):
             object = s3_path.split("/")[-1]
             if object.endswith(".trigger"):  # XXXX Undo trigger hack
                 object = object[: -len(".trigger")]
@@ -310,21 +310,42 @@ class MessageIo(S3Io):
         else:
             yield prefix
 
-    def delete(self, prefixes):  # dangerous to support 'all' as default
-        """Given typical message prefixes, locate and delete the corresponding objects,
+    def delete(self, prefixes, check_exists=True):  # dangerous to support 'all' as default
+        """Given typical *message* prefixes, locate and delete the corresponding objects,
         which are nominally S3 files of some kind.
 
-        Fully qualified messages of form type-ipppssoot are deleted immediately without
-        any check to determine they exist first.
+        If check_exists is True and an expanded prefix looks like type-ipppssoot, then
+        check to see if that message exists with s3.get() before trying
+        s3.delete().  When most expansions of all-ipppssoot don't exist,  they only pay
+        1/12 the cost of an unneeded delete making it reasonably cheap to use all-ipppssoot
+        even when most types don't exist.
+
+        If it's expected that most expansions do exist,  then set check_exists=False to avoid
+        unnecessary tests for messges known to exist,  just delete them.
         """
         for prefix in self.expand_all(prefixes):
             parts = prefix.split("-")
             if len(parts) == 2 and parts[0] in MESSAGE_TYPES and hst.IPPPSSOOT_RE.match(parts[1]):
-                # these don't have self.s3_path added yet
-                s3.delete_object(self.path(prefix), client=self.client)
+                try:
+                    # these don't have self.s3_path added yet
+                    s3_path = self.path(prefix)
+                    if check_exists:  # don't try to delete
+                        s3.get_object(s3_path, client=self.client)
+                    s3.delete_object(s3_path, client=self.client)
+                except self.client.exceptions.NoSuchKey:
+                    pass  # Catch any failed gets
             else:
                 for path in self.list_s3(prefix):
                     s3.delete_object(path, client=self.client)
+
+    def delete_literal(self, msg):
+        """Given the name of a message `msg`,  delete it,  and in the case of "all-xxxx" or "xxxx-all"
+        messages,  do not expand "all" first.
+        """
+        parts = msg.split("-")
+        assert parts[0] in MESSAGE_TYPES + "all", f"Bad message type for message {msg}"
+        assert hst.IPPPSSOOT_RE.match(parts[1]) or parts[1] == "all", f"Bad dataset for message {msg}"
+        s3.delete_object(self.path(msg), client=self.client)
 
 
 class InputsIo(S3Io):

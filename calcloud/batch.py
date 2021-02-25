@@ -11,17 +11,26 @@ from . import common
 
 JOB_STATUSES = tuple("SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED".split("|"))
 
+DEFAULT_CLIENT = None
 
-def list_jobs(queue, collect_statuses=JOB_STATUSES):
+
+def get_default_client():
+    global DEFAULT_CLIENT
+    if DEFAULT_CLIENT is None:
+        DEFAULT_CLIENT = boto3.client("batch", config=common.retry_config)
+    return DEFAULT_CLIENT
+
+
+def list_jobs(queue, collect_statuses=JOB_STATUSES, client=None):
     jobs = []
     for status in collect_statuses:
-        jobs.extend(_list_jobs(queue, status))
+        jobs.extend(_list_jobs(queue, status, client))
     return jobs
 
 
-def _list_jobs(queue, status):
-    batch = boto3.client("batch", config=common.retry_config)
-    paginator = batch.get_paginator("list_jobs")
+def _list_jobs(queue, status, client=None):
+    client = client or get_default_client()
+    paginator = client.get_paginator("list_jobs")
     page_iterator = paginator.paginate(jobQueue=queue, jobStatus=status)
     jobs = []
     for page in page_iterator:
@@ -29,9 +38,9 @@ def _list_jobs(queue, status):
     return [_format_job_listing(job) for job in jobs]
 
 
-def _list_jobs_iterator(queue, status, PageSize=10):
-    batch = boto3.client("batch", config=common.retry_config)
-    paginator = batch.get_paginator("list_jobs")
+def _list_jobs_iterator(queue, status, PageSize=10, client=None):
+    client = client or get_default_client()
+    paginator = client.get_paginator("list_jobs")
     return paginator.paginate(jobQueue=queue, jobStatus=status, PaginationConfig={"PageSize": PageSize})
 
 
@@ -56,11 +65,11 @@ def describe_jobs_of_queue(queue, statuses=JOB_STATUSES):
     return describe_jobs(job_names)
 
 
-def describe_jobs(job_names):
-    batch = boto3.client("batch", config=common.retry_config)
+def describe_jobs(job_names, client=None):
+    client = client or get_default_client()
     descriptions = []
     for i in range(0, len(job_names), 100):
-        block = batch.describe_jobs(jobs=job_names[i : i + 100])
+        block = client.describe_jobs(jobs=job_names[i : i + 100])
         descriptions.extend(block["jobs"])
     return descriptions
 
@@ -74,6 +83,18 @@ def _get_outputter(output_format):
             # print(yaml.dump(results))
 
     return func
+
+
+def terminate(job_id, ipppssoot, reason=None, client=None):
+    """Terminate Batch job `job_id` associated with `ipppsssoot` using Batch `client`.
+
+    Return True IFF client.terminate_job() call terminates a job.
+    """
+    client = client or get_default_client()
+    response = client.terminate_job(jobId=job_id, reason="batch.terminate called")
+    print(response)
+    print(f"terminate response: {response['ResponseMetadata']['HTTPStatusCode']}: {job_id} - {ipppssoot}")
+    return response["ResponseMetadata"]["HTTPStatusCode"] == 200
 
 
 def main(args=None):

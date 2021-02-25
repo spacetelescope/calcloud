@@ -15,12 +15,12 @@ def lambda_handler(event, context):
     exit_code = event["detail"]["attempts"][0]["container"]["exitCode"]
 
     comm = io.get_io_bundle(bucket)
-    comm.messages.delete("all-" + ipppssoot)
 
     try:
         ctrl_msg = comm.control.get(ipppssoot)
     except comm.control.client.exceptions.NoSuchKey:
-        ctrl_msg = dict()
+        print("Job for", ipppssoot, "already terminated.  No control file.")
+        return
 
     ctrl_msg["ipppssoot"] = ipppssoot
     ctrl_msg["bucket"] = bucket
@@ -28,10 +28,6 @@ def lambda_handler(event, context):
     ctrl_msg["job_name"] = job_name
     ctrl_msg["fail_reason"] = fail_reason
     ctrl_msg["exit_code"] = exit_code
-
-    #  XXXXX Automatic rescue with increasing memory retry count
-    if "memory_retries" not in ctrl_msg:
-        ctrl_msg["memory_retries"] = 0
 
     continuation_msg = "error-" + ipppssoot
     if fail_reason.startswith("OutOfMemoryError:"):
@@ -45,6 +41,7 @@ def lambda_handler(event, context):
         print("Failure for", ipppssoot, "no automatic retry for", fail_reason)
 
     # XXXX Since retry count used in planning, control output must precede rescue message
-    comm.control.put(ipppssoot, ctrl_msg)
-    comm.messages.put(continuation_msg)
     print(ctrl_msg)
+    comm.control.put(ipppssoot, ctrl_msg)
+    comm.messages.delete("all-" + ipppssoot)
+    comm.messages.put(continuation_msg)

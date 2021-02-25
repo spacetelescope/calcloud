@@ -44,6 +44,8 @@ def get_default_client():
 
 DEFAULT_BUCKET = os.environ.get("S3_PROCESSING_BUCKET", "s3://calcloud-UNDEFINED-bucket")
 
+MAX_LIST_OBJECTS = 10 ** 7
+
 # -------------------------------------------------------------
 
 
@@ -75,7 +77,7 @@ def _s3_setup(client, s3_filepath):
 
     Returns client, bucket_name, object_name
     """
-    client = client or boto3.client("s3")
+    client = client or get_default_client()
     bucket_name, object_name = s3_split_path(s3_filepath)
     return client, bucket_name, object_name
 
@@ -93,7 +95,7 @@ def upload_filepath(filepath, s3_filepath, client=None):
     s3_filepath : str
         Full s3 path to object to upload,  including the bucket prefix,
         e.g. s3://hstdp/batch-1-2020-06-11T19-35-51/acs/j8cb010b0/process.txt
-    client : boto3.client('s3')
+    client : get_default_client()
         Optional boto3 s3 client to re-use for multiple files.
 
     Returns
@@ -114,7 +116,7 @@ def download_filepath(filepath, s3_filepath, client=None):
     s3_filepath : str
         Full s3 path to object to download,  including the bucket prefix,
         e.g. s3://hstdp/batch-1-2020-06-11T19-35-51/acs/j8cb010b0/process.txt
-    client : boto3.client('s3')
+    client : get_default_client()
         Optional boto3 s3 client to re-use for multiple files.
     Returns
     ------
@@ -136,13 +138,13 @@ def copy_object(s3_filepath_from, s3_filepath_to, client=None):
         e.g. s3://hstdp/batch-1-2020-06-11T19-35-51/acs/j8cb010b0/process.txt
     s3_filepath_to : str
         s3 destination object path.
-    client : boto3.client('s3')
+    client : get_default_client()
         Optional boto3 s3 client to re-use for multiple files.
     Returns
     ------
     None
     """
-    client = client or boto3.client("s3")
+    client = client or get_default_client()
     from_bucket_name, from_object_name = s3_split_path(s3_filepath_from)
     to_bucket_name, to_object_name = s3_split_path(s3_filepath_to)
     return client.copy_object(
@@ -167,13 +169,13 @@ def move_object(s3_filepath_from, s3_filepath_to, client=None):
         e.g. s3://hstdp/batch-1-2020-06-11T19-35-51/acs/j8cb010b0/process.txt
     s3_filepath_to : str
         s3 destination object path.
-    client : boto3.client('s3')
+    client : get_default_client()
         Optional boto3 s3 client to re-use for multiple files.
     Returns
     ------
     None
     """
-    client = client or boto3.client("s3")
+    client = client or get_default_client()
     copy_object(s3_filepath_from, s3_filepath_to, client)
     delete_object(s3_filepath_from, client)
 
@@ -193,7 +195,7 @@ def download_objects(dirpath, s3_dirpath, max_objects=1000, client=None):
     s3_dirpath : str
         Full s3 path to directory to download,  including the bucket prefix,
         e.g. s3://hstdp/batch-1-2020-06-11T19-35-51/data/acs/j8cb010b0
-    client : boto3.client('s3')
+    client : get_default_client()
         Optional boto3 s3 client to re-use for multiple files.
     max_objects : int
         Max number of files to list and download.
@@ -203,7 +205,7 @@ def download_objects(dirpath, s3_dirpath, max_objects=1000, client=None):
     downloads : list (str)
        file paths of downloaded files.
     """
-    client = client or boto3.client("s3")
+    client = client or get_default_client()
     downloads = []
     for s3_filepath in list_objects(s3_dirpath, max_objects=max_objects, client=client):
         local_filepath = os.path.abspath(s3_filepath.replace(s3_dirpath, dirpath))
@@ -232,7 +234,7 @@ def upload_directory(dirpath, s3_dirpath):
     raise NotImplementedError("upload_directory hasn't been implemented yet.")
 
 
-def list_objects(s3_prefix, client=None, max_objects=10 ** 6):
+def list_objects(s3_prefix, client=None, max_objects=MAX_LIST_OBJECTS):
     """Given `s3_dirpath_prefix` s3 bucket and prefix to list, yield the full
     s3 paths of every object in the associated bucket which match the prefix.
 
@@ -241,7 +243,7 @@ def list_objects(s3_prefix, client=None, max_objects=10 ** 6):
     s3_prefix : str
         Full s3 path to directory and prefix to list:
         e.g. s3://hstdp/messages/dataset-processed
-    client : boto3.client('s3')
+    client : get_default_client()
         Optional boto3 s3 client to re-use for multiple files.
     max_objects : int
         Max number of S3 objects to return.
@@ -270,7 +272,7 @@ def get_object(s3_filepath, client=None, encoding="utf-8"):
     s3_dirpath_prefix : str
         Full s3 path to object to fetch
         e.g. s3://hstdp/batch-1-2020-06-11T19-35-51/acs/j8cb010b0/process.txt
-    client : boto3.client('s3')
+    client : get_default_client()
         Optional boto3 s3 client to re-use for multiple files.
     encoding : str
         Encoding to decode object contents with.  Default 'utf-8'.
@@ -306,7 +308,7 @@ def delete_object(s3_filepath, client=None):
     s3_filepath : str
         Full s3 path to object to delete,  including the bucket prefix,
         e.g. s3://hstdp/batch-1-2020-06-11T19-35-51/acs/j8cb010b0/process.txt
-    client : boto3.client('s3')
+    client : get_default_client()
         Optional boto3 s3 client to re-use for multiple files.
     Returns
     ------

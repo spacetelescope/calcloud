@@ -3,7 +3,9 @@ from calcloud import hst
 from calcloud import lambda_submit
 
 
-RESCUE_TYPES = ["error"]
+RESCUE_TYPES = ["error", "terminated"]
+
+MAX_PER_LAMBDA = 100
 
 
 def lambda_handler(event, context):
@@ -17,20 +19,23 @@ def lambda_handler(event, context):
     assert hst.IPPPSSOOT_RE.match(ipst) or ipst == "all", "Bad ipppssoot value: " + repr(ipst)
 
     comm = io.get_io_bundle(bucket_name)
+
+    fail_ipsts = set()
     if ipst == "all":
         print("Rescuing all")
-        comm.messages.delete("rescue-all")
-        fail_ipsts = set()
         for type in RESCUE_TYPES:
-            ipsts = [msg.split("-")[-1] for msg in comm.messages.list(f"{type}-all")]
+            ipsts = [msg.split("-")[-1] for msg in comm.messages.list(f"{type}-all", max_objects=MAX_PER_LAMBDA)]
             fail_ipsts |= set(ipsts)
-        for this in fail_ipsts:
+        for this in fail_ipsts:  # call lambdas for paralellism
             comm.messages.put(f"rescue-{this}")
+        if len(fail_ipsts) == MAX_PER_LAMBDA:
+            comm.messages.put("rescue-all")  # re-trigger next 0 <= x <= 100 rescues,  don't bother deleting first
+        else:
+            comm.messages.delete_literal("rescue-all")  # delete 'rescue-all' only,  not individual ipppssoot versions
     else:
         print("Rescuing", ipst)
         comm.outputs.delete(ipst)
         comm.messages.delete(f"all-{ipst}")
-        if comm.inputs.listl(ipst):
-            lambda_submit.main(ipst, bucket_name)
-        else:
-            print("No inputs for", ipst, "cannot rescue.")
+        # control file required for retries
+        # inputs required for retries
+        lambda_submit.main(ipst, bucket_name)

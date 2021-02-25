@@ -32,11 +32,7 @@ def main(ipppssoot, bucket_name):
     try:
         ctrl_msg = comm.control.get(ipppssoot)
     except comm.control.client.exceptions.NoSuchKey:
-        ctrl_msg = dict()
-
-    # memory_retries is incremented in the batch failure event if it's a memory fail
-    if "memory_retries" not in ctrl_msg:
-        ctrl_msg["memory_retries"] = 0
+        ctrl_msg = dict(memory_retries=0, job_id=None)
 
     p = plan.get_plan(ipppssoot, bucket, input_path, ctrl_msg["memory_retries"])
 
@@ -44,11 +40,12 @@ def main(ipppssoot, bucket_name):
 
     try:
         response = submit.submit_job(p)
-        ctrl_msg["job_id"] = response["jobId"]
     except Exception as e:
         print(e)
         comm.messages.put("error-" + ipppssoot)
-        return
+        return False
 
+    ctrl_msg["job_id"] = response["jobId"]
     comm.control.put(ipppssoot, ctrl_msg)
     comm.messages.put("submit-" + ipppssoot)
+    return True
