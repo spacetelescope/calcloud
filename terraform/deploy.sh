@@ -3,8 +3,8 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="0.1.0"
-CALDP_VER="0.1.1"
+CALCLOUD_VER="0.2.0"
+CALDP_VER="0.1.2"
 CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20201208_DRZ_final"
 # this is the tag that the image will have in AWS ECR
 CALDP_IMAGE_TAG="latest"
@@ -23,7 +23,7 @@ rm "v$CALCLOUD_VER.tar.gz"
 # caldp source download/unpack
 # github's tarballs don't work with pip install, so we have to clone and checkout the tag
 git clone https://github.com/spacetelescope/caldp.git
-cd caldp && git checkout tags/v${CALDP_VER} && cd ..
+cd caldp && git fetch --all --tags && git checkout tags/v${CALDP_VER} && cd ..
 
 # get a couple of things from AWS ssm
 # the env, i.e. sb,dev,test,prod
@@ -63,6 +63,19 @@ docker push ${CALDP_DOCKER_IMAGE}
 cd ../calcloud-${CALCLOUD_VER}/terraform
 # manual confirmation required
 awsudo $ADMIN_ARN terraform apply
+
+# make sure needed prefixes exist in primary s3 bucket
+# pulls the bucket name in from a tag called Name
+bucket_url_response=`awsudo $ADMIN_ARN terraform state show aws_s3_bucket.calcloud | grep "Name"`
+bucket_url=${bucket_url_response##*=}
+# removes double quotes from variable
+bucket_url=`echo $bucket_url | tr -d '"'`
+
+awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key messages/
+awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key inputs/
+awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key outputs/
+awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key control/
+awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key blackboard/
 
 cd $HOME
 rm -rf $TMP_INSTALL_DIR
