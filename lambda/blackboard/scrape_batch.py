@@ -1,7 +1,7 @@
 def lambda_handler(event, context):
     import boto3
     import os
-    import uuid
+    import tempfile
     from calcloud import batch
 
     # various metadata definitions
@@ -26,7 +26,7 @@ def lambda_handler(event, context):
     queues = os.environ["JOBQUEUES"].split(",")
     # use a random tmp filename just in case there's ever a time where two lambdas end up running together
     # that won't matter for the snapshot, generally, but the tmp file could get wonky without unique filenames
-    filename = f"/tmp/{str(uuid.uuid4())}"
+    fd, temppath = tempfile.mkstemp()
 
     # some params that could be tuned over time
     default_timestamp = 0
@@ -36,7 +36,7 @@ def lambda_handler(event, context):
     s3 = boto3.client("s3")
     gateway = boto3.client("storagegateway")
 
-    with open(filename, "w") as fout:
+    with os.fdopen(fd, "w") as fout:
         # write the header
         out_str = "|".join(header_names) + "\n"
         fout.write(out_str)
@@ -89,9 +89,10 @@ def lambda_handler(event, context):
                         ]
                         fout.write("|".join(map(str, out_list)) + "\n")
 
-    with open(filename, "rb") as f:
+    with open(temppath, "rb") as f:
         s3.upload_fileobj(f, os.environ["BUCKET"], "blackboard/blackboardAWS.snapshot")
 
+    os.remove(temppath)
     try:
         response = gateway.refresh_cache(
             FileShareARN=os.environ["FILESHARE"], FolderList=["/blackboard/"], Recursive=True
