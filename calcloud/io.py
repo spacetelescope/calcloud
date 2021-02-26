@@ -18,6 +18,7 @@ __all__ = [
     "ControlIo",
     "InputsIo",
     "OutputsIo",
+    "MetadataIo",
 ]
 
 # -------------------------------------------------------------
@@ -320,6 +321,16 @@ class InputsIo(S3Io):
     """
 
 
+class ControlIo(S3Io):
+    """ControlIo provides simple standard operations on the processing
+    control store.
+
+    >>> comm = get_io_bundle()
+    >>> comm.metadata.path('lcw303cjq/env') #doctest: +ELLIPSIS
+    's3://.../comtrol/lcw303cjq/env'
+    """
+
+
 class OutputsIo(S3Io):
     """OutputsIo provides simple standard operations on the processing
     outputs store.
@@ -346,19 +357,8 @@ class OutputsIo(S3Io):
     """
 
 
-class ControlIo(S3Io):
-    """Provides simple standard operations on the processing control store,
-    transparently serializing/de-serializing Python objects as a JSON
-    encoded payload.
-
-    >>> comm = get_io_bundle()
-
-    >>> obj = {'job_params': {'memory': 1500, 'vcpus': 2}, 'job_id': '1cc5817c-8d93-4119-bbd4-25407ee233b5', 'retry': 0}
-    >>> comm.control.put('lcw303cjq', obj)
-
-    >>> comm.control.get('lcw303cjq')
-    {'job_params': {'memory': 1500, 'vcpus': 2}, 'job_id': '1cc5817c-8d93-4119-bbd4-25407ee233b5', 'retry': 0}
-    """
+class JsonIo(S3Io):
+    """Serializes/deserializes objects to JSON when putting/getting from S3."""
 
     def get(self, ipppssoot):
         text = super().get(ipppssoot)
@@ -370,6 +370,28 @@ class ControlIo(S3Io):
         super().put({ipppssoot: text})
 
 
+class MetadataIo(JsonIo):
+    """Provides simple standard operations on the processing job control metadata,
+    transparently serializing/de-serializing Python objects as a JSON encoded payload.
+
+    Metadata is stored in the ipppssoot control folder as s3://.../control/ipppssoot/job.json
+
+    >>> comm = get_io_bundle()
+
+    >>> obj = {'job_params': {'memory': 1500, 'vcpus': 2}, 'job_id': '1cc5817c-8d93-4119-bbd4-25407ee233b5', 'retry': 0}
+    >>> comm.metadata.put('lcw303cjq', obj)
+
+    >>> list(comm.metadata.list_s3('lcw303cjq'))  #doctest: +ELLIPSIS
+    ['s3://.../control/lcw303cjq/job.json']
+
+    >>> comm.metadata.get('lcw303cjq')
+    {'job_params': {'memory': 1500, 'vcpus': 2}, 'job_id': '1cc5817c-8d93-4119-bbd4-25407ee233b5', 'retry': 0}
+    """
+
+    def path(self, ipppssoot):
+        return self.s3_path + f"/{ipppssoot}/job.json"
+
+
 # -------------------------------------------------------------
 
 
@@ -379,10 +401,13 @@ class IoBundle:
     def __init__(self, bucket=s3.DEFAULT_BUCKET, client=None):
         self.bucket = bucket
         self.client = client or s3.get_default_client()
-        self.messages = MessageIo(self.bucket + "/messages", self.client)
-        self.inputs = InputsIo(self.bucket + "/inputs", self.client)
-        self.outputs = OutputsIo(self.bucket + "/outputs", self.client)
-        self.control = ControlIo(self.bucket + "/control", self.client)
+        self.messages = MessageIo(
+            self.bucket + "/messages", self.client
+        )  # i/o to message files of the form type-ipppssoot + all
+        self.inputs = InputsIo(self.bucket + "/inputs", self.client)  # simple text inputs i/o, abitrary file prefix
+        self.outputs = OutputsIo(self.bucket + "/outputs", self.client)  # simple text outputs i/o, abitrary file prefix
+        self.control = ControlIo(self.bucket + "/control", self.client)  # simple text control i/o, abitrary file prefix
+        self.metadata = MetadataIo(self.bucket + "/control", self.client)  # serialized object job control metadata i/o
 
 
 def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):

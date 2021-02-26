@@ -18,8 +18,8 @@ def lambda_handler(event, context):
     comm.messages.delete("all-" + ipppssoot)
 
     try:
-        ctrl_msg = comm.control.get(ipppssoot)
-    except comm.control.client.exceptions.NoSuchKey:
+        ctrl_msg = comm.metadata.get(ipppssoot)
+    except comm.metadata.client.exceptions.NoSuchKey:
         ctrl_msg = dict()
 
     ctrl_msg["ipppssoot"] = ipppssoot
@@ -45,6 +45,6 @@ def lambda_handler(event, context):
         print("Failure for", ipppssoot, "no automatic retry for", fail_reason)
 
     # XXXX Since retry count used in planning, control output must precede rescue message
-    comm.control.put(ipppssoot, ctrl_msg)
+    comm.metadata.put(ipppssoot, ctrl_msg)
     comm.messages.put(continuation_msg)
     print(ctrl_msg)
