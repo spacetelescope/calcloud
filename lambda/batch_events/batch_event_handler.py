@@ -17,8 +17,8 @@ def lambda_handler(event, context):
     comm = io.get_io_bundle(bucket)
 
     try:
-        ctrl_msg = comm.control.get(ipppssoot)
-    except comm.control.client.exceptions.NoSuchKey:
+        ctrl_msg = comm.metadata.get(ipppssoot)
+    except comm.metadata.client.exceptions.NoSuchKey:
         print("Job for", ipppssoot, "already terminated.  No control file.")
         return
 
@@ -42,6 +42,6 @@ def lambda_handler(event, context):
 
     # XXXX Since retry count used in planning, control output must precede rescue message
     print(ctrl_msg)
-    comm.control.put(ipppssoot, ctrl_msg)
+    comm.metadata.put(ipppssoot, ctrl_msg)
     comm.messages.delete("all-" + ipppssoot)
     comm.messages.put(continuation_msg)

@@ -30,8 +30,8 @@ def main(ipppssoot, bucket_name):
     ipppssoot = ipppssoot.lower()
 
     try:
-        ctrl_msg = comm.control.get(ipppssoot)
-    except comm.control.client.exceptions.NoSuchKey:
+        ctrl_msg = comm.metadata.get(ipppssoot)
+    except comm.metadata.client.exceptions.NoSuchKey:
         ctrl_msg = dict(memory_retries=0, job_id=None)
 
     p = plan.get_plan(ipppssoot, bucket, input_path, ctrl_msg["memory_retries"])
@@ -46,6 +46,6 @@ def main(ipppssoot, bucket_name):
         return False
 
     ctrl_msg["job_id"] = response["jobId"]
-    comm.control.put(ipppssoot, ctrl_msg)
+    comm.metadata.put(ipppssoot, ctrl_msg)
     comm.messages.put("submit-" + ipppssoot)
     return True
