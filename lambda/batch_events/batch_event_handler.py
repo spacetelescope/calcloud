@@ -1,3 +1,22 @@
+"""The batch event lambda currently processes failure events for AWS Batch
+issued through CloudWatch.
+
+Currently failure events are classified as "memory related" and "other" where
+memory related failures results in automatic retries if:
+
+1. The job control metadata does not indicate the job was terminated/cancelled.
+
+2. The job control memory_retries count hasn't exceeded the maximum.
+
+Job control data is updated with a new retry count and other information from
+the Batch event.
+
+All messages for the failed ipppssoot are deleted.
+
+A rescue message is sent to trigger the rescue lambda for qualifying
+memory related failures, otherwise an error-ipppssoot message is sent.
+"""
+
 import os
 
 from calcloud import io
@@ -16,32 +35,27 @@ def lambda_handler(event, context):
 
     comm = io.get_io_bundle(bucket)
 
-    try:
-        ctrl_msg = comm.metadata.get(ipppssoot)
-    except comm.metadata.client.exceptions.NoSuchKey:
-        print("Job for", ipppssoot, "already terminated.  No control file.")
-        return
-
-    ctrl_msg["ipppssoot"] = ipppssoot
-    ctrl_msg["bucket"] = bucket
-    ctrl_msg["job_id"] = job_id
-    ctrl_msg["job_name"] = job_name
-    ctrl_msg["fail_reason"] = fail_reason
-    ctrl_msg["exit_code"] = exit_code
+    metadata = comm.xdata.get(ipppssoot)
+    metadata["ipppssoot"] = ipppssoot
+    metadata["bucket"] = bucket
+    metadata["job_id"] = job_id
+    metadata["job_name"] = job_name
+    metadata["fail_reason"] = fail_reason
+    metadata["exit_code"] = exit_code
 
     continuation_msg = "error-" + ipppssoot
     if fail_reason.startswith("OutOfMemoryError:"):
-        if ctrl_msg["memory_retries"] < int(os.environ["MAX_MEMORY_RETRIES"]):
-            print("Automatic rescue of", ipppssoot, "with memory retry count", ctrl_msg["memory_retries"])
-            ctrl_msg["memory_retries"] += 1
+        if not metadata["terminated"] and metadata["memory_retries"] < int(os.environ["MAX_MEMORY_RETRIES"]):
+            print("Automatic rescue of", ipppssoot, "with memory retry count", metadata["memory_retries"])
+            metadata["memory_retries"] += 1
             continuation_msg = "rescue-" + ipppssoot
         else:
-            print("Automatic memory retries for", ipppssoot, "exhausted at", ctrl_msg["memory_retries"])
+            print("Automatic memory retries for", ipppssoot, "exhausted at", metadata["memory_retries"])
     else:
         print("Failure for", ipppssoot, "no automatic retry for", fail_reason)
 
     # XXXX Since retry count used in planning, control output must precede rescue message
-    print(ctrl_msg)
-    comm.metadata.put(ipppssoot, ctrl_msg)
+    print(metadata)
+    comm.xdata.put(ipppssoot, metadata)
     comm.messages.delete("all-" + ipppssoot)
     comm.messages.put(continuation_msg)

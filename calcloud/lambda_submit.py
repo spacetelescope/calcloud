@@ -1,51 +1,56 @@
-"""This module is the primary path for job submission,  for both initial "placed"
-submissions and "rescue" submissions which are triggered by the corresponding
-lambdas.
+"""This module is the primary path for job submission, for both
+initial "placed" submissions and "rescue" submissions which are
+triggered by the corresponding lambdas.
 
 The key difference between "placed" and "rescue" submissions is that
-rescue submissions track failure metadata in a control file,
-e.g. retry count, while placed submissions clear all messages and
-control data.
+placed submissions reset job control metadata to initial conditions
+(primarily no retries yet) while rescue submissions merely use the
+existing control data to drive job planning and job definition
+(memory allocation) selection.
 
-Another primary source of control information is the batch event
-lambda which responds to CloudWatch failure events for Batch jobs.
-For the first several retries, the fail event increments the retry
-counter, stores other metadata, and triggers a rescue.  After a few
-retries not documented here, the failure lambda stops attempting to
-rescue.   This info is all stored in a control file.
+See the batch_event handler, rescue handler, and s3_trigger
+handlers for more information on how jobs are initiated and
+retried.
 """
 
 from . import plan
 from . import submit
-from . import io
 
 
-def main(ipppssoot, bucket_name):
+def main(comm, ipppssoot, bucket_name):
+    """Submit the job for `ipppssoot` using `bucket_name` and io bundle `comm`.
 
-    comm = io.get_io_bundle(bucket_name)
-
-    bucket = f"s3://{bucket_name}"
-    input_path = f"{bucket}/inputs"
-
-    ipppssoot = ipppssoot.lower()
-
+    1. Deletes all messages for `ipppssoot`.
+    2. Creates a metadata file for `ipppssoot` if it doesn't exist already.
+    3. Computes a job Plan leveraging the retry counter in the metadata file.
+    4. Submits the Plan creating a Batch job.
+    5. Saves the job_id reported by the Batch submission in the metadata file.
+    6. Nominally sends "submit-ipppssoot" message.
+    7. On error anywhere, sends the "error-ipppssoot" message.
+    """
+    comm.messages.delete("all-{ipppssoot}")
     try:
-        ctrl_msg = comm.metadata.get(ipppssoot)
-    except comm.metadata.client.exceptions.NoSuchKey:
-        ctrl_msg = dict(memory_retries=0, job_id=None)
+        _main(comm, ipppssoot, bucket_name)
+        comm.messages.put("submit-{ipppssoot}")
+    except Exception as exc:
+        print("Exception in lambda_submit.main for", ipppssoot, "=", exc)
+        comm.messages.put(f"error-{ipppssoot}")
 
-    p = plan.get_plan(ipppssoot, bucket, input_path, ctrl_msg["memory_retries"])
+
+def _main(comm, ipppssoot, bucket_name):
+    """Core job submission function factored out of main() to clarify exception handling."""
+    try:
+        metadata = comm.xdata.get(ipppssoot)  # retry/rescue path
+    except comm.xdata.client.exceptions.NoSuchKey:
+        metadata = dict(memory_retries=0, job_id=None, terminated=False)
+
+    p = plan.get_plan(ipppssoot, bucket_name, f"{bucket_name}/inputs", metadata["memory_retries"])
 
     print("Job Plan:", p)
 
-    try:
-        response = submit.submit_job(p)
-    except Exception as e:
-        print(e)
-        comm.messages.put("error-" + ipppssoot)
-        return False
+    response = submit.submit_job(p)
 
-    ctrl_msg["job_id"] = response["jobId"]
-    comm.metadata.put(ipppssoot, ctrl_msg)
-    comm.messages.put("submit-" + ipppssoot)
-    return True
+    print("Submitted job for", ipppssoot, "as ID", response["job_id"])
+
+    metadata["job_id"] = response["jobId"]
+    comm.xdata.put(ipppssoot, metadata)

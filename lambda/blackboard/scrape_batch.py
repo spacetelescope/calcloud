@@ -4,7 +4,7 @@ def lambda_handler(event, context):
     import tempfile
     from calcloud import batch
 
-    # various metadata definitions
+    # various xdata definitions
     jobStatuses = ["FAILED", "SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING", "SUCCEEDED"]
     # these are the column names in the blackboardAWS table in the owl DB on-premise
     header_names = [
@@ -69,7 +69,7 @@ def lambda_handler(event, context):
 
                         # getting the LogStream requires calling describe_jobs which is very slow.
                         # for the time being we provide a None value, in the hopes we can find
-                        # a way to get it into the metadata in the future.
+                        # a way to get it into the xdata in the future.
                         LogStream = "None"
                         # writing out the status of the job
                         s3Path = f"{os.environ['BUCKET']}/outputs/{dataset}/"
