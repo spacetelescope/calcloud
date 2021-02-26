@@ -326,8 +326,8 @@ class ControlIo(S3Io):
     control store.
 
     >>> comm = get_io_bundle()
-    >>> comm.metadata.path('lcw303cjq/env') #doctest: +ELLIPSIS
-    's3://.../comtrol/lcw303cjq/env'
+    >>> comm.control.path('lcw303cjq/env') #doctest: +ELLIPSIS
+    's3://.../control/lcw303cjq/env'
     """
 
 
