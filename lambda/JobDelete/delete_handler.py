@@ -15,12 +15,10 @@ When an individual cancel-ipppssoot message is processed:
 The control metadata of the cancelled ipppssoot is updated,  not deleted, in
 order to short circuit memory based retries on subsequent rescues.
 """
-
 from calcloud import batch
 from calcloud import io
 from calcloud import s3
 from calcloud import hst
-
 
 CLEANUP_TYPES = ["processing", "submit", "processed", "error"]
 
@@ -34,25 +32,39 @@ def lambda_handler(event, context):
     if ipst == "all":
         # Delete exactly the cancel-all message,  not every ipppssoot
         comm.messages.delete_literal("cancel-all")
-        ipppssoots, already_cancelled = set(), set()
-        for message in comm.messages.listl("all"):
-            kind, ipst = message.split("-")
-            if not hst.IPPPSSOOT_RE.match(ipst):
-                continue
-            if kind == "cancel":
-                already_cancelled.add(ipst)
-            else:
-                ipppssoots.add(ipst)
-        comm.messages.broadcast("cancel", ipppssoots - already_cancelled)
-    else:
-        metadata = comm.xdata.get(ipst)
-        metadata["terminated"] = True
-        comm.xdata.put(ipst, metadata)
+
+        # Define jobs as anything with a control metadata file
+        ipppssoots = comm.xdata.listl("all")
+        comm.messages.broadcast("cancel", ipppssoots)
+
+        # Pick up any orphan jobs by listing them all. These deletes compete with ipppssoots
+        job_ids = batch.get_job_ids()
+        comm.messages.broadcast("cancel", job_ids)
+
+    elif hst.IPPPSSOOT_RE.match(ipst):
+        # Terminate a single ipppssoot
+        try:
+            metadata = comm.xdata.get(ipst)
+            metadata["terminated"] = True
+            comm.xdata.put(ipst, metadata)
+        except Exception as exc:
+            print("Exception updating control file for", ipst, "was", exc)
 
         try:
             batch.terminate_job(metadata["job_id"], ipst, "Operator cancelled")
         except Exception as exc:
             print("Exception terminating", ipst, "was", exc)
 
-        comm.messages.delete(f"all-{ipst}")
-        comm.messages.put(f"terminated-{ipst}")
+        try:
+            comm.messages.delete(f"all-{ipst}")
+            comm.messages.put(f"terminated-{ipst}")
+        except Exception as exc:
+            print("Exception updating messages for", ipst, "to terminated was", exc)
+    elif batch.JOB_ID_RE.match(ipst):
+        try:
+            batch.terminate_job(ipst, ipst, "cancel-all terminated job directly")
+        except Exception as exc:
+            print("Exception terminating", ipst, "was", exc)
+        comm.messages.delete(f"cancel-{ipst}")
+    else:
+        print("Bad cancel ID", ipst)

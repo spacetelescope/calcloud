@@ -24,13 +24,13 @@ def lambda_handler(event, context):
 
     if ipst == "all":
         print("Rescuing all")
+
         comm.messages.delete_literal("rescue-all")  # don't interpret all as existing ipppssoots
-        rescues = set()
-        for message in comm.messages.list(RESCUE_TYPES):
-            kind, ipst = message.split("-")
-            rescues.add(ipst)
+
+        rescues = comm.messages.ids(RESCUE_TYPES)
+
         comm.messages.broadcast("rescue", rescues)
     else:
         print("Rescuing", ipst)
-        comm.outputs.delete(ipst)
+        # comm.outputs.delete(ipst)
         lambda_submit.main(comm, ipst, bucket_name)

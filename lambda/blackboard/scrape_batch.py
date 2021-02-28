@@ -3,8 +3,9 @@ def lambda_handler(event, context):
     import os
     import tempfile
     from calcloud import batch
+    from calcloud import common
 
-    # various xdata definitions
+    # various metadata definitions
     jobStatuses = ["FAILED", "SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING", "SUCCEEDED"]
     # these are the column names in the blackboardAWS table in the owl DB on-premise
     header_names = [
@@ -33,8 +34,8 @@ def lambda_handler(event, context):
     maxJobResults = 100
 
     # we need s3 to upload the snapshot, and storagegateway to refresh the cache
-    s3 = boto3.client("s3")
-    gateway = boto3.client("storagegateway")
+    s3 = boto3.client("s3", config=common.retry_config)
+    gateway = boto3.client("storagegateway", config=common.retry_config)
 
     with os.fdopen(fd, "w") as fout:
         # write the header
@@ -69,7 +70,7 @@ def lambda_handler(event, context):
 
                         # getting the LogStream requires calling describe_jobs which is very slow.
                         # for the time being we provide a None value, in the hopes we can find
-                        # a way to get it into the xdata in the future.
+                        # a way to get it into the metadata in the future.
                         LogStream = "None"
                         # writing out the status of the job
                         s3Path = f"{os.environ['BUCKET']}/outputs/{dataset}/"

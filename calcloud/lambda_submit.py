@@ -31,7 +31,7 @@ def main(comm, ipppssoot, bucket_name):
     comm.messages.delete("all-{ipppssoot}")
     try:
         _main(comm, ipppssoot, bucket_name)
-        comm.messages.put("submit-{ipppssoot}")
+        comm.messages.put(f"submit-{ipppssoot}")
     except Exception as exc:
         print("Exception in lambda_submit.main for", ipppssoot, "=", exc)
         comm.messages.put(f"error-{ipppssoot}")
@@ -39,6 +39,10 @@ def main(comm, ipppssoot, bucket_name):
 
 def _main(comm, ipppssoot, bucket_name):
     """Core job submission function factored out of main() to clarify exception handling."""
+
+    comm.messages.delete(f"all-{ipppssoot}")
+    comm.outputs.delete(f"{ipppssoot}")
+
     try:
         metadata = comm.xdata.get(ipppssoot)  # retry/rescue path
     except comm.xdata.client.exceptions.NoSuchKey:
@@ -50,7 +54,7 @@ def _main(comm, ipppssoot, bucket_name):
 
     response = submit.submit_job(p)
 
-    print("Submitted job for", ipppssoot, "as ID", response["job_id"])
+    print("Submitted job for", ipppssoot, "as ID", response["jobId"])
 
     metadata["job_id"] = response["jobId"]
     comm.xdata.put(ipppssoot, metadata)

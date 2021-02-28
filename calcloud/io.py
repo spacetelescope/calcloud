@@ -98,10 +98,7 @@ class S3Io:
         component of each listed object.
         """
         for s3_path in self.list_s3(prefixes, max_objects=max_objects):
-            object = s3_path.split("/")[-1]
-            if object.endswith(".trigger"):  # XXXX Undo trigger hack
-                object = object[: -len(".trigger")]
-            yield object
+            yield s3_path[len(self.s3_path + "/") :]
 
     def listl(self, prefixes="all"):
         """Return the outputs of list() as a list,  mainly for testing since list()
@@ -178,6 +175,10 @@ class S3Io:
         msg = self.get(prefix)
         self.delete_literal(prefix)
         return msg
+
+    def ids(self):
+        """Return the list of all unique ipppssoot/id directories."""
+        return list(set(obj.split("/")[0] for obj in self.list("all")))
 
 
 # -------------------------------------------------------------
@@ -401,6 +402,20 @@ class MessageIo(JsonIo):
         self.put(msg, [f"{type}-{ipst}" for ipst in ipppssoots])
         return msg
 
+    def ids(self, message_types="all"):
+        """Given a list of `message_types`, return the list of unique
+        ipppssoots such that each ipppssoot has at least one message
+        of those types.
+        """
+        return list(set(msg.split("-")[1] for msg in self.list(message_types)))
+
+    def list(self, prefix):
+        """List all objects related to `prefix,  removing any .trigger suffix."""
+        for obj in super().list(prefix):
+            if obj.endswith(".trigger"):  # XXXX Undo trigger hack
+                obj = obj[: -len(".trigger")]
+            yield obj
+
 
 class InputsIo(S3Io):
     """InputsIo provides simple standard operations on the processing
@@ -410,6 +425,10 @@ class InputsIo(S3Io):
     >>> comm.inputs.path('lcw303cjq') #doctest: +ELLIPSIS
     's3://.../inputs/lcw303cjq'
     """
+
+    def ids(self):
+        """Return the ipppssoots associated with every input tarball."""
+        return [tarball.split(".")[0] for tarball in self.list("all") if tarball]
 
 
 class ControlIo(S3Io):
@@ -474,6 +493,7 @@ class MetadataIo(JsonIo):
 
     >>> comm.xdata.delete("all")
     """
+
     def list(self, prefixes="all", max_objects=s3.MAX_LIST_OBJECTS):
         """Given S3 `prefixes` described earlier, use list_s3() to generate a
         sequence of listed objects and yield only the final prefix
@@ -508,6 +528,18 @@ class IoBundle:
         self.outputs = OutputsIo(self.bucket + "/outputs", self.client)  # simple text outputs i/o, abitrary file prefix
         self.control = ControlIo(self.bucket + "/control", self.client)  # simple text control i/o, abitrary file prefix
         self.xdata = MetadataIo(self.bucket + "/control", self.client)  # serialized object job control metadata i/o
+
+    def reset(self, ids="all"):
+        """Delete outputs, messages, and the control metadata files."""
+        self.outputs.delete(ids)
+        self.messages.delete(ids)
+        self.xdata.delete(ids)
+
+    def clear(self, ids="all"):
+        """Delete every S3 file managed by this IoBundle."""
+        self.reset(ids)
+        self.inputs.delete(ids)
+        self.control.delete(ids)
 
 
 def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):

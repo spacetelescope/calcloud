@@ -5,11 +5,25 @@ them act on job counts > 100 jobs.
 import argparse
 import json
 import datetime
+import re
+import os
+
 import boto3
+
 from . import common
 
 
 JOB_STATUSES = tuple("SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED".split("|"))
+
+KILL_STATUSES = tuple("SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING".split("|"))
+
+JOB_ID_RE = re.compile("[a-f0-9]{8}_[a-f0-9]{4}_[a-f0-9]{4}_[a-f0-9]{4}_[a-f0-9]{12}")  # just uuid with "_" vs "-"
+
+
+def get_queues():
+    """Return the queues defined in the environment by Terraform."""
+    return os.environ["JOBQUEUES"].split(",")
+
 
 DEFAULT_CLIENT = None
 
@@ -21,10 +35,30 @@ def get_default_client():
     return DEFAULT_CLIENT
 
 
+def get_job_ids(queues=None, collect_statuses=KILL_STATUSES, client=None):
+    """Return a list of the job ids for jobs on any of `queues` which
+    have job status in `collect_statuses`.
+
+    Default:  return all killable jobs for Q's defined by env var JOBQUEUES.
+
+    Replaces uuid "-" with "_"
+
+    Returns ["job_id", ...]
+    """
+    queues = queues or get_queues()
+    job_ids = []
+    for job in list_jobs(queues, collect_statuses, client):
+        job_ids.append(job["jobId"].replace("-", "_"))
+    return job_ids
+
+
 def list_jobs(queue, collect_statuses=JOB_STATUSES, client=None):
+    client = client or get_default_client()
+    queues = [queue] if isinstance(queue, str) else queue
     jobs = []
-    for status in collect_statuses:
-        jobs.extend(_list_jobs(queue, status, client))
+    for queue in queues:
+        for status in collect_statuses:
+            jobs.extend(_list_jobs(queue, status, client))
     return jobs
 
 
@@ -85,13 +119,14 @@ def _get_outputter(output_format):
     return func
 
 
-def terminate(job_id, ipppssoot, reason=None, client=None):
+def terminate_job(job_id, ipppssoot, reason=None, client=None):
     """Terminate Batch job `job_id` associated with `ipppsssoot` using Batch `client`.
 
     Return True IFF client.terminate_job() call terminates a job.
     """
     client = client or get_default_client()
-    response = client.terminate_job(jobId=job_id, reason="batch.terminate called")
+    job_id = job_id.replace("_", "-")  # undo hacking needed to make it a simple messsage id
+    response = client.terminate_job(jobId=job_id, reason=reason)
     print(response)
     print(f"terminate response: {response['ResponseMetadata']['HTTPStatusCode']}: {job_id} - {ipppssoot}")
     return response["ResponseMetadata"]["HTTPStatusCode"] == 200
@@ -99,7 +134,9 @@ def terminate(job_id, ipppssoot, reason=None, client=None):
 
 def main(args=None):
     parser = argparse.ArgumentParser(description="Perform AWS Batch functions on arbitrary numbers of jobs, etc.")
-    parser.add_argument("command", choices=("list-jobs", "describe-jobs"), help="Batch function to perform.")
+    parser.add_argument(
+        "command", choices=("list-jobs", "describe-jobs", "get-job-ids"), help="Batch function to perform."
+    )
     parser.add_argument(
         "--job-queue",
         dest="job_queue",
@@ -127,6 +164,8 @@ def main(args=None):
             outputter(describe_jobs(parsed.job_names))
         elif parsed.job_queue is not None:
             outputter(describe_jobs_of_queue(parsed.job_queue, parsed.job_statuses))
+    elif parsed.command == "get-job-ids":
+        outputter(get_job_ids(queues=parsed.job_queue or get_queues(), collect_statuses=parsed.job_statuses))
 
 
 if __name__ == "__main__":
