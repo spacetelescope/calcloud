@@ -474,7 +474,6 @@ class MetadataIo(JsonIo):
 
     >>> comm.xdata.delete("all")
     """
-
     def list(self, prefixes="all", max_objects=s3.MAX_LIST_OBJECTS):
         """Given S3 `prefixes` described earlier, use list_s3() to generate a
         sequence of listed objects and yield only the final prefix
