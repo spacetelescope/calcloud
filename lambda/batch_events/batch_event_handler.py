@@ -48,9 +48,9 @@ def lambda_handler(event, context):
     continuation_msg = "error-" + ipppssoot
     if fail_reason.startswith("OutOfMemoryError:"):
         if not metadata["terminated"] and metadata["memory_retries"] < int(os.environ["MAX_MEMORY_RETRIES"]):
-            print("Automatic rescue of", ipppssoot, "with memory retry count", metadata["memory_retries"])
             metadata["memory_retries"] += 1
             continuation_msg = "rescue-" + ipppssoot
+            print("Automatic rescue of", ipppssoot, "with memory retry count", metadata["memory_retries"])
         else:
             print("Automatic memory retries for", ipppssoot, "exhausted at", metadata["memory_retries"])
     else:
