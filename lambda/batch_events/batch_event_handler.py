@@ -30,7 +30,7 @@ def lambda_handler(event, context):
     bucket = event["detail"]["container"]["command"][2].split("/")[2]
     job_id = event["detail"]["jobId"]
     job_name = event["detail"]["jobName"]  # appears to be ipppssoot
-    fail_reason = event["detail"]["attempts"][0]["container"]["reason"]
+    fail_reason = event["detail"]["attempts"][0]["container"]["statusReason"]
     exit_code = event["detail"]["attempts"][0]["container"]["exitCode"]
 
     comm = io.get_io_bundle(bucket)
