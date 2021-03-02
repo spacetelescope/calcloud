@@ -38,7 +38,7 @@ module "calcloud_lambda_broadcast" {
   # existing role for the lambda
   # will need to parametrize when ITSD takes over role creation. 
   # for now this role was created by hand in the console, it is not terraform managed
-  lambda_role = data.aws_ssm_parameter.lambda_delete_role.value   # XXX Re-use DELETE ROLE
+  lambda_role = data.aws_ssm_parameter.lambda_broadcast_role.value
   
   tags = {
     Name = "calcloud-broadcast${local.environment}"
