@@ -3,6 +3,7 @@ def lambda_handler(event, context):
     import os
     import tempfile
     from calcloud import batch
+    from calcloud import common
 
     # various metadata definitions
     jobStatuses = ["FAILED", "SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING", "SUCCEEDED"]
@@ -33,8 +34,8 @@ def lambda_handler(event, context):
     maxJobResults = 100
 
     # we need s3 to upload the snapshot, and storagegateway to refresh the cache
-    s3 = boto3.client("s3")
-    gateway = boto3.client("storagegateway")
+    s3 = boto3.client("s3", config=common.retry_config)
+    gateway = boto3.client("storagegateway", config=common.retry_config)
 
     with os.fdopen(fd, "w") as fout:
         # write the header

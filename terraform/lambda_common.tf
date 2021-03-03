@@ -80,9 +80,16 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
     filter_prefix       = "messages/rescue-"
   }
 
+  lambda_function {
+    lambda_function_arn = module.calcloud_lambda_broadcast.this_lambda_function_arn
+    events              = ["s3:ObjectCreated:Put"]
+    filter_prefix       = "messages/broadcast-"
+  }
+
   depends_on = [
     aws_lambda_permission.allow_bucket,
     aws_lambda_permission.allow_bucket_deleteLambda,
-    aws_lambda_permission.allow_bucket_rescueLambda
+    aws_lambda_permission.allow_bucket_rescueLambda,
+    aws_lambda_permission.allow_bucket_broadcastLambda
   ]
 }

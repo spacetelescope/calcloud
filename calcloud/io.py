@@ -5,8 +5,10 @@ simple API for putting, getting, listing, and deleting messages.
 import sys
 import doctest
 import json
+import uuid
 
 from calcloud import s3
+from calcloud import hst
 
 # -------------------------------------------------------------
 
@@ -18,6 +20,7 @@ __all__ = [
     "ControlIo",
     "InputsIo",
     "OutputsIo",
+    "JsonIo",
     "MetadataIo",
 ]
 
@@ -77,7 +80,7 @@ class S3Io:
             for expanded in self.expand_prefix(prefix):
                 yield expanded
 
-    def list_s3(self, prefixes="all"):
+    def list_s3(self, prefixes="all", max_objects=s3.MAX_LIST_OBJECTS):
         """Given S3 `prefixes` described earlier, generate the sequence of
         full S3 paths corresponding to those prefixes,  list each path in
         S3,  and generate a single combined sequence of list results.
@@ -87,18 +90,15 @@ class S3Io:
         to list multiple objects.
         """
         for expanded in self.expand_all(prefixes):
-            yield from s3.list_objects(self.path(expanded), client=self.client)
+            yield from s3.list_objects(self.path(expanded), client=self.client, max_objects=max_objects)
 
-    def list(self, prefixes="all"):
+    def list(self, prefixes="all", max_objects=s3.MAX_LIST_OBJECTS):
         """Given S3 `prefixes` described earlier, use list_s3() to generate a
         sequence of listed objects and yield only the final prefix
         component of each listed object.
         """
-        for s3_path in self.list_s3(prefixes):
-            object = s3_path.split("/")[-1]
-            if object.endswith(".trigger"):  # XXXX Undo trigger hack
-                object = object[: -len(".trigger")]
-            yield object
+        for s3_path in self.list_s3(prefixes, max_objects=max_objects):
+            yield s3_path[len(self.s3_path + "/") :]
 
     def listl(self, prefixes="all"):
         """Return the outputs of list() as a list,  mainly for testing since list()
@@ -132,21 +132,84 @@ class S3Io:
         for msg, payload in msgs:
             s3.put_object(payload, self.path(msg), encoding=encoding, client=self.client)
 
-    def delete(self, prefixes):  # dangerous to support 'all' as default
-        """Given typical message/output prefixes, locate and delete the corresponding objects,
+    def delete(self, prefixes, check_exists=True):  # dangerous to support 'all' as default
+        """Given typical *message* prefixes, locate and delete the corresponding objects,
         which are nominally S3 files of some kind.
+
+        If check_exists is True and an expanded prefix looks like type-ipppssoot, then
+        check to see if that message exists with s3.get() before trying
+        s3.delete().  When most expansions of all-ipppssoot don't exist,  they only pay
+        1/12 the cost of an unneeded delete making it reasonably cheap to use all-ipppssoot
+        even when most types don't exist.
+
+        If it's expected that most expansions do exist,  then set check_exists=False to avoid
+        unnecessary tests for messges known to exist,  just delete them.
         """
-        for path in self.list_s3(prefixes):
-            s3.delete_object(path, client=self.client)
+        for prefix in self.expand_all(prefixes):
+            parts = prefix.split("-")
+            if len(parts) == 2 and parts[0] in MESSAGE_TYPES:
+                try:
+                    # these don't have self.s3_path added yet
+                    s3_path = self.path(prefix)
+                    if check_exists:  # don't try to delete
+                        s3.get_object(s3_path, client=self.client)
+                    s3.delete_object(s3_path, client=self.client)
+                except self.client.exceptions.NoSuchKey:
+                    pass  # Catch any failed gets
+            else:
+                for path in self.list_s3(prefix):
+                    s3.delete_object(path, client=self.client)
+
+    def delete_literal(self, msg):
+        """Given the name of a message `msg`,  delete it,  and in the case of "all-xxxx" or "xxxx-all"
+        messages,  do not expand "all" first.
+        """
+        s3.delete_object(self.path(msg), client=self.client)
 
     def move(self, prefix_from, prefix_to):
         """Pass any contents of `prefix_from` to `prefix_to` and delete the object at `prefix_from`."""
         s3.move_object(self.path(prefix_from), self.path(prefix_to), client=self.client)
 
+    def pop(self, prefix):
+        """Fetch the contents of message `prefix` and delete it."""
+        msg = self.get(prefix)
+        self.delete_literal(prefix)
+        return msg
+
+    def ids(self):
+        """Return the list of all unique ipppssoot/id directories."""
+        return list(set(obj.split("/")[0] for obj in self.list("all")))
+
 
 # -------------------------------------------------------------
 
+
+class JsonIo(S3Io):
+    """Serializes/deserializes objects to JSON when putting/getting from S3."""
+
+    def get(self, prefix):
+        """Return the decoded message object fetched from literal message name `prefix`."""
+        text = super().get(prefix)
+        return json.loads(text)
+
+    def put(self, prefix, obj=""):
+        """Put messages defined by message name `prefix` and  payload `obj`.
+
+        If `prefix` is a string, it is the message name and `obj` defines the payload.
+        If `prefix` is a list of strings, they are message names, and `obj` defines the common payload.
+        If `prefix` is a dict,  they keys are messages names,  the values are message payload objects.
+
+        Prior to putting,  any payloads are encoded in JSON using json.dumps().
+        """
+        if isinstance(prefix, str):
+            prefix = [prefix]
+        if isinstance(prefix, list):
+            prefix = {pref: obj for pref in prefix}
+        super().put({pref: json.dumps(obj) for (pref, obj) in prefix.items()})
+
+
 MESSAGE_TYPES = [
+    "broadcast",
     "placed",
     "submit",
     "processing",
@@ -160,7 +223,7 @@ MESSAGE_TYPES = [
 ]
 
 
-class MessageIo(S3Io):
+class MessageIo(JsonIo):
     """The MessageIo class provides put/get/list/delete operations for
     messages of various types used to track the state of dataset
     processing.
@@ -213,13 +276,12 @@ class MessageIo(S3Io):
     in MESSAGE_TYPES regardless of the existence of the message on S3:
 
     >>> list(comm.messages.expand_all('all-lcw303cjq'))
-    ['placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'error-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq']
+    ['broadcast-lcw303cjq', 'placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'error-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq']
 
     The all-ipppssoot message is expanded to every type-ipppssoot:
 
     >>> comm.messages.put(['cancel-lcw303cjq', 'error-lcw303cjq', 'rescue-lcw304cjq']);
-    >>> comm.messages.delete('all-lcw303cjq');
-    >>> comm.messages.listl()
+    >>> comm.messages.delete('all-lcw303cjq'); comm.messages.listl()
     ['rescue-lcw304cjq']
 
     The type-all message is expanded into every type-ipppssoot combination and is really
@@ -280,13 +342,13 @@ class MessageIo(S3Io):
         key prefixes, match all ipppssoots of each type:
 
         >>> list(comm.messages.expand_all('all'))
-        ['placed', 'submit', 'processing', 'processed', 'error', 'ingesterror', 'ingested', 'terminated', 'cancel', 'rescue']
+        ['broadcast', 'placed', 'submit', 'processing', 'processed', 'error', 'ingesterror', 'ingested', 'terminated', 'cancel', 'rescue']
 
         The message 'all-ipppssoot' expands into a sequence of type-ipppssoot messages for each
         type in MESSAGE_TYPES:
 
         >>> list(comm.messages.expand_all('all-lcw303cjq'))
-        ['placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'error-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq']
+        ['broadcast-lcw303cjq', 'placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'error-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq']
 
         A fully specified type-ipppsoot message expands to itself:
 
@@ -310,6 +372,50 @@ class MessageIo(S3Io):
         else:
             yield prefix
 
+    def get_id(self):
+        """Return a unique message ID,  nominally for broadcast messages."""
+        return str(uuid.uuid4()).replace("-", "_")
+
+    def broadcast(self, type, ipppssoots):
+        """Output a `type` message for each dataset in `ipppssoots`.  This
+        is nominally done by sending a list of messages to the broadcast lambda
+        which then sends them using a divide-and-conquer approach.
+
+        >>> comm = get_io_bundle()
+
+        Calling the broadcast method writes a single broadcast message containing a payload of messages to send.
+        Broadcast messages are named using a random id instead of ipppssoot, a uuid with _ replacing -.
+
+        >>> msg = comm.messages.broadcast("cancel", ["lcw303cjq", "lcw304cjq", "lcw305cjq"]);
+        >>> comm.messages.listl() #doctest: +ELLIPSIS
+        ['broadcast-..._..._..._..._...']
+
+        The contents of a broadcast message is a list of no-payload messages which will later be sent
+        by the lambda which processes broadcast messages:
+
+        >>> comm.messages.pop(msg)
+        ['cancel-lcw303cjq', 'cancel-lcw304cjq', 'cancel-lcw305cjq']
+
+        >>> comm.messages.delete("all")
+        """
+        msg = f"broadcast-{self.get_id()}"
+        self.put(msg, [f"{type}-{ipst}" for ipst in ipppssoots])
+        return msg
+
+    def ids(self, message_types="all"):
+        """Given a list of `message_types`, return the list of unique
+        ipppssoots such that each ipppssoot has at least one message
+        of those types.
+        """
+        return list(set(msg.split("-")[1] for msg in self.list(message_types)))
+
+    def list(self, prefix):
+        """List all objects related to `prefix,  removing any .trigger suffix."""
+        for obj in super().list(prefix):
+            if obj.endswith(".trigger"):  # XXXX Undo trigger hack
+                obj = obj[: -len(".trigger")]
+            yield obj
+
 
 class InputsIo(S3Io):
     """InputsIo provides simple standard operations on the processing
@@ -319,6 +425,10 @@ class InputsIo(S3Io):
     >>> comm.inputs.path('lcw303cjq') #doctest: +ELLIPSIS
     's3://.../inputs/lcw303cjq'
     """
+
+    def ids(self):
+        """Return the ipppssoots associated with every input tarball."""
+        return [tarball.split(".")[0] for tarball in self.list("all") if tarball]
 
 
 class ControlIo(S3Io):
@@ -357,19 +467,6 @@ class OutputsIo(S3Io):
     """
 
 
-class JsonIo(S3Io):
-    """Serializes/deserializes objects to JSON when putting/getting from S3."""
-
-    def get(self, ipppssoot):
-        text = super().get(ipppssoot)
-        return json.loads(text)
-
-    def put(self, ipppssoot, obj):
-        if not isinstance(obj, str):
-            text = json.dumps(obj)
-        super().put({ipppssoot: text})
-
-
 class MetadataIo(JsonIo):
     """Provides simple standard operations on the processing job control metadata,
     transparently serializing/de-serializing Python objects as a JSON encoded payload.
@@ -379,17 +476,40 @@ class MetadataIo(JsonIo):
     >>> comm = get_io_bundle()
 
     >>> obj = {'job_params': {'memory': 1500, 'vcpus': 2}, 'job_id': '1cc5817c-8d93-4119-bbd4-25407ee233b5', 'retry': 0}
-    >>> comm.metadata.put('lcw303cjq', obj)
+    >>> comm.xdata.put('lcw303cjq', obj)
 
-    >>> list(comm.metadata.list_s3('lcw303cjq'))  #doctest: +ELLIPSIS
+    >>> list(comm.xdata.list_s3('lcw303cjq'))  #doctest: +ELLIPSIS
     ['s3://.../control/lcw303cjq/job.json']
 
-    >>> comm.metadata.get('lcw303cjq')
+    >>> comm.xdata.get('lcw303cjq')
     {'job_params': {'memory': 1500, 'vcpus': 2}, 'job_id': '1cc5817c-8d93-4119-bbd4-25407ee233b5', 'retry': 0}
+
+
+    >>> comm.xdata.put('icw304cjq')
+    >>> comm.xdata.put('jcw305cjq')
+    >>> comm.xdata.put('lcw303cjq')
+    >>> comm.xdata.listl()
+    ['icw304cjq', 'jcw305cjq', 'lcw303cjq']
+
+    >>> comm.xdata.delete("all")
     """
 
+    def list(self, prefixes="all", max_objects=s3.MAX_LIST_OBJECTS):
+        """Given S3 `prefixes` described earlier, use list_s3() to generate a
+        sequence of listed objects and yield only the final prefix
+        component of each listed object.
+
+        Yield the ipppssoot folder name of each listed metadata file.
+        """
+        for s3_path in self.list_s3(prefixes, max_objects=max_objects):
+            ipppssoot = s3_path.split("/")[-2]  # return ipppssoot folder
+            if ipppssoot != "control":
+                yield ipppssoot
+
     def path(self, ipppssoot):
-        return self.s3_path + f"/{ipppssoot}/job.json"
+        assert hst.IPPPSSOOT_RE.match(ipppssoot) or ipppssoot in ["all", ""], f"Bad ipppssoot {ipppssoot}"
+        prefix = f"{ipppssoot}/job.json" if ipppssoot not in ["all", ""] else ""
+        return super().path(prefix)
 
 
 # -------------------------------------------------------------
@@ -399,7 +519,7 @@ class IoBundle:
     """Bundle all the I/O branches into one package."""
 
     def __init__(self, bucket=s3.DEFAULT_BUCKET, client=None):
-        self.bucket = bucket
+        self.bucket = bucket if bucket.startswith("s3://") else "s3://" + bucket
         self.client = client or s3.get_default_client()
         self.messages = MessageIo(
             self.bucket + "/messages", self.client
@@ -407,7 +527,19 @@ class IoBundle:
         self.inputs = InputsIo(self.bucket + "/inputs", self.client)  # simple text inputs i/o, abitrary file prefix
         self.outputs = OutputsIo(self.bucket + "/outputs", self.client)  # simple text outputs i/o, abitrary file prefix
         self.control = ControlIo(self.bucket + "/control", self.client)  # simple text control i/o, abitrary file prefix
-        self.metadata = MetadataIo(self.bucket + "/control", self.client)  # serialized object job control metadata i/o
+        self.xdata = MetadataIo(self.bucket + "/control", self.client)  # serialized object job control metadata i/o
+
+    def reset(self, ids="all"):
+        """Delete outputs, messages, and the control metadata files."""
+        self.outputs.delete(ids)
+        self.messages.delete(ids)
+        self.xdata.delete(ids)
+
+    def clear(self, ids="all"):
+        """Delete every S3 file managed by this IoBundle."""
+        self.reset(ids)
+        self.inputs.delete(ids)
+        self.control.delete(ids)
 
 
 def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):
