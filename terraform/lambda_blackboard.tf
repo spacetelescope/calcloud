@@ -42,7 +42,7 @@ module "calcloud_lambda_blackboard" {
 
   environment_variables = {
     # comma delimited list of job queues, because batch can only list jobs per queue
-    JOBQUEUES="${aws_batch_job_queue.batch_queue.name},${aws_batch_job_queue.batch_outlier_queue.name}"
+    JOBQUEUES=aws_batch_job_queue.batch_queue.name
     BUCKET=aws_s3_bucket.calcloud.id
     FILESHARE=data.aws_ssm_parameter.file_share_arn.value
   }

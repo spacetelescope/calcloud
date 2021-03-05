@@ -42,7 +42,6 @@ module "calcloud_lambda_submit" {
   environment_variables = {
     JOBDEFINITIONS = local.job_definitions,
     NORMALQUEUE = aws_batch_job_queue.batch_queue.name,
-    OUTLIERQUEUE = aws_batch_job_queue.batch_outlier_queue.name,
   }
 
   tags = {
