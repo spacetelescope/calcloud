@@ -88,8 +88,7 @@ def get_resources(ipppssoot, output_bucket, input_path):
     input_path = input_path
     crds_config = "caldp-config-offsite"
     return JobResources(
-        *(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config)
-        + _get_job_resources(instr, ipppssoot)
+        *(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config) + _get_job_resources(instr, ipppssoot)
     )
 
 
@@ -105,7 +104,7 @@ def _get_environment(job_resources, memory_retries):
     final_bin = job_resources.initial_modeled_bin + memory_retries
     if final_bin < len(job_defs):
         job_definition = job_defs[final_bin]
-        print(
+        log.info(
             "Selected job definition",
             job_definition,
             "for",
@@ -117,10 +116,10 @@ def _get_environment(job_resources, memory_retries):
             "retries.",
         )
     else:
-        print("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
+        log.info("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
         raise AllBinsTriedQuit("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
 
-    return JobEnv(queue, job_definition, "caldp-process")
+    return JobEnv(normal_queue, job_definition, "caldp-process")
 
 
 def _get_job_resources(instr, ipppssoot):
