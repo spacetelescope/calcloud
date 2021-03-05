@@ -108,8 +108,12 @@ data "aws_ecr_image" "caldp_latest" {
   image_tag = var.image_tag
 }
 
-resource "aws_batch_job_definition" "calcloud" {
-  name                 = "calcloud-hst-caldp-job-definition${local.environment}"
+# ------------------------------------------------------------------------------------------
+
+# 2G -----------------  also reserve 32M per 1G for Batch ECS overheads
+
+resource "aws_batch_job_definition" "calcloud_2g" {
+  name                 = "calcloud-jobdef-2g${local.environment}"
   type                 = "container"
   container_properties = <<CONTAINER_PROPERTIES
   {
@@ -117,7 +121,7 @@ resource "aws_batch_job_definition" "calcloud" {
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
-    "memory": 2560,
+    "memory": ${2*(1024-32)},
     "mountPoints": [],
     "resourceRequirements": [],
     "ulimits": [],
@@ -134,6 +138,95 @@ resource "aws_batch_job_definition" "calcloud" {
     "crds_config" = "caldp-config-offsite"
   }
 }
+
+# 8G ----------------
+
+resource "aws_batch_job_definition" "calcloud_8g" {
+  name                 = "calcloud-jobdef-8g${local.environment}"
+  type                 = "container"
+  container_properties = <<CONTAINER_PROPERTIES
+  {
+    "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
+    "environment": [],
+    "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
+    "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
+    "memory": ${8*(1024-32)},
+    "mountPoints": [],
+    "resourceRequirements": [],
+    "ulimits": [],
+    "vcpus": 1,
+    "volumes": []
+  }
+  CONTAINER_PROPERTIES
+
+  parameters = {
+    "command" = "caldp-process"
+    "dataset" = "j8cb010b0"
+    "input_path" = "astroquery:"
+    "s3_output_path" = "s3://${aws_s3_bucket.calcloud.bucket}/outputs"
+    "crds_config" = "caldp-config-offsite"
+  }
+}
+
+# 16G -------------------
+
+resource "aws_batch_job_definition" "calcloud_16g" {
+  name                 = "calcloud-jobdef-16g${local.environment}"
+  type                 = "container"
+  container_properties = <<CONTAINER_PROPERTIES
+  {
+    "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
+    "environment": [],
+    "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
+    "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
+    "memory": ${16*(1024-32)},
+    "mountPoints": [],
+    "resourceRequirements": [],
+    "ulimits": [],
+    "vcpus": 1,
+    "volumes": []
+  }
+  CONTAINER_PROPERTIES
+
+  parameters = {
+    "command" = "caldp-process"
+    "dataset" = "j8cb010b0"
+    "input_path" = "astroquery:"
+    "s3_output_path" = "s3://${aws_s3_bucket.calcloud.bucket}/outputs"
+    "crds_config" = "caldp-config-offsite"
+  }
+}
+
+# 64G ------------------
+
+resource "aws_batch_job_definition" "calcloud_64g" {
+  name                 = "calcloud-jobdef-64g${local.environment}"
+  type                 = "container"
+  container_properties = <<CONTAINER_PROPERTIES
+  {
+    "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
+    "environment": [],
+    "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
+    "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
+    "memory": ${64*(1024-32)},
+    "mountPoints": [],
+    "resourceRequirements": [],
+    "ulimits": [],
+    "vcpus": 1,
+    "volumes": []
+  }
+  CONTAINER_PROPERTIES
+
+  parameters = {
+    "command" = "caldp-process"
+    "dataset" = "j8cb010b0"
+    "input_path" = "astroquery:"
+    "s3_output_path" = "s3://${aws_s3_bucket.calcloud.bucket}/outputs"
+    "crds_config" = "caldp-config-offsite"
+  }
+}
+
+# ---------------------------------------------------------------------------------------------
 
 resource "aws_s3_bucket" "calcloud" {
   bucket = "calcloud-processing${local.environment}"

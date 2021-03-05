@@ -1,21 +1,22 @@
-"""This module is used to create processing resourcess given a list of ipppssoots and parameters to
-define outputs locations.
+"""This module is used to define job plans using the high level function
+get_plan().
 
-The idea behind creating resourcess is to generate enough information such that an ipppssoot or
-set of ipppssoots can be assigned to well tuned processing resources.
+get_plan() returns a named tuple specifying all the information needed to
+submit a job.
+
+Based on a memory_retries counter,  get_plan() iterates through a sequence
+of job definitions with increasing memory requirements until the job later
+succeeds with sufficient memory or exhausts all retries.
 """
 import sys
 import os
 from collections import namedtuple
 
 from . import hst
-from . import metrics
 from . import log
 from . import s3
 
 # ----------------------------------------------------------------------
-
-OUTLIER_THRESHHOLD_MEGABYTES = 8192 - 128  # m5.large - 128M ~overhead
 
 JobResources = namedtuple(
     "JobResources",
@@ -27,7 +28,7 @@ JobResources = namedtuple(
         "input_path",
         "crds_config",
         "vcpus",
-        "memory",
+        "initial_modeled_bin",
         "max_seconds",
     ],
 )
@@ -35,6 +36,11 @@ JobResources = namedtuple(
 JobEnv = namedtuple("JobEnv", ("job_queue", "job_definition", "command"))
 
 Plan = namedtuple("Plan", JobResources._fields + JobEnv._fields)
+
+
+class AllBinsTriedQuit(Exception):
+    """Exception to raise when retry is requested but no applicable bin is available."""
+
 
 # ----------------------------------------------------------------------
 
@@ -61,7 +67,7 @@ def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0):
     Returns    Plan   (named tuple)
     """
     job_resources = get_resources(ipppssoot, output_bucket, input_path, memory_retries)
-    env = _get_environment(job_resources)
+    env = _get_environment(job_resources, memory_retries)
     return Plan(*(job_resources + env))
 
 
@@ -87,35 +93,47 @@ def get_resources(ipppssoot, output_bucket, input_path, retries=0):
     )
 
 
-def _get_environment(job_resources):
+def _get_environment(job_resources, memory_retries):
+    """Based on a resources tuple and a memory_retries counter,  determine:
+
+    (queue,  job_definition_for_memory,  kill seconds)
+    """
+    job_defs = os.environ["JOBDEFINITIONS"].split(",")
     job_resources = JobResources(*job_resources)
-    job_definition = os.environ["JOBDEFINITION"]
     normal_queue = os.environ["NORMALQUEUE"]
-    outlier_queue = os.environ["OUTLIERQUEUE"]
 
-    if job_resources.memory <= OUTLIER_THRESHHOLD_MEGABYTES:
-        return JobEnv(normal_queue, job_definition, "caldp-process")
+    final_bin = job_resources.initial_modeled_bin + memory_retries
+    if final_bin < len(job_defs):
+        job_definition = job_defs[final_bin]
+        print(
+            "Selected job definition",
+            job_definition,
+            "for",
+            job_resources.ipppssoot,
+            "based on initial bin",
+            job_resources.initial_modeled_bin,
+            "and",
+            memory_retries,
+            "retries.",
+        )
     else:
-        return JobEnv(outlier_queue, job_definition, "caldp-process")
+        print("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
+        raise AllBinsTriedQuit("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
+
+    return JobEnv(queue, job_definition, "caldp-process")
 
 
-def _get_job_resources(instr, ipppssoot, retries=0):
+def _get_job_resources(instr, ipppssoot):
     """Given the instrument `instr` and dataset id `ipppssoot`...
 
-    Return  required resources (cores, memory in M,  seconds til kill)
+    Return  required resources (cores, initial_modeled_bin,  seconds til kill)
 
     Note that these are "required" and still need to be matched to "available".
+
+    # XXXXX  Memory modeling nominally plugs in here to determin starting bin.
     """
-    info = [0] * 3
-    try:
-        memory_megabytes, cpus, wallclock_seconds = metrics.get_resources(ipppssoot)
-        info[0] = cpus
-        info[1] = memory_megabytes + 512  # add some overhead for AWS Batch (>= 32M) and measurement error
-        info[2] = max(int(wallclock_seconds * cpus * 6), 120)  # kill time,  BEWARE:  THIS LOOKS WRONG
-    except KeyError:
-        info = (32, 64 * 1024, int(60 * 60 * 48))  # 32 cores,  64G/72G,  48 hours max   (c5.9xlarge)
-        log.warning("Defaulting (cpu, memory, time) requirements for unknown dataset:", ipppssoot, "to", info)
-    return tuple(info)
+    # (1 core, 0th bin,  48 hour kill time)
+    return tuple(1, 0, 48 * 60 * 60)
 
 
 # ----------------------------------------------------------------------

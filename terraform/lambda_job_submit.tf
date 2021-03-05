@@ -40,7 +40,7 @@ module "calcloud_lambda_submit" {
   lambda_role = data.aws_ssm_parameter.lambda_submit_role.value
 
   environment_variables = {
-    JOBDEFINITION = aws_batch_job_definition.calcloud.name,
+    JOBDEFINITIONS = local.job_definitions,
     NORMALQUEUE = aws_batch_job_queue.batch_queue.name,
     OUTLIERQUEUE = aws_batch_job_queue.batch_outlier_queue.name,
   }
