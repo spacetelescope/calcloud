@@ -66,12 +66,12 @@ def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0):
 
     Returns    Plan   (named tuple)
     """
-    job_resources = get_resources(ipppssoot, output_bucket, input_path, memory_retries)
+    job_resources = get_resources(ipppssoot, output_bucket, input_path)
     env = _get_environment(job_resources, memory_retries)
     return Plan(*(job_resources + env))
 
 
-def get_resources(ipppssoot, output_bucket, input_path, retries=0):
+def get_resources(ipppssoot, output_bucket, input_path):
     """Given an HST IPPPSSOOT ID,  return information used to schedule it as a batch job.
 
     Conceptually resource requirements can be tailored to individual IPPPSSOOTs.
@@ -89,7 +89,7 @@ def get_resources(ipppssoot, output_bucket, input_path, retries=0):
     crds_config = "caldp-config-offsite"
     return JobResources(
         *(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config)
-        + _get_job_resources(instr, ipppssoot, retries)
+        + _get_job_resources(instr, ipppssoot)
     )
 
 
@@ -133,7 +133,7 @@ def _get_job_resources(instr, ipppssoot):
     # XXXXX  Memory modeling nominally plugs in here to determin starting bin.
     """
     # (1 core, 0th bin,  48 hour kill time)
-    return tuple(1, 0, 48 * 60 * 60)
+    return (1, 0, 48 * 60 * 60)
 
 
 # ----------------------------------------------------------------------
