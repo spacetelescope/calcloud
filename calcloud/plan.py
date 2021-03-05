@@ -27,7 +27,6 @@ JobResources = namedtuple(
         "s3_output_uri",
         "input_path",
         "crds_config",
-        "vcpus",
         "initial_modeled_bin",
         "max_seconds",
     ],
@@ -66,12 +65,12 @@ def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0):
 
     Returns    Plan   (named tuple)
     """
-    job_resources = get_resources(ipppssoot, output_bucket, input_path)
+    job_resources = _get_resources(ipppssoot, output_bucket, input_path)
     env = _get_environment(job_resources, memory_retries)
     return Plan(*(job_resources + env))
 
 
-def get_resources(ipppssoot, output_bucket, input_path):
+def _get_resources(ipppssoot, output_bucket, input_path):
     """Given an HST IPPPSSOOT ID,  return information used to schedule it as a batch job.
 
     Conceptually resource requirements can be tailored to individual IPPPSSOOTs.
@@ -87,9 +86,9 @@ def get_resources(ipppssoot, output_bucket, input_path):
     job_name = ipppssoot
     input_path = input_path
     crds_config = "caldp-config-offsite"
-    return JobResources(
-        *(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config) + _get_job_resources(instr, ipppssoot)
-    )
+    initial_bin = 0
+    kill_time = 48 * 60 * 60
+    return JobResources(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time)
 
 
 def _get_environment(job_resources, memory_retries):
@@ -120,19 +119,6 @@ def _get_environment(job_resources, memory_retries):
         raise AllBinsTriedQuit("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
 
     return JobEnv(normal_queue, job_definition, "caldp-process")
-
-
-def _get_job_resources(instr, ipppssoot):
-    """Given the instrument `instr` and dataset id `ipppssoot`...
-
-    Return  required resources (cores, initial_modeled_bin,  seconds til kill)
-
-    Note that these are "required" and still need to be matched to "available".
-
-    # XXXXX  Memory modeling nominally plugs in here to determin starting bin.
-    """
-    # (1 core, 0th bin,  48 hour kill time)
-    return (1, 0, 48 * 60 * 60)
 
 
 # ----------------------------------------------------------------------

@@ -110,7 +110,7 @@ data "aws_ecr_image" "caldp_latest" {
 
 # ------------------------------------------------------------------------------------------
 
-# 2G -----------------  also reserve 32M per 1G for Batch ECS overheads
+# 2G -----------------  also reserve 128M per 1G for Batch ECS + STScI overheads
 
 resource "aws_batch_job_definition" "calcloud_2g" {
   name                 = "calcloud-jobdef-2g${local.environment}"
@@ -121,7 +121,7 @@ resource "aws_batch_job_definition" "calcloud_2g" {
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
-    "memory": ${2*(1024-32)},
+    "memory": ${2*(1024-128)},
     "mountPoints": [],
     "resourceRequirements": [],
     "ulimits": [],
@@ -150,11 +150,11 @@ resource "aws_batch_job_definition" "calcloud_8g" {
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
-    "memory": ${8*(1024-32)},
+    "memory": ${8*(1024-128)},
     "mountPoints": [],
     "resourceRequirements": [],
     "ulimits": [],
-    "vcpus": 1,
+    "vcpus": 4,
     "volumes": []
   }
   CONTAINER_PROPERTIES
@@ -179,11 +179,11 @@ resource "aws_batch_job_definition" "calcloud_16g" {
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
-    "memory": ${16*(1024-32)},
+    "memory": ${16*(1024-128)},
     "mountPoints": [],
     "resourceRequirements": [],
     "ulimits": [],
-    "vcpus": 1,
+    "vcpus": 8,
     "volumes": []
   }
   CONTAINER_PROPERTIES
@@ -208,11 +208,11 @@ resource "aws_batch_job_definition" "calcloud_64g" {
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
-    "memory": ${64*(1024-32)},
+    "memory": ${64*(1024-128)},
     "mountPoints": [],
     "resourceRequirements": [],
     "ulimits": [],
-    "vcpus": 1,
+    "vcpus": 32,
     "volumes": []
   }
   CONTAINER_PROPERTIES
