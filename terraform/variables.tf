@@ -14,3 +14,21 @@ variable region {
   type = string
   default = "us-east-1"
 }
+
+variable awsdpver {
+  description = "HST keyword for caldp repo tag version"
+  type = string
+  default = "undefined"
+}
+
+variable awsysver {
+  description = "HST keyword for calcloud repo tag version"
+  type = string
+  default = "undefined"
+}
+
+variable csys_ver {
+  description = "HST keyword for docker base calibration image tag"
+  type = string
+  default = "undefined"
+}
