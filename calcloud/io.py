@@ -100,11 +100,11 @@ class S3Io:
         for s3_path in self.list_s3(prefixes, max_objects=max_objects):
             yield s3_path[len(self.s3_path + "/") :]
 
-    def listl(self, prefixes="all"):
+    def listl(self, prefixes="all", max_objects=s3.MAX_LIST_OBJECTS):
         """Return the outputs of list() as a list,  mainly for testing since list()
         returns a generator which reveals little in its repr().
         """
-        return list(sorted(self.list(prefixes)))
+        return list(sorted(self.list(prefixes, max_objects=max_objects)))
 
     def get(self, prefix, encoding="utf-8"):
         return s3.get_object(self.path(prefix), client=self.client, encoding=encoding)
@@ -409,9 +409,9 @@ class MessageIo(JsonIo):
         """
         return list(set(msg.split("-")[1] for msg in self.list(message_types)))
 
-    def list(self, prefix):
+    def list(self, prefix, max_objects=s3.MAX_LIST_OBJECTS):
         """List all objects related to `prefix,  removing any .trigger suffix."""
-        for obj in super().list(prefix):
+        for obj in super().list(prefix, max_objects=max_objects):
             if obj.endswith(".trigger"):  # XXXX Undo trigger hack
                 obj = obj[: -len(".trigger")]
             yield obj
@@ -530,16 +530,16 @@ class IoBundle:
         self.xdata = MetadataIo(self.bucket + "/control", self.client)  # serialized object job control metadata i/o
 
     def reset(self, ids="all"):
-        """Delete outputs, messages, and the control metadata files."""
+        """Delete outputs, messages, and control files."""
         self.outputs.delete(ids)
         self.messages.delete(ids)
+        self.control.delete(ids)
         self.xdata.delete(ids)
 
     def clear(self, ids="all"):
         """Delete every S3 file managed by this IoBundle."""
         self.reset(ids)
         self.inputs.delete(ids)
-        self.control.delete(ids)
 
 
 def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):

@@ -12,6 +12,7 @@ See the batch_event handler, rescue handler, and s3_trigger
 handlers for more information on how jobs are initiated and
 retried.
 """
+import time
 
 from . import plan
 from . import submit
@@ -28,17 +29,20 @@ def main(comm, ipppssoot, bucket_name):
     6. Nominally sends "submit-ipppssoot" message.
     7. On error anywhere, sends the "error-ipppssoot" message.
     """
-    comm.messages.delete("all-{ipppssoot}")
     try:
         _main(comm, ipppssoot, bucket_name)
         comm.messages.put(f"submit-{ipppssoot}")
     except Exception as exc:
         print("Exception in lambda_submit.main for", ipppssoot, "=", exc)
+        comm.messages.delete(f"all-{ipppssoot}")
         comm.messages.put(f"error-{ipppssoot}")
+        raise
 
 
 def _main(comm, ipppssoot, bucket_name):
     """Core job submission function factored out of main() to clarify exception handling."""
+
+    wait_for_inputs(comm, ipppssoot)
 
     comm.messages.delete(f"all-{ipppssoot}")
     comm.outputs.delete(f"{ipppssoot}")
@@ -58,3 +62,28 @@ def _main(comm, ipppssoot, bucket_name):
 
     metadata["job_id"] = response["jobId"]
     comm.xdata.put(ipppssoot, metadata)
+
+
+class CalcloudInputsFailure(RuntimeError):
+    """The inputs needed to plan and run this job were not ready in time."""
+
+
+def wait_for_inputs(comm, ipppssoot):
+    """Ensure that the inputs required to plan and run the job for `ipppssoot` are available.
+
+    Each iteration,  check for the S3 message files which trigger submissions and abort if none
+    are found.
+
+    Eventually after 15 min (default) the lambda will die if it's still waiting.
+    """
+    input_tarball, memory_modeling = [], []
+    while not input_tarball or not memory_modeling:
+        input_tarball = comm.inputs.listl(f"{ipppssoot}.tar.gz")
+        memory_modeling = comm.control.listl(f"{ipppssoot}/{ipppssoot}_MemModelFeatures.txt")
+        if not comm.messages.listl([f"placed-{ipppssoot}", f"rescue-{ipppssoot}"]):
+            raise CalcloudInputsFailure(
+                f"Both the 'placed' and 'rescue' messages for {ipppssoot} have been deleted. Aborting input wait and submission."
+            )
+        print(f"Waiting for inputs for {ipppssoot}. input_tarball={input_tarball}  memory_modeling={memory_modeling}")
+        time.sleep(30)
+    print(f"Inputs for {ipppssoot} found.")

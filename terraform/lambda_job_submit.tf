@@ -7,7 +7,7 @@ module "calcloud_lambda_submit" {
   handler       = "s3_trigger_handler.lambda_handler"
   runtime       = "python3.6"
   publish       = false
-  timeout       = 30
+  timeout       = 900
 
   source_path = [
     {

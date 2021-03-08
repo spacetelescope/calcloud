@@ -267,7 +267,7 @@ def list_objects(s3_prefix, client=None, max_objects=MAX_LIST_OBJECTS):
     log.verbose("s3.list_objects", s3_prefix, max_objects)
     client, bucket_name, prefix = _s3_setup(client, s3_prefix)
     paginator = client.get_paginator("list_objects_v2")
-    config = {"MaxItems": max_objects, "PageSize": max_objects}
+    config = {"MaxItems": max_objects, "PageSize": 1000}
     for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix, PaginationConfig=config):
         for result in page.get("Contents", []):
             listed = "s3://" + bucket_name + "/" + result["Key"]
