@@ -533,13 +533,13 @@ class IoBundle:
         """Delete outputs, messages, and control files."""
         self.outputs.delete(ids)
         self.messages.delete(ids)
-        self.xdata.delete(ids)
+        self.xdata.delete(ids)  # IPPPSSOOT control metadata / retry status
 
     def clear(self, ids="all"):
         """Delete every S3 file managed by this IoBundle."""
         self.reset(ids)
-        self.control.delete(ids)
-        self.inputs.delete(ids)
+        self.control.delete(ids)  # Memory model inputs
+        self.inputs.delete(ids)  # Input tarballs
 
 
 def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):

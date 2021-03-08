@@ -5,7 +5,7 @@ module "calcloud_lambda_submit" {
 
   function_name = "calcloud-job-submit${local.environment}"
   description   = "looks for placed-ipppssoot messages and submits jobs to Batch"
-  # the path is relative to the path inside the lambda env, not in the local filesystem. 
+  # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "s3_trigger_handler.lambda_handler"
   runtime       = "python3.6"
   publish       = false
@@ -38,7 +38,7 @@ module "calcloud_lambda_submit" {
   attach_tracing_policy = false
   attach_async_event_policy = false
   # existing role for the lambda
-  # will need to parametrize when ITSD takes over role creation. 
+  # will need to parametrize when ITSD takes over role creation.
   # for now this role was created by hand in the console, it is not terraform managed
   lambda_role = data.aws_ssm_parameter.lambda_submit_role.value
 
