@@ -32,3 +32,9 @@ variable csys_ver {
   type = string
   default = "undefined"
 }
+
+variable pinned_tf_ver {
+  description = "the intended value of the terraform installation in the environment"
+  type = string
+  default = "0.14.7"
+}
