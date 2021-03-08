@@ -1,5 +1,6 @@
 module "calcloud_lambda_deleteJob" {
   source = "terraform-aws-modules/lambda/aws"
+  version = "~> 1.43.0"
 
   function_name = "calcloud-job-delete${local.environment}"
   description   = "accepts messages from s3 event and deletes either individual jobs by ipppssoot, or all active jobs"
