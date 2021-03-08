@@ -84,6 +84,9 @@ def wait_for_inputs(comm, ipppssoot):
             raise CalcloudInputsFailure(
                 f"Both the 'placed' and 'rescue' messages for {ipppssoot} have been deleted. Aborting input wait and submission."
             )
-        print(f"Waiting for inputs for {ipppssoot}. input_tarball={input_tarball}  memory_modeling={memory_modeling}")
-        time.sleep(30)
+        if not input_tarball or not memory_modeling:
+            print(
+                f"Waiting for inputs for {ipppssoot}. input_tarball={input_tarball}  memory_modeling={memory_modeling}"
+            )
+            time.sleep(30)
     print(f"Inputs for {ipppssoot} found.")
