@@ -1,5 +1,6 @@
 module "calcloud_lambda_rescueJob" {
   source = "terraform-aws-modules/lambda/aws"
+  version = "~> 1.43.0"
 
   function_name = "calcloud-job-rescue${local.environment}"
   description   = "Rescues the specified ipppssoot (must be in error state) by deleting all outputs and messages and re-placing."

@@ -2,6 +2,35 @@ provider "aws" {
   region  = var.region
 }
 
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "~> 3.29.0"
+    }
+    hashicorp-template = {
+      source = "hashicorp/template"
+      version = "~> 2.2.0"
+    }
+    hashicorp-null = {
+      source = "hashicorp/null"
+      version = "~> 3.1.0"
+    }
+    hashicorp-external = {
+      source = "hashicorp/external"
+      version = "~> 2.1.0"
+    }
+    hashicorp-local = {
+      source = "hashicorp/local"
+      version = "~> 2.1.0"
+    }
+    hashicorp-random = {
+      source = "hashicorp/random"
+      version = "~> 3.1.0"
+    }
+  }
+}
+
 data "template_file" "userdata" {
   template = file("${path.module}/user_data.sh")
   vars = {
