@@ -1,5 +1,6 @@
 module "calcloud_lambda_refreshCache" {
   source = "terraform-aws-modules/lambda/aws"
+  version = "~> 1.43.0"
 
   function_name = "calcloud-fileshare-refresh_cache${local.environment}"
   description   = "listens for refresh cache operations and logs them"
@@ -8,6 +9,7 @@ module "calcloud_lambda_refreshCache" {
   runtime       = "python3.6"
   publish       = false
   timeout       = 900
+  cloudwatch_logs_retention_in_days = 30
 
   source_path = [
     {

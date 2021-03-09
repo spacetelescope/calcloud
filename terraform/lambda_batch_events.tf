@@ -1,5 +1,6 @@
 module "calcloud_lambda_batchEvents" {
   source = "terraform-aws-modules/lambda/aws"
+  version = "~> 1.43.0"
 
   function_name = "calcloud-job-events${local.environment}"
   description   = "listens for Batch failure events from cloudWatch event rule"
@@ -8,6 +9,7 @@ module "calcloud_lambda_batchEvents" {
   runtime       = "python3.6"
   publish       = false
   timeout       = 900
+  cloudwatch_logs_retention_in_days = 30
 
   source_path = [
     {

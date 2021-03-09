@@ -1,5 +1,7 @@
 module "calcloud_lambda_submit" {
   source = "terraform-aws-modules/lambda/aws"
+  # https://github.com/hashicorp/terraform/issues/17211
+  version = "~> 1.43.0"
 
   function_name = "calcloud-job-submit${local.environment}"
   description   = "looks for placed-ipppssoot messages and submits jobs to Batch"
@@ -8,6 +10,7 @@ module "calcloud_lambda_submit" {
   runtime       = "python3.6"
   publish       = false
   timeout       = 30
+  cloudwatch_logs_retention_in_days = 30
 
   source_path = [
     {

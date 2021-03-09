@@ -2,6 +2,35 @@ provider "aws" {
   region  = var.region
 }
 
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "~> 3.29.0"
+    }
+    hashicorp-template = {
+      source = "hashicorp/template"
+      version = "~> 2.2.0"
+    }
+    hashicorp-null = {
+      source = "hashicorp/null"
+      version = "~> 3.1.0"
+    }
+    hashicorp-external = {
+      source = "hashicorp/external"
+      version = "~> 2.1.0"
+    }
+    hashicorp-local = {
+      source = "hashicorp/local"
+      version = "~> 2.1.0"
+    }
+    hashicorp-random = {
+      source = "hashicorp/random"
+      version = "~> 3.1.0"
+    }
+  }
+}
+
 data "template_file" "userdata" {
   template = file("${path.module}/user_data.sh")
   vars = {
@@ -118,7 +147,11 @@ resource "aws_batch_job_definition" "calcloud_2g" {
   container_properties = <<CONTAINER_PROPERTIES
   {
     "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
-    "environment": [],
+    "environment": [
+      {"name": "AWSDPVER", "value": "${var.awsdpver}"},
+      {"name": "AWSYSVER", "value": "${var.awsysver}"},
+      {"name": "CSYS_VER", "value": "${var.csys_ver}"}
+    ],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
     "memory": ${2*(1024-128)},

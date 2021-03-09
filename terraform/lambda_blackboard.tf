@@ -1,5 +1,6 @@
 module "calcloud_lambda_blackboard" {
   source = "terraform-aws-modules/lambda/aws"
+  version = "~> 1.43.0"
 
   function_name = "calcloud-job-blackboard${local.environment}"
   description   = "scrapes the Batch console for job metadata and posts to S3 bucket for on-premise poller"
@@ -8,6 +9,7 @@ module "calcloud_lambda_blackboard" {
   runtime       = "python3.6"
   publish       = false
   timeout       = 300
+  cloudwatch_logs_retention_in_days = 30
 
   source_path = [
     {

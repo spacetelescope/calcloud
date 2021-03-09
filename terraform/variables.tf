@@ -14,3 +14,27 @@ variable region {
   type = string
   default = "us-east-1"
 }
+
+variable awsdpver {
+  description = "HST keyword for caldp repo tag version"
+  type = string
+  default = "undefined"
+}
+
+variable awsysver {
+  description = "HST keyword for calcloud repo tag version"
+  type = string
+  default = "undefined"
+}
+
+variable csys_ver {
+  description = "HST keyword for docker base calibration image tag"
+  type = string
+  default = "undefined"
+}
+
+variable pinned_tf_ver {
+  description = "the intended value of the terraform installation in the environment"
+  type = string
+  default = "0.14.7"
+}
