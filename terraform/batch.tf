@@ -154,11 +154,12 @@ resource "aws_batch_job_definition" "calcloud_2g" {
     ],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
-    "memory": ${2*(1024-128)},
     "mountPoints": [],
-    "resourceRequirements": [],
+    "resourceRequirements": [
+        {"value" : "${2*(1024-128)}", "type" : "MEMORY"},
+        {"value" : "1", "type": "VCPU"}
+    ],
     "ulimits": [],
-    "vcpus": 1,
     "volumes": []
   }
   CONTAINER_PROPERTIES
@@ -183,11 +184,12 @@ resource "aws_batch_job_definition" "calcloud_8g" {
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
-    "memory": ${8*(1024-128)},
     "mountPoints": [],
-    "resourceRequirements": [],
+    "resourceRequirements": [
+        {"value" : "${8*(1024-128)}", "type" : "MEMORY"},
+        {"value" : "4", "type": "VCPU"}
+    ],
     "ulimits": [],
-    "vcpus": 4,
     "volumes": []
   }
   CONTAINER_PROPERTIES
@@ -212,11 +214,12 @@ resource "aws_batch_job_definition" "calcloud_16g" {
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
-    "memory": ${16*(1024-128)},
     "mountPoints": [],
-    "resourceRequirements": [],
+    "resourceRequirements": [
+    	{"value": "${16*(1024-128)}", "type": "MEMORY"},
+        {"value": "8", "type": "VCPU"}
+    ],
     "ulimits": [],
-    "vcpus": 8,
     "volumes": []
   }
   CONTAINER_PROPERTIES
@@ -241,11 +244,12 @@ resource "aws_batch_job_definition" "calcloud_64g" {
     "environment": [],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
-    "memory": ${64*(1024-128)},
     "mountPoints": [],
-    "resourceRequirements": [],
+    "resourceRequirements": [
+    	{"value": "${64*(1024-128)}", "type": "MEMORY"},
+        {"value": "32", "type": "VCPU"}
+    ],
     "ulimits": [],
-    "vcpus": 32,
     "volumes": []
   }
   CONTAINER_PROPERTIES
