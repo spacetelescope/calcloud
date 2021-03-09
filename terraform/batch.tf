@@ -181,7 +181,11 @@ resource "aws_batch_job_definition" "calcloud_8g" {
   container_properties = <<CONTAINER_PROPERTIES
   {
     "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
-    "environment": [],
+    "environment": [
+      {"name": "AWSDPVER", "value": "${var.awsdpver}"},
+      {"name": "AWSYSVER", "value": "${var.awsysver}"},
+      {"name": "CSYS_VER", "value": "${var.csys_ver}"}
+    ],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
     "mountPoints": [],
@@ -211,12 +215,16 @@ resource "aws_batch_job_definition" "calcloud_16g" {
   container_properties = <<CONTAINER_PROPERTIES
   {
     "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
-    "environment": [],
+    "environment": [
+      {"name": "AWSDPVER", "value": "${var.awsdpver}"},
+      {"name": "AWSYSVER", "value": "${var.awsysver}"},
+      {"name": "CSYS_VER", "value": "${var.csys_ver}"}
+    ],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
     "mountPoints": [],
     "resourceRequirements": [
-    	{"value": "${16*(1024-128)}", "type": "MEMORY"},
+        {"value": "${16*(1024-128)}", "type": "MEMORY"},
         {"value": "8", "type": "VCPU"}
     ],
     "ulimits": [],
@@ -241,12 +249,16 @@ resource "aws_batch_job_definition" "calcloud_64g" {
   container_properties = <<CONTAINER_PROPERTIES
   {
     "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
-    "environment": [],
+    "environment": [
+      {"name": "AWSDPVER", "value": "${var.awsdpver}"},
+      {"name": "AWSYSVER", "value": "${var.awsysver}"},
+      {"name": "CSYS_VER", "value": "${var.csys_ver}"}
+    ],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
     "mountPoints": [],
     "resourceRequirements": [
-    	{"value": "${64*(1024-128)}", "type": "MEMORY"},
+        {"value": "${64*(1024-128)}", "type": "MEMORY"},
         {"value": "32", "type": "VCPU"}
     ],
     "ulimits": [],
