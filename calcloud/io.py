@@ -533,12 +533,12 @@ class IoBundle:
         """Delete outputs, messages, and control files."""
         self.outputs.delete(ids)
         self.messages.delete(ids)
-        self.control.delete(ids)
         self.xdata.delete(ids)
 
     def clear(self, ids="all"):
         """Delete every S3 file managed by this IoBundle."""
         self.reset(ids)
+        self.control.delete(ids)
         self.inputs.delete(ids)
 
 
