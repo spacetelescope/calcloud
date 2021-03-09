@@ -48,13 +48,12 @@ def _main(comm, ipppssoot, bucket_name):
     except comm.xdata.client.exceptions.NoSuchKey:
         metadata = dict(memory_retries=0, job_id=None, terminated=False)
 
+    # get_plan() raises AllBinsTriedQuit when retries exhaust higher memory job definitions
     p = plan.get_plan(ipppssoot, bucket_name, f"{bucket_name}/inputs", metadata["memory_retries"])
 
+    # Only reached if get_plan() defines a viable job plan
     print("Job Plan:", p)
-
     response = submit.submit_job(p)
-
     print("Submitted job for", ipppssoot, "as ID", response["jobId"])
-
     metadata["job_id"] = response["jobId"]
     comm.xdata.put(ipppssoot, metadata)

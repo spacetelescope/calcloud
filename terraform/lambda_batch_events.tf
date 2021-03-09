@@ -42,7 +42,7 @@ module "calcloud_lambda_batchEvents" {
   lambda_role = data.aws_ssm_parameter.lambda_submit_role.value
 
   environment_variables = {
-    JOBQUEUES="${aws_batch_job_queue.batch_queue.name},${aws_batch_job_queue.batch_outlier_queue.name}"
+    JOBQUEUES=aws_batch_job_queue.batch_queue.name
     MAX_MEMORY_RETRIES="4"
   }
 

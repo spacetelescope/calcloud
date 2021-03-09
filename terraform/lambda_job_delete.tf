@@ -42,7 +42,7 @@ module "calcloud_lambda_deleteJob" {
   lambda_role = data.aws_ssm_parameter.lambda_delete_role.value
 
   environment_variables = {
-    JOBQUEUES="${aws_batch_job_queue.batch_queue.name},${aws_batch_job_queue.batch_outlier_queue.name}"
+    JOBQUEUES=aws_batch_job_queue.batch_queue.name
   }
 
   tags = {

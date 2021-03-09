@@ -42,9 +42,8 @@ module "calcloud_lambda_rescueJob" {
   lambda_role = data.aws_ssm_parameter.lambda_delete_role.value   # XXX Re-use DELETE ROLE
   
   environment_variables = {
-    JOBDEFINITION = aws_batch_job_definition.calcloud.name,
+    JOBDEFINITIONS = local.job_definitions,
     NORMALQUEUE = aws_batch_job_queue.batch_queue.name,
-    OUTLIERQUEUE = aws_batch_job_queue.batch_outlier_queue.name,
   }
 
   tags = {

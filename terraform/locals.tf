@@ -8,4 +8,6 @@ locals {
 
        # Unless the pre_environment is an empty string,  prepend an implicit "-" to the final environment value
        environment = local.pre_environment == "" ? "" : join("", ["-", local.pre_environment])
+
+       job_definitions = "${aws_batch_job_definition.calcloud_2g.name},${aws_batch_job_definition.calcloud_8g.name},${aws_batch_job_definition.calcloud_16g.name},${aws_batch_job_definition.calcloud_64g.name}"
 }
