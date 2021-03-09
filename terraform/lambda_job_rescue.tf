@@ -8,7 +8,7 @@ module "calcloud_lambda_rescueJob" {
   handler       = "rescue_handler.lambda_handler"
   runtime       = "python3.6"
   publish       = false
-  timeout       = 300
+  timeout       = 900
   cloudwatch_logs_retention_in_days = 30
 
   source_path = [
