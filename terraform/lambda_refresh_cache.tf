@@ -3,7 +3,7 @@ module "calcloud_lambda_refresh_cache_submit" {
   version = "~> 1.43.0"
 
   function_name = "calcloud-fileshare-refresh_cache_submit${local.environment}"
-  description   = "listens for refresh cache operations and logs them"
+  description   = "submits refresh cache operations"
   # the path is relative to the path inside the lambda env, not in the local filesystem. 
   handler       = "refresh_cache_submit.lambda_handler"
   runtime       = "python3.6"
