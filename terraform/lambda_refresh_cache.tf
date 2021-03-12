@@ -51,13 +51,6 @@ module "calcloud_lambda_refresh_cache_submit" {
   }
 }
 
-# # for cron-like schedule
-# resource "aws_cloudwatch_event_rule" "refresh_cache_submit" {
-#   name                = "every-five-minutes"
-#   description         = "for refresh cache lambda"
-#   schedule_expression = "rate(5 minutes)"
-# }
-
 resource "aws_cloudwatch_event_target" "refresh_cache_submit" {
   rule      = aws_cloudwatch_event_rule.every_five_minutes.name
   target_id = "lambda"
