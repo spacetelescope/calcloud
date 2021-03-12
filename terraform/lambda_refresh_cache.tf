@@ -62,6 +62,10 @@ resource "aws_cloudwatch_event_target" "refresh_cache_submit" {
   rule      = aws_cloudwatch_event_rule.refresh_cache_submit.name
   target_id = "lambda"
   arn       = module.calcloud_lambda_refresh_cache_submit.this_lambda_function_arn
+  depends_on = [
+    module.calcloud_lambda_refresh_cache_submit,
+    aws_cloudwatch_event_rule.refresh_cache_submit
+  ]
 }
 
 resource "aws_lambda_permission" "refresh_cache_submit" {

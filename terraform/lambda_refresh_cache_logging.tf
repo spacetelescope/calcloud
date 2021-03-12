@@ -71,6 +71,10 @@ resource "aws_cloudwatch_event_target" "refresh_cache_logs" {
   rule      = aws_cloudwatch_event_rule.refresh_cache_logs.name
   target_id = "lambda"
   arn       = module.calcloud_lambda_refresh_cache.this_lambda_function_arn
+  depends_on = [
+    module.calcloud_lambda_refresh_cache,
+    aws_cloudwatch_event_rule.refresh_cache_logs
+  ]
 }
 
 resource "aws_lambda_permission" "allow_lambda_exec_refresh_cache_logs" {

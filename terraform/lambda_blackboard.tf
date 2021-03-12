@@ -65,6 +65,10 @@ resource "aws_cloudwatch_event_target" "every_five_minutes" {
   rule      = aws_cloudwatch_event_rule.every_five_minutes.name
   target_id = "lambda"
   arn       = module.calcloud_lambda_blackboard.this_lambda_function_arn
+  depends_on = [
+    module.calcloud_lambda_blackboard,
+    aws_cloudwatch_event_rule.every_five_minutes
+  ]
 }
 
 resource "aws_lambda_permission" "allow_lambda_exec" {

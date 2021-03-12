@@ -75,6 +75,12 @@ resource "aws_cloudwatch_event_target" "batch_events" {
   rule      = aws_cloudwatch_event_rule.batch.name
   target_id = "lambda"
   arn       = module.calcloud_lambda_batchEvents.this_lambda_function_arn
+  depends_on = [
+    module.calcloud_lambda_batchEvents,
+    aws_cloudwatch_event_rule.batch
+  ]
+
+
 }
 
 resource "aws_lambda_permission" "allow_lambda_exec_batch" {
