@@ -35,7 +35,6 @@ def lambda_handler(event, context):
 
     # we need s3 to upload the snapshot, and storagegateway to refresh the cache
     s3 = boto3.client("s3", config=common.retry_config)
-    gateway = boto3.client("storagegateway", config=common.retry_config)
 
     with os.fdopen(fd, "w") as fout:
         # write the header
@@ -94,12 +93,5 @@ def lambda_handler(event, context):
         s3.upload_fileobj(f, os.environ["BUCKET"], "blackboard/blackboardAWS.snapshot")
 
     os.remove(temppath)
-    try:
-        response = gateway.refresh_cache(
-            FileShareARN=os.environ["FILESHARE"], FolderList=["/blackboard/"], Recursive=True
-        )
-        print(response)
-    except Exception as exc:
-        print(str(exc))
 
     return None
