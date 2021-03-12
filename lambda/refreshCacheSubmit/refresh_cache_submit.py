@@ -14,7 +14,7 @@ def lambda_handler(event, context):
     event_time = event["time"]
     dt = dateutil.parser.isoparse(event_time)
 
-    if str(dt.minute)[0] in ("3", "6"):
+    if str(dt.minute)[0] in ("0", "3"):
         # these can be refreshed far less often
         refresh_1.append("/control/")
         refresh_2.append("/inputs/")
