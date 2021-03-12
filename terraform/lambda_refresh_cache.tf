@@ -51,21 +51,17 @@ module "calcloud_lambda_refresh_cache_submit" {
   }
 }
 
-# for cron-like schedule
-resource "aws_cloudwatch_event_rule" "refresh_cache_submit" {
-  name                = "every-five-minutes"
-  description         = "for refresh cache lambda"
-  schedule_expression = "rate(5 minutes)"
-}
+# # for cron-like schedule
+# resource "aws_cloudwatch_event_rule" "refresh_cache_submit" {
+#   name                = "every-five-minutes"
+#   description         = "for refresh cache lambda"
+#   schedule_expression = "rate(5 minutes)"
+# }
 
 resource "aws_cloudwatch_event_target" "refresh_cache_submit" {
-  rule      = aws_cloudwatch_event_rule.refresh_cache_submit.name
+  rule      = aws_cloudwatch_event_rule.every_five_minutes.name
   target_id = "lambda"
   arn       = module.calcloud_lambda_refresh_cache_submit.this_lambda_function_arn
-  depends_on = [
-    module.calcloud_lambda_refresh_cache_submit,
-    aws_cloudwatch_event_rule.refresh_cache_submit
-  ]
 }
 
 resource "aws_lambda_permission" "refresh_cache_submit" {
@@ -73,5 +69,5 @@ resource "aws_lambda_permission" "refresh_cache_submit" {
   action        = "lambda:InvokeFunction"
   function_name = module.calcloud_lambda_refresh_cache_submit.this_lambda_function_name
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.refresh_cache_submit.arn
+  source_arn    = aws_cloudwatch_event_rule.every_five_minutes.arn
 }
