@@ -1,11 +1,11 @@
-module "calcloud_lambda_refresh_cache_logs" {
+module "calcloud_lambda_refresh_cache_submit" {
   source = "terraform-aws-modules/lambda/aws"
   version = "~> 1.43.0"
 
-  function_name = "calcloud-fileshare-refresh_cache_logs${local.environment}"
-  description   = "listens for refresh cache operations and logs them"
+  function_name = "calcloud-fileshare-refresh_cache_submit${local.environment}"
+  description   = "submits refresh cache operations"
   # the path is relative to the path inside the lambda env, not in the local filesystem. 
-  handler       = "refresh_cache_logs.lambda_handler"
+  handler       = "refresh_cache_submit.lambda_handler"
   runtime       = "python3.6"
   publish       = false
   timeout       = 900
@@ -14,7 +14,7 @@ module "calcloud_lambda_refresh_cache_logs" {
   source_path = [
     {
       # this is the lambda itself. The code in path will be placed directly into the lambda execution path
-      path = "${path.module}/../lambda/refreshCacheLogs"
+      path = "${path.module}/../lambda/refreshCacheSubmit"
       pip_requirements = false
     },
     {
@@ -39,44 +39,34 @@ module "calcloud_lambda_refresh_cache_logs" {
   # existing role for the lambda
   # will need to parametrize when ITSD takes over role creation. 
   # for now this role was created by hand in the console, it is not terraform managed
-  lambda_role = data.aws_ssm_parameter.lambda_cloudwatch_role.value
+  lambda_role = data.aws_ssm_parameter.lambda_refreshCacheSubmit_role.value
 
-#   environment_variables = {
-#     JOBQUEUES=aws_batch_job_queue.batch_queue.name
-#   }
+  environment_variables = {
+    # comma delimited list of job queues, because batch can only list jobs per queue
+    FILESHARE=data.aws_ssm_parameter.file_share_arn.value
+  }
 
   tags = {
-    Name = "calcloud-fileshare-refresh_cache_logs${local.environment}"
+    Name = "calcloud-fileshare-refresh_cache_submits${local.environment}"
   }
 }
 
-# the event rule for this lambda/cloudwatch interaction is AWS failure events
-resource "aws_cloudwatch_event_rule" "refresh_cache_logs" {
-  name = "capture-refresh-cache-operations"
-  description = "capture file share refresh cache operations to track and evaluate them in log stream"
-
-  event_pattern = <<EOF
-{
-  "source": [
-    "aws.storagegateway"
-  ],
-  "detail-type": [
-    "Storage Gateway Refresh Cache Event"
-  ]
-}
-EOF
+resource "aws_cloudwatch_event_rule" "refresh_cache_schedule" {
+  name                = "refresh-cache-scheduler"
+  description         = "Fires every five minutes"
+  schedule_expression = "rate(5 minutes)"
 }
 
-resource "aws_cloudwatch_event_target" "refresh_cache_logs" {
-  rule      = aws_cloudwatch_event_rule.refresh_cache_logs.name
+resource "aws_cloudwatch_event_target" "refresh_cache_submit" {
+  rule      = aws_cloudwatch_event_rule.refresh_cache_schedule.name
   target_id = "lambda"
-  arn       = module.calcloud_lambda_refresh_cache_logs.this_lambda_function_arn
+  arn       = module.calcloud_lambda_refresh_cache_submit.this_lambda_function_arn
 }
 
-resource "aws_lambda_permission" "allow_lambda_exec_refresh_cache_logs" {
+resource "aws_lambda_permission" "refresh_cache_submit" {
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_lambda_refresh_cache_logs.this_lambda_function_name
+  function_name = module.calcloud_lambda_refresh_cache_submit.this_lambda_function_name
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.refresh_cache_logs.arn
+  source_arn    = aws_cloudwatch_event_rule.refresh_cache_schedule.arn
 }
