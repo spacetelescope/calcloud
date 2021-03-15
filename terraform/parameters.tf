@@ -50,6 +50,10 @@ data aws_ssm_parameter lambda_cloudwatch_role {
   name = "/iam/roles/calcloud_lambda_cloudWatchLogs"
 }
 
+data aws_ssm_parameter lambda_refreshCacheSubmit_role {
+  name = "/iam/roles/calcloud_lambda_refreshCacheSubmit"
+}
+
 data aws_ssm_parameter file_share_arn {
   name = "/gateway/fileshare"
 }
