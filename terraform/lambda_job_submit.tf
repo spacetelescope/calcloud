@@ -60,3 +60,12 @@ resource "aws_lambda_permission" "allow_bucket" {
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.calcloud.arn
 }
+
+# for invoking container image lambda (memory prediction model)
+resource "aws_lambda_permission" "invoke_function" {
+  statement_id  = "lambda-00b88cf8-496c-4861-83d1-5782c2ca6235"
+  action        = "lambda:InvokeFunction"
+  function_name = module.lambda_function_container_image.this_lambda_function_arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.calcloud.arn
+}

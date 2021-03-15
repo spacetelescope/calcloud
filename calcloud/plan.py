@@ -19,7 +19,7 @@ from . import s3
 import json
 import boto3
 
-client = boto3.client('lambda')
+client = boto3.client("lambda")
 
 # ----------------------------------------------------------------------
 
@@ -76,7 +76,18 @@ def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0):
 
 
 def invoke_AI_lambda(ipppssoot, output_bucket):
-    
+    # invoke calcloud-ai lambda
+    key = f"control/{ipppssoot}/{ipppssoot}_MemModelFeatures.txt"
+    inputParams = {"Bucket": output_bucket, "Key": key}
+    response = client.invoke(
+        FunctionName="arn:aws:lambda:us-east-1:218835028644:function:calcloud-ai",
+        InvocationType="RequestResponse",
+        Payload=json.dumps(inputParams),
+    )
+    predictions = json.load(response["Payload"])
+    print(predictions)
+    return predictions
+
 
 def _get_resources(ipppssoot, output_bucket, input_path):
     """Given an HST IPPPSSOOT ID,  return information used to schedule it as a batch job.
@@ -95,21 +106,9 @@ def _get_resources(ipppssoot, output_bucket, input_path):
     input_path = input_path
     crds_config = "caldp-config-offsite"
     # invoke calcloud-ai lambda
-    key = f"control/{ipppssoot}/{ipppssoot}_MemModelFeatures.txt"
-    inputParams = {
-        "Bucket" : output_bucket,
-        "Key" : key
-    }
-    response = client.invoke(
-        FunctionName = 'arn:aws:lambda:us-east-1:218835028644:function:calcloud-ai',
-        InvocationType = 'RequestResponse',
-        Payload = json.dumps(inputParams)
-    )
-    estimates = json.load(response['Payload'])
-    print(estimates)
-
-    initial_bin = estimates['memBin'] # 0 
-    kill_time = estimates['clockTime'] * 3 # 48 * 60 * 60 
+    predictions = invoke_AI_lambda(ipppssoot, output_bucket)
+    initial_bin = predictions["memBin"]  # 0
+    kill_time = predictions["clockTime"] * 3  # 48 * 60 * 60
 
     return JobResources(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time)
 
