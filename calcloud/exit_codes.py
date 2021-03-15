@@ -10,6 +10,10 @@ generic values of 0 or 1 to prevent conflicts with these codes.
 """
 import sys
 
+
+_MEMORY_ERROR_NAMES = ["SUBPROCESS_MEMORY_ERROR", "CALDP_MEMORY_ERROR", "CONTAINER_MEMORY_ERROR"]
+
+
 _EXIT_CODES = dict(
     SUCCESS=0,
     GENERIC_ERROR=1,
@@ -80,7 +84,7 @@ def explain(exit_code):
         exit_code = globals()[name]
         explanation = _NAME_EXPLANATIONS[name]
     else:
-        raise ValueError("Invalid exit_code: " + repr(exit_code))
+        raise ValueError("Unhandled exit_code: " + repr(exit_code))
     return f"EXIT {name}[{exit_code}]: {explanation}"
 
 
@@ -117,8 +121,7 @@ def is_memory_error(exit_code):
     >>> is_memory_error("SUBPROCESS_MEMORY_ERROR")
     True
     """
-    memory_error_names = ["SUBPROCESS_MEMORY_ERROR", "CALDP_MEMORY_ERROR", "CONTAINER_MEMORY_ERROR"]
-    return (exit_code in [globals()[name] for name in memory_error_names]) or (exit_code in memory_error_names)
+    return (exit_code in [globals()[name] for name in _MEMORY_ERROR_NAMES]) or (exit_code in _MEMORY_ERROR_NAMES)
 
 
 def test():
