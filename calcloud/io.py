@@ -535,7 +535,7 @@ class IoBundle:
         self.messages.delete(ids)
         self.xdata.delete(ids)  # IPPPSSOOT control metadata / retry status
 
-    def clear(self, ids="all"):
+    def clean(self, ids="all"):
         """Delete every S3 file managed by this IoBundle."""
         self.reset(ids)
         self.control.delete(ids)  # Memory model inputs
