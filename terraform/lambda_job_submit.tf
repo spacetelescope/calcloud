@@ -5,7 +5,7 @@ module "calcloud_lambda_submit" {
 
   function_name = "calcloud-job-submit${local.environment}"
   description   = "looks for placed-ipppssoot messages and submits jobs to Batch"
-  # the path is relative to the path inside the lambda env, not in the local filesystem. 
+  # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "s3_trigger_handler.lambda_handler"
   runtime       = "python3.6"
   publish       = false
@@ -38,7 +38,7 @@ module "calcloud_lambda_submit" {
   attach_tracing_policy = false
   attach_async_event_policy = false
   # existing role for the lambda
-  # will need to parametrize when ITSD takes over role creation. 
+  # will need to parametrize when ITSD takes over role creation.
   # for now this role was created by hand in the console, it is not terraform managed
   lambda_role = data.aws_ssm_parameter.lambda_submit_role.value
 
@@ -57,15 +57,6 @@ resource "aws_lambda_permission" "allow_bucket" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
   function_name = module.calcloud_lambda_submit.this_lambda_function_arn
-  principal     = "s3.amazonaws.com"
-  source_arn    = aws_s3_bucket.calcloud.arn
-}
-
-# for invoking container image lambda (memory prediction model)
-resource "aws_lambda_permission" "invoke_function" {
-  statement_id  = "lambda-00b88cf8-496c-4861-83d1-5782c2ca6235"
-  action        = "lambda:InvokeFunction"
-  function_name = module.lambda_function_container_image.this_lambda_function_arn
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.calcloud.arn
 }

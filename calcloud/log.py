@@ -89,11 +89,11 @@ class HstdpLogger:
 
         # verbose_level handles HSTDP verbosity,  defaulting to 0 for no debug
         try:
-            verbose_level = os.environ.get("HSTDP_VERBOSITY", 0)
+            verbose_level = os.environ.get("CALCLOUD_VERBOSITY", 0)
             self.verbose_level = int(verbose_level)
         except Exception:
             warning(
-                "Bad format for HSTDP_VERBOSITY =",
+                "Bad format for CALCLOUD_VERBOSITY =",
                 repr(verbose_level),
                 "Use e.g. -1 to squelch info, 0 for no debug,  50 for default debug output. 100 max debug.",
             )
