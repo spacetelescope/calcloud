@@ -38,3 +38,14 @@ variable pinned_tf_ver {
   type = string
   default = "0.14.7"
 }
+
+variable lt_ebs_type {
+  description = "the type of EBS volume used to back the EC2 worker nodes"
+  type = map(string)
+  default = {
+    "-sb" = "gp2"
+    "-dev" = "gp2"
+    "-test" = "gp3"
+    "-ops" = "gp3"
+  }
+}
