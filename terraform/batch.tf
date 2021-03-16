@@ -43,6 +43,7 @@ resource "aws_launch_template" "hstdp" {
   description             = "Template for cluster worker nodes updated to limit stopped container lifespan"
   ebs_optimized           = "false"
   image_id                = data.aws_ssm_parameter.batch_ami_id.value
+  update_default_version = true
   tags                    = {
     "Name"         = "calcloud-hst-worker${local.environment}"
     "calcloud-hst" = "calcloud-hst-worker${local.environment}"
@@ -59,7 +60,7 @@ resource "aws_launch_template" "hstdp" {
     encrypted             = "true"
     iops                  = 0
     volume_size           = 150
-    volume_type           = "gp2"
+    volume_type           = lookup(var.lt_ebs_type, local.environment, "gp2")
             }
   }
   iam_instance_profile {
