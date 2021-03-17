@@ -19,12 +19,13 @@ module "lambda_function_container_image" {
   description   = "pretrained neural networks to generate predictions on job resource requirements (memory bin and max execution time)"
 
   create_package = false
+  #image_uri = aws_ecr_image.calcloud_predict_ecr.name
   image_uri = aws_ecr_image.calcloud_predict_latest.repository_name
   #image_uri    = "218835028644.dkr.ecr.us-east-1.amazonaws.com/calcloud-ai"
   package_type = "Image"
 
   timeout       = 180
-  memory        = 500
+  memory_size   = 500
   cloudwatch_logs_retention_in_days = 30
 
   source_path = [
@@ -35,7 +36,7 @@ module "lambda_function_container_image" {
     }
   ]
 
-  #store_on_s3 = true
+  store_on_s3 = false
   #s3_bucket   = aws_s3_bucket.calcloud_lambda_envs.id
 
   # ensures that terraform doesn't try to mess with IAM
