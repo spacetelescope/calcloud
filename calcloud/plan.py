@@ -75,12 +75,12 @@ def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0):
     return Plan(*(job_resources + env))
 
 
-def invoke_AI_lambda(ipppssoot, output_bucket):
+def invoke_prediction_lambda(ipppssoot, output_bucket):
     # invoke calcloud-ai lambda
     key = f"control/{ipppssoot}/{ipppssoot}_MemModelFeatures.txt"
     inputParams = {"Bucket": output_bucket, "Key": key}
     response = client.invoke(
-        FunctionName="arn:aws:lambda:us-east-1:218835028644:function:calcloud-ai",
+        FunctionName="arn:aws:lambda:us-east-1:218835028644:function:calcloud-job=predict",
         InvocationType="RequestResponse",
         Payload=json.dumps(inputParams),
     )
@@ -106,7 +106,7 @@ def _get_resources(ipppssoot, output_bucket, input_path):
     input_path = input_path
     crds_config = "caldp-config-offsite"
     # invoke calcloud-ai lambda
-    predictions = invoke_AI_lambda(ipppssoot, output_bucket)
+    predictions = invoke_prediction_lambda(ipppssoot, output_bucket)
     initial_bin = predictions["memBin"]  # 0
     kill_time = predictions["clockTime"] * 3  # 48 * 60 * 60
 
