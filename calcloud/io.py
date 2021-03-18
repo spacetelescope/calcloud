@@ -419,10 +419,11 @@ class MessageIo(JsonIo):
 
         >>> comm.messages.delete("all")
         """
-        assert type in MESSAGE_TYPES  # note that "broadcast" is actually *required* here.
-        assert type != "broadcast"
+        assert type in MESSAGE_TYPES
+        assert type != "broadcast"  # don't broadcast broadcasts....
         assert isinstance(ipppssoots, list)
         assert not len(ipppssoots) or isinstance(ipppssoots[0], str)
+        assert "all" not in ipppssoots  # don't broadcast message tails of "all"
         assert len(ipppssoots) < MAX_BROADCAST_MSGS
         msg = f"broadcast-{self.get_id()}"
         self.put(msg, [f"{type}-{ipst}" for ipst in ipppssoots])
