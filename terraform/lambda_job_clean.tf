@@ -39,7 +39,7 @@ module "calcloud_lambda_cleanJob" {
   # existing role for the lambda
   # will need to parametrize when ITSD takes over role creation.
   # for now this role was created by hand in the console, it is not terraform managed
-  lambda_role = data.aws_ssm_parameter.lambda_delete_role.value
+  lambda_role = data.aws_ssm_parameter.lambda_cleanup_role.value
 
   environment_variables = {
     JOBQUEUES=aws_batch_job_queue.batch_queue.name

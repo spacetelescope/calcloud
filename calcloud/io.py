@@ -78,7 +78,7 @@ class S3Io:
         is potentially still incomplete and can  result in multiple S3
         list results.
         """
-        return self.s3_path + "/" + prefix
+        return self.s3_path + "/" + prefix if prefix else self.s3_path
 
     def expand_prefix(self, prefix):
         """For simple APIs,  a prefix of "all" translates to a partial S3 list
@@ -634,6 +634,15 @@ class IoBundle:
         ids = ids | set(self.control.ids(prefixes))  # ipppssoot directory
         ids = ids | set(self.messages.ids(prefixes))  # ipppssoots / message tails
         return list(ids)
+
+    def list_s3(self, prefixes="all"):
+        """Return the S3 listing of all branches of the comm bundle."""
+        items = []
+        items.extend(list(self.inputs.list_s3(prefixes)))
+        items.extend(list(self.control.list_s3(prefixes)))
+        items.extend(list(self.messages.list_s3(prefixes)))
+        items.extend(list(self.outputs.list_s3(prefixes)))
+        return items
 
 
 def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):

@@ -270,8 +270,8 @@ def list_objects(s3_prefix, client=None, max_objects=MAX_LIST_OBJECTS):
     config = {"MaxItems": max_objects, "PageSize": 1000}
     for page in paginator.paginate(Bucket=bucket_name, Prefix=prefix, PaginationConfig=config):
         for result in page.get("Contents", []):
-            listed = "s3://" + bucket_name + "/" + result["Key"]
-            yield listed
+            if result["Key"]:
+                yield "s3://" + bucket_name + "/" + result["Key"]
 
 
 def get_object(s3_filepath, client=None, encoding="utf-8"):
