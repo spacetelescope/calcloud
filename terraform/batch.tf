@@ -60,8 +60,8 @@ resource "aws_launch_template" "hstdp" {
     encrypted             = "true"
     # iops is only valid for gp3, io1, io2 (not gp2)
     iops                  = lookup(var.lt_ebs_iops, local.environment, 0)
-    # throughput is only valid for gp3
-    throughput            = lookup(var.lt_ebs_throughput, local.environment, 0)
+    # throughput is only valid for gp3, but it doesn't accept '0' as valid. null works, which is then set to 0
+    throughput            = lookup(var.lt_ebs_throughput, local.environment, null)
     volume_size           = 150
     volume_type           = lookup(var.lt_ebs_type, local.environment, "gp2")
             }

@@ -39,11 +39,17 @@ variable pinned_tf_ver {
   default = "0.14.7"
 }
 
+# valid combos
+# type: iops, throughput
+# gp2: null, null
+# gp3: null, number
+# io1: number, null
+# io2: number, null
 variable lt_ebs_type {
   description = "the type of EBS volume used to back the EC2 worker nodes"
   type = map(string)
   default = {
-    "-sb" = "gp3"
+    "-sb" = "gp2"
     "-dev" = "gp2"
     "-test" = "io1"
     "-ops" = "gp2"
@@ -55,7 +61,7 @@ variable lt_ebs_iops {
   type = map(number)
   # only valid for gp3, io1, io2 volumes
   default = {
-    "-sb" = 6000
+    "-sb" = null
     "-dev" = 0
     "-test" = 6000
     "-ops" = 0
@@ -66,10 +72,11 @@ variable lt_ebs_throughput {
   description = "only for gp3 ebs types, the provisioned throughput"
   type = map(number)
   # only valid for gp3 volumes
+  # io1 seems to require saying something that's not 0, but null works
   default = {
-    "-sb" = 500
+    "-sb" = null
     "-dev" = 0
-    "-test" = 0
+    "-test" = null
     "-ops" = 0
   }
 }
