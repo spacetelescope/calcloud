@@ -43,9 +43,47 @@ variable lt_ebs_type {
   description = "the type of EBS volume used to back the EC2 worker nodes"
   type = map(string)
   default = {
-    "-sb" = "gp2"
+    "-sb" = "gp3"
     "-dev" = "gp2"
-    "-test" = "gp3"
-    "-ops" = "gp3"
+    "-test" = "io1"
+    "-ops" = "gp2"
+  }
+}
+
+variable lt_ebs_iops {
+  description = "the provisioned iops of the ebs."
+  type = map(number)
+  # only valid for gp3, io1, io2 volumes
+  default = {
+    "-sb" = 6000
+    "-dev" = 0
+    "-test" = 6000
+    "-ops" = 0
+  }
+}
+
+variable lt_ebs_throughput {
+  description = "only for gp3 ebs types, the provisioned throughput"
+  type = map(number)
+  # only valid for gp3 volumes
+  default = {
+    "-sb" = 500
+    "-dev" = 0
+    "-test" = 0
+    "-ops" = 0
+  }
+}
+
+
+
+
+variable ce_max_vcpu {
+  description = "the max allowed vCPUs in the compute environment"
+  type = map(number)
+  default = {
+    "-sb" = 64
+    "-dev" = 128
+    "-test" = 128
+    "-ops" = 128
   }
 }
