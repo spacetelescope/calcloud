@@ -6,6 +6,7 @@ import sys
 import doctest
 import json
 import uuid
+import contextlib
 
 from calcloud import s3
 from calcloud import hst
@@ -24,7 +25,33 @@ __all__ = [
     "MetadataIo",
 ]
 
+MESSAGE_TYPES = [
+    "broadcast",
+    "placed",
+    "submit",
+    "processing",
+    "processed",
+    "error",
+    "ingesterror",
+    "ingested",
+    "terminated",
+    "cancel",
+    "rescue",
+    "clean",
+]
+
+MAX_BROADCAST_MSGS = 10 ** 6  # safety
+
 # -------------------------------------------------------------
+
+
+@contextlib.contextmanager
+def ignore_exceptions():
+    """Trap and ignore exceptions in the nested with block."""
+    try:
+        yield
+    except Exception:
+        pass
 
 
 class S3Io:
@@ -51,7 +78,7 @@ class S3Io:
         is potentially still incomplete and can  result in multiple S3
         list results.
         """
-        return self.s3_path + "/" + prefix
+        return self.s3_path + "/" + prefix if prefix else self.s3_path
 
     def expand_prefix(self, prefix):
         """For simple APIs,  a prefix of "all" translates to a partial S3 list
@@ -106,8 +133,15 @@ class S3Io:
         """
         return list(sorted(self.list(prefixes, max_objects=max_objects)))
 
-    def get(self, prefix, encoding="utf-8"):
-        return s3.get_object(self.path(prefix), client=self.client, encoding=encoding)
+    def get(self, prefixes, encoding="utf-8"):
+        """Return the contents of S3 file associated with `prefixes` if prefixes is a string.
+
+        Otherwise return the dictionary mapping each element of `prefixes` to its contents.
+        """
+        if isinstance(prefixes, str):
+            return s3.get_object(self.path(prefixes), client=self.client, encoding=encoding)
+        else:
+            return {prefix: self.get(prefix, encoding) for prefix in prefixes}
 
     def put(self, msgs, encoding="utf-8"):
         """Put messages `msgs` into S3,  accepting several forms:
@@ -176,9 +210,9 @@ class S3Io:
         self.delete_literal(prefix)
         return msg
 
-    def ids(self):
-        """Return the list of all unique ipppssoot/id directories."""
-        return list(set(obj.split("/")[0] for obj in self.list("all")))
+    def ids(self, prefixes="all"):
+        """Return the list of unique ipppssoot/id directories associated with `prefixes`."""
+        return list(set(obj.split("/")[0] for obj in self.list(prefixes) if obj))
 
 
 # -------------------------------------------------------------
@@ -187,10 +221,16 @@ class S3Io:
 class JsonIo(S3Io):
     """Serializes/deserializes objects to JSON when putting/getting from S3."""
 
-    def get(self, prefix):
-        """Return the decoded message object fetched from literal message name `prefix`."""
-        text = super().get(prefix)
-        return json.loads(text)
+    def get(self, prefixes):
+        """Return the decoded message object fetched from literal message name `prefixes` if
+        prefix is a string,  otherwise return a dictionary {prefix: contents, ...} for each
+        prefix in the sequence `prefixes`.
+        """
+        if isinstance(prefixes, str):
+            text = super().get(prefixes)
+            return json.loads(text)
+        else:
+            return {prefix: self.get(prefix) for prefix in prefixes}
 
     def put(self, prefix, obj=""):
         """Put messages defined by message name `prefix` and  payload `obj`.
@@ -203,24 +243,9 @@ class JsonIo(S3Io):
         """
         if isinstance(prefix, str):
             prefix = [prefix]
-        if isinstance(prefix, list):
+        if isinstance(prefix, (tuple, list, set)):
             prefix = {pref: obj for pref in prefix}
         super().put({pref: json.dumps(obj) for (pref, obj) in prefix.items()})
-
-
-MESSAGE_TYPES = [
-    "broadcast",
-    "placed",
-    "submit",
-    "processing",
-    "processed",
-    "error",
-    "ingesterror",
-    "ingested",
-    "terminated",
-    "cancel",
-    "rescue",
-]
 
 
 class MessageIo(JsonIo):
@@ -272,12 +297,6 @@ class MessageIo(JsonIo):
     >>> comm.messages.listl()
     []
 
-    expand_all("all-ipppssoot") is expanded into type-ipppssoot for every type
-    in MESSAGE_TYPES regardless of the existence of the message on S3:
-
-    >>> list(comm.messages.expand_all('all-lcw303cjq'))
-    ['broadcast-lcw303cjq', 'placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'error-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq']
-
     The all-ipppssoot message is expanded to every type-ipppssoot:
 
     >>> comm.messages.put(['cancel-lcw303cjq', 'error-lcw303cjq', 'rescue-lcw304cjq']);
@@ -328,8 +347,9 @@ class MessageIo(JsonIo):
         return self.s3_path + "/" + prefix
 
     def expand_prefix(self, prefix):
-        """For the MessageIo,  expand_all is used to generate a sequence of partial S3 keys
-        which correspond to:
+        """For the MessageIo, expand_prefix() is used to customize the behavior of
+        expand_all to handle message types.  expand_all() is used to generate a
+        sequence of partial S3 keys which correspond to:
 
         1. "all messages of all types"    when prefix="all"
         2. "all types for one ipppssoot"  when prefix="all-{ipst}"
@@ -342,13 +362,13 @@ class MessageIo(JsonIo):
         key prefixes, match all ipppssoots of each type:
 
         >>> list(comm.messages.expand_all('all'))
-        ['broadcast', 'placed', 'submit', 'processing', 'processed', 'error', 'ingesterror', 'ingested', 'terminated', 'cancel', 'rescue']
+        ['broadcast', 'placed', 'submit', 'processing', 'processed', 'error', 'ingesterror', 'ingested', 'terminated', 'cancel', 'rescue', 'clean']
 
         The message 'all-ipppssoot' expands into a sequence of type-ipppssoot messages for each
         type in MESSAGE_TYPES:
 
         >>> list(comm.messages.expand_all('all-lcw303cjq'))
-        ['broadcast-lcw303cjq', 'placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'error-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq']
+        ['broadcast-lcw303cjq', 'placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'error-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq', 'clean-lcw303cjq']
 
         A fully specified type-ipppsoot message expands to itself:
 
@@ -360,6 +380,7 @@ class MessageIo(JsonIo):
 
         >>> list(comm.messages.expand_all('rescue-all'))
         ['rescue']
+
         """
         if prefix == "all":
             prefix = "all-"
@@ -398,6 +419,12 @@ class MessageIo(JsonIo):
 
         >>> comm.messages.delete("all")
         """
+        assert type in MESSAGE_TYPES
+        assert type != "broadcast"  # don't broadcast broadcasts....
+        assert isinstance(ipppssoots, list)
+        assert not len(ipppssoots) or isinstance(ipppssoots[0], str)
+        assert "all" not in ipppssoots  # don't broadcast message tails of "all"
+        assert len(ipppssoots) < MAX_BROADCAST_MSGS
         msg = f"broadcast-{self.get_id()}"
         self.put(msg, [f"{type}-{ipst}" for ipst in ipppssoots])
         return msg
@@ -406,6 +433,20 @@ class MessageIo(JsonIo):
         """Given a list of `message_types`, return the list of unique
         ipppssoots such that each ipppssoot has at least one message
         of those types.
+
+        >>> comm = get_io_bundle()
+        >>> comm.messages.put(['cancel-lcw303cjq', 'cancel-lcw304cjq', 'error-lcw303cjq'])
+
+        >>> result = comm.messages.ids(["cancel", "error"])
+        >>> assert set(result) == set(['lcw303cjq', 'lcw304cjq'])
+
+        >>> comm.messages.ids("error")
+        ['lcw303cjq']
+
+        >>> comm.messages.ids("placed")
+        []
+
+        >>> comm.messages.delete("all")
         """
         return list(set(msg.split("-")[1] for msg in self.list(message_types)))
 
@@ -415,6 +456,14 @@ class MessageIo(JsonIo):
             if obj.endswith(".trigger"):  # XXXX Undo trigger hack
                 obj = obj[: -len(".trigger")]
             yield obj
+
+    def reset(self, ids):
+        """Delete all messages associated with `ids` which are nominally
+        ipppssoots or other message tails.
+        """
+        if isinstance(ids, str):
+            ids = [ids]
+        self.delete(["all-" + id for id in ids])
 
 
 class InputsIo(S3Io):
@@ -426,9 +475,19 @@ class InputsIo(S3Io):
     's3://.../inputs/lcw303cjq'
     """
 
-    def ids(self):
-        """Return the ipppssoots associated with every input tarball."""
-        return [tarball.split(".")[0] for tarball in self.list("all") if tarball]
+    def ids(self, prefixes="all"):
+        """Return the ipppssoots associated with every input tarball.
+
+        >>> comm = get_io_bundle()
+
+        >>> comm.inputs.put(["j6d511gvq.tar.gz", "j6m901040.tar.gz"])
+
+        >>> result = comm.inputs.ids()
+        >>> assert set(result) == set(['j6d511gvq', 'j6m901040'])
+
+        >>> comm.inputs.delete("all")
+        """
+        return [tarball.split(".")[0] for tarball in self.list(prefixes) if tarball]
 
 
 class ControlIo(S3Io):
@@ -461,6 +520,13 @@ class OutputsIo(S3Io):
 
     >>> list(comm.outputs.list_s3("all"))   #doctest: +ELLIPSIS
     ['s3://.../outputs/lcw303cjq/something.fits']
+
+    >>> comm.outputs.delete("all");
+    >>> comm.outputs.put("j6d511gvq/j6d511gvq.tar.gz")
+    >>> comm.outputs.put("j6d511gvq/process_metrics.txt")
+    >>> comm.outputs.put("j6m901040/preview.txt")
+    >>> result = comm.outputs.ids()
+    >>> assert set(result) == set(['j6d511gvq', 'j6m901040'])
 
     >>> comm.outputs.delete("all");   list(comm.outputs.list_s3())
     []
@@ -531,18 +597,59 @@ class IoBundle:
 
     def reset(self, ids="all"):
         """Delete outputs, messages, and control files."""
-        self.outputs.delete(ids)
-        self.messages.delete(ids)
-        self.xdata.delete(ids)  # IPPPSSOOT control metadata / retry status
+        if isinstance(ids, str):
+            ids = [ids]
+        for tail in ids:
+            with ignore_exceptions():
+                self.outputs.delete(tail)
+            with ignore_exceptions():
+                self.messages.reset(tail)  # messages.delete() doesn't handle "ipppssoot", only "type-ipppssoot".
+            with ignore_exceptions():
+                self.xdata.delete(tail)  # IPPPSSOOT control metadata / retry status
 
     def clean(self, ids="all"):
-        """Delete every S3 file managed by this IoBundle."""
-        self.reset(ids)
-        self.control.delete(ids)  # Memory model inputs
-        self.inputs.delete(ids)  # Input tarballs
+        """Delete every S3 file associated with `ids` which specifies one of:
+
+        1. ipppssoot  -  clean one ipppssoot
+        2. [ipppssoot, ...]
+        3. "all"
+
+        """
+        if isinstance(ids, str):
+            ids = [ids]
+        for id in ids:
+            with ignore_exceptions():
+                self.reset(ids)
+            with ignore_exceptions():
+                self.control.delete(ids)  # Memory model inputs
+            with ignore_exceptions():
+                self.inputs.delete(ids)  # Input tarballs
+
+    def ids(self, prefixes="all"):
+        """Return the id associated with every object in any branch of this comm
+        bundle.
+        """
+        ids = set()
+        ids = ids | set(self.inputs.ids(prefixes))  # tarball root
+        ids = ids | set(self.outputs.ids(prefixes))  # ipppssoot directory
+        ids = ids | set(self.control.ids(prefixes))  # ipppssoot directory
+        ids = ids | set(self.messages.ids(prefixes))  # ipppssoots / message tails
+        return list(ids)
+
+    def list_s3(self, prefixes="all"):
+        """Return the S3 listing of all branches of the comm bundle."""
+        items = []
+        items.extend(list(self.inputs.list_s3(prefixes)))
+        items.extend(list(self.control.list_s3(prefixes)))
+        items.extend(list(self.messages.list_s3(prefixes)))
+        items.extend(list(self.outputs.list_s3(prefixes)))
+        return items
 
 
 def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):
+    """Return the IoBundle defined by root S3 `bucket` and accessed using
+    S3 `client`.
+    """
     return IoBundle(bucket, client)
 
 

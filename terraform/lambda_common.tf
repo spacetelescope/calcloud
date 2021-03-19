@@ -73,7 +73,7 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
     events              = ["s3:ObjectCreated:Put"]
     filter_prefix       = "messages/cancel-"
   }
-  
+
   lambda_function {
     lambda_function_arn = module.calcloud_lambda_rescueJob.this_lambda_function_arn
     events              = ["s3:ObjectCreated:Put"]
@@ -86,10 +86,17 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
     filter_prefix       = "messages/broadcast-"
   }
 
+  lambda_function {
+    lambda_function_arn = module.calcloud_lambda_cleanJob.this_lambda_function_arn
+    events              = ["s3:ObjectCreated:Put"]
+    filter_prefix       = "messages/clean-"
+  }
+
   depends_on = [
     aws_lambda_permission.allow_bucket,
     aws_lambda_permission.allow_bucket_deleteLambda,
     aws_lambda_permission.allow_bucket_rescueLambda,
-    aws_lambda_permission.allow_bucket_broadcastLambda
+    aws_lambda_permission.allow_bucket_broadcastLambda,
+    aws_lambda_permission.allow_bucket_cleanLambda
   ]
 }

@@ -42,6 +42,10 @@ data aws_ssm_parameter lambda_delete_role {
   name = "/iam/roles/calcloud_lambda_delete"
 }
 
+data aws_ssm_parameter lambda_cleanup_role {
+  name = "/iam/roles/calcloud_lambda_cleanup"
+}
+
 data aws_ssm_parameter lambda_broadcast_role {
   name = "/iam/roles/calcloud_lambda_broadcast"
 }
@@ -57,4 +61,3 @@ data aws_ssm_parameter lambda_refreshCacheSubmit_role {
 data aws_ssm_parameter file_share_arn {
   name = "/gateway/fileshare"
 }
-

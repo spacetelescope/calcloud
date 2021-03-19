@@ -21,6 +21,9 @@ def lambda_handler(event, context):
 
     comm = io.get_io_bundle(bucket_name)
 
+    if check_for_kill(comm, "Detected broadcast-kill on entry."):
+        return
+
     broadcasted = comm.messages.pop(f"broadcast-{serial}")
 
     if len(broadcasted) > 100:
@@ -28,5 +31,18 @@ def lambda_handler(event, context):
         comm.messages.put(f"broadcast-{serial1}", broadcasted[: len(broadcasted) // 2])
         comm.messages.put(f"broadcast-{serial2}", broadcasted[len(broadcasted) // 2 :])
     else:
-        for msg in broadcasted:
+        for i, msg in enumerate(broadcasted):
+            if not i % 10:
+                if check_for_kill(comm, "Detected broadcast-kill in put loop"):
+                    return
             comm.messages.put(msg)
+
+
+def check_for_kill(comm, message):
+    """Return True IFF a broadcast-kill message has been written to S3."""
+    try:
+        comm.messages.get("broadcast-kill")  # 12x cheaper than listl
+        print(message)
+        return True
+    except comm.messages.client.exceptions.NoSuchKey:
+        return False
