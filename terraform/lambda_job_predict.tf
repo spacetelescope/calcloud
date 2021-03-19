@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    docker = {
-      source = "kreuzwerker/docker"
-      version = "2.11.0"
-    }
-  }
-}
-
 data "aws_caller_identity" "this" {}
 data "aws_region" "current" {}
 data "aws_ecr_authorization_token" "token" {}
