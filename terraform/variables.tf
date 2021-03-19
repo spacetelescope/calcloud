@@ -38,3 +38,7 @@ variable pinned_tf_ver {
   type = string
   default = "0.14.7"
 }
+#temp
+variable lambda_predict_role {
+  type = string
+}

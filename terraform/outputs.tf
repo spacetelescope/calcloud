@@ -35,3 +35,8 @@ output region {
 output vpc {
   value = data.aws_ssm_parameter.vpc.value
 }
+
+output predict_lambda_function_arn {
+  #value = module.lambda_function_container_image.this_lambda_function_arn
+  value = module.lambda_function_container_image.this_lambda_function_arn
+}

@@ -79,8 +79,9 @@ def invoke_prediction_lambda(ipppssoot, output_bucket):
     # invoke calcloud-ai lambda
     key = f"control/{ipppssoot}/{ipppssoot}_MemModelFeatures.txt"
     inputParams = {"Bucket": output_bucket, "Key": key}
+    job_predict_lambda = os.environ["JOBPREDICTLAMBDA"]
     response = client.invoke(
-        FunctionName="arn:aws:lambda:us-east-1:218835028644:function:calcloud-job=predict",
+        FunctionName=job_predict_lambda,
         InvocationType="RequestResponse",
         Payload=json.dumps(inputParams),
     )

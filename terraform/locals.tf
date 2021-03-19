@@ -10,4 +10,9 @@ locals {
        environment = local.pre_environment == "" ? "" : join("", ["-", local.pre_environment])
 
        job_definitions = "${aws_batch_job_definition.calcloud_2g.name},${aws_batch_job_definition.calcloud_8g.name},${aws_batch_job_definition.calcloud_16g.name},${aws_batch_job_definition.calcloud_64g.name}"
+
+       #ecr_address = aws_ecr_repository.caldp_ecr.repository_url
+       #ecr_address = format("%v.dkr.ecr.%v.amazonaws.com", data.aws_caller_identity.this.account_id, data.aws_region.current.name)
+       #ecr_image   = format("%v/%v:model", local.ecr_address, aws_ecr_repository.caldp_ecr.name)
+       ecr_image = "${aws_ecr_repository.caldp_ecr.repository_url}:model"
 }
