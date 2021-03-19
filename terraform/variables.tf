@@ -51,7 +51,7 @@ variable lt_ebs_type {
   default = {
     "-sb" = "gp2"
     "-dev" = "gp2"
-    "-test" = "io1"
+    "-test" = "gp2"
     "-ops" = "gp2"
   }
 }
@@ -62,9 +62,9 @@ variable lt_ebs_iops {
   # only valid for gp3, io1, io2 volumes
   default = {
     "-sb" = null
-    "-dev" = 0
-    "-test" = 6000
-    "-ops" = 0
+    "-dev" = null
+    "-test" = null
+    "-ops" = null
   }
 }
 
@@ -75,9 +75,9 @@ variable lt_ebs_throughput {
   # io1 seems to require saying something that's not 0, but null works
   default = {
     "-sb" = null
-    "-dev" = 0
+    "-dev" = null
     "-test" = null
-    "-ops" = 0
+    "-ops" = null
   }
 }
 
