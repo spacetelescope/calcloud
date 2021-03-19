@@ -39,6 +39,10 @@ data "template_file" "userdata" {
 }
 
 resource "aws_launch_template" "hstdp" {
+  # IF YOU CHANGE THE LAUNCH TEMPLATE YOU MUST "TAINT" THE COMPUTE ENVIRONMENT BEFORE DEPLOY
+  # IN ORDER FOR YOUR CHANGES TO BE PICKED UP BY BATCH
+  # See https://docs.aws.amazon.com/batch/latest/userguide/create-compute-environment.html
+  # and https://github.com/hashicorp/terraform-provider-aws/issues/15535
   name = "calcloud-hst-worker${local.environment}"
   description             = "Template for cluster worker nodes updated to limit stopped container lifespan"
   ebs_optimized           = "false"
@@ -56,9 +60,15 @@ resource "aws_launch_template" "hstdp" {
     device_name = "/dev/xvda"
 
   ebs {
+    # IF YOU CHANGE THE LAUNCH TEMPLATE YOU MUST "TAINT" THE COMPUTE ENVIRONMENT BEFORE DEPLOY
+    # IN ORDER FOR YOUR CHANGES TO BE PICKED UP BY BATCH
+    # SAYING IT AGAIN IN THE PLACE WHERE YOU MAY BE TRYING TO MAKE A CHANGE TO THE TEMPLATE
     delete_on_termination = "true"
     encrypted             = "true"
-    iops                  = 0
+    # iops is only valid for gp3, io1, io2 (not gp2)
+    iops                  = lookup(var.lt_ebs_iops, local.environment, 0)
+    # throughput is only valid for gp3, but it doesn't accept '0' as valid. null works, which is then set to 0
+    throughput            = lookup(var.lt_ebs_throughput, local.environment, null)
     volume_size           = 150
     volume_type           = lookup(var.lt_ebs_type, local.environment, "gp2")
             }
