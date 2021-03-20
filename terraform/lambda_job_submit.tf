@@ -45,6 +45,8 @@ module "calcloud_lambda_submit" {
   environment_variables = {
     JOBDEFINITIONS = local.job_definitions,
     NORMALQUEUE = aws_batch_job_queue.batch_queue.name,
+    S3BUCKET = aws_s3_bucket.calcloud.id,
+    JOBPREDICTLAMBDA = module.lambda_function_container_image.this_lambda_function_arn
   }
 
   tags = {
