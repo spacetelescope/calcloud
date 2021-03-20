@@ -23,9 +23,7 @@ def submit_job(plan_tuple):
             # ],
             "command": [info.command, info.ipppssoot, info.input_path, info.s3_output_uri, info.crds_config],
         },
-        "timeout": {
-            "attemptDurationSeconds": info.max_seconds,
-        },
+        "timeout": {"attemptDurationSeconds": info.max_seconds,},
     }
     client = boto3.client("batch", config=common.retry_config)
     return client.submit_job(**job)

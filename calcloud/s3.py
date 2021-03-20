@@ -156,12 +156,7 @@ def copy_object(s3_filepath_from, s3_filepath_to, client=None):
     from_bucket_name, from_object_name = s3_split_path(s3_filepath_from)
     to_bucket_name, to_object_name = s3_split_path(s3_filepath_to)
     return client.copy_object(
-        Bucket=to_bucket_name,
-        Key=to_object_name,
-        CopySource={
-            "Bucket": from_bucket_name,
-            "Key": from_object_name,
-        },
+        Bucket=to_bucket_name, Key=to_object_name, CopySource={"Bucket": from_bucket_name, "Key": from_object_name,},
     )
 
 
