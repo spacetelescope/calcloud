@@ -24,8 +24,7 @@ class Preprocess:
         self.inputs = None
 
     def import_data(self):
-        """import job metadata file from s3 bucket
-        """
+        """import job metadata file from s3 bucket"""
         bucket = s3.Bucket(self.bucket_name)
         obj = bucket.Object(self.key)
         input_data = {}

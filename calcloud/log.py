@@ -102,7 +102,9 @@ class HstdpLogger:
     def set_formatter(self, enable_time=True, enable_msg_count=True):
         """Set the formatter attribute of `self` to a logging.Formatter and return it."""
         self.formatter = logging.Formatter(
-            "{}%(levelname)s -%(message)s".format("%(asctime)s - " if enable_time else "",)
+            "{}%(levelname)s -%(message)s".format(
+                "%(asctime)s - " if enable_time else "",
+            )
         )
         for handler in self.handlers:
             handler.setFormatter(self.formatter)
