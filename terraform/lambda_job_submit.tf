@@ -45,6 +45,7 @@ module "calcloud_lambda_submit" {
   environment_variables = {
     JOBDEFINITIONS = local.job_definitions,
     NORMALQUEUE = aws_batch_job_queue.batch_queue.name,
+    S3BUCKET = aws_s3_bucket.calcloud.id,
     JOBPREDICTLAMBDA = module.lambda_function_container_image.this_lambda_function_arn
   }
 
@@ -60,13 +61,4 @@ resource "aws_lambda_permission" "allow_bucket" {
   function_name = module.calcloud_lambda_submit.this_lambda_function_arn
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.calcloud.arn
-}
-
-# for invoking container image lambda (memory prediction model)
-resource "aws_lambda_permission" "invoke_function" {
-  statement_id  = "AllowPredictJobInvokeLambda"
-  action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_lambda_predict.this_lambda_function_arn
-  principal     = "lambda.amazonaws.com"
-  source_arn    = module.calcloud_lambda_submit.this_lambda_function_arn
 }
