@@ -16,7 +16,6 @@ from tensorflow.keras.layers import Dense
 
 
 class Preprocess:
-
     def __init__(self, ipppssoot, bucket_name, key):
         self.ipppssoot = ipppssoot
         self.bucket_name = bucket_name
@@ -30,9 +29,9 @@ class Preprocess:
         bucket = s3.Bucket(self.bucket_name)
         obj = bucket.Object(self.key)
         input_data = {}
-        body = obj.get()['Body'].read().splitlines()
+        body = obj.get()["Body"].read().splitlines()
         for line in body:
-            k, v = str(line).strip('b\'').split("=")
+            k, v = str(line).strip("b'").split("=")
             input_data[k] = v
         return input_data
 
@@ -46,41 +45,41 @@ class Preprocess:
         crsplit = 0
 
         for k, v in self.input_data.items():
-            if k == 'n_files':
+            if k == "n_files":
                 n_files = int(v)
-            if k == 'total_mb':
+            if k == "total_mb":
                 total_mb = int(np.round(float(v), 0))
-            if k == 'DETECTOR':
-                if v == 'UVIS' or 'WFC':
+            if k == "DETECTOR":
+                if v == "UVIS" or "WFC":
                     detector = 1
                 else:
                     detector = 0
-            if k == 'SUBARRAY':
-                if v == 'True':
+            if k == "SUBARRAY":
+                if v == "True":
                     subarray = 1
                 else:
                     subarray = 0
-            if k == 'DRIZCORR':
-                if v == 'PERFORM':
+            if k == "DRIZCORR":
+                if v == "PERFORM":
                     drizcorr = 1
                 else:
                     drizcorr = 0
-            if k == 'PCTECORR':
-                if v == 'PERFORM':
+            if k == "PCTECORR":
+                if v == "PERFORM":
                     pctecorr = 1
                 else:
                     pctecorr = 0
-            if k == 'CRSPLIT':
-                if v == 'NaN':
+            if k == "CRSPLIT":
+                if v == "NaN":
                     crsplit = 0
-                elif v == '1.0':
+                elif v == "1.0":
                     crsplit = 1
                 else:
                     crsplit = 2
 
         i = self.ipppssoot
         # dtype (asn or singleton)
-        if i[-1] == '0':
+        if i[-1] == "0":
             dtype = 1
         else:
             dtype = 0
@@ -139,9 +138,9 @@ def regressor(model, data):
     return pred
 
 
-clf = get_model('./models/mem_clf/1/')
-mem_reg = get_model('./models/mem_reg/1/')
-wall_reg = get_model('./models/wall_reg/1/')
+clf = get_model("./models/mem_clf/1/")
+mem_reg = get_model("./models/mem_reg/1/")
+wall_reg = get_model("./models/wall_reg/1/")
 s3 = boto3.resource("s3")
 
 
@@ -160,9 +159,9 @@ def lambda_handler(event, context):
 
     MEMORY REGRESSION: A third regression model is used to estimate the actual value of memory needed for the job. This is mainly for the purpose of logging/future analysis and is not currently being used for allocating memory in calcloud jobs.
     """
-    bucket_name = event['Bucket']
-    key = event['Key']
-    ipppssoot = key.split('/')[-1].split('_')[0]
+    bucket_name = event["Bucket"]
+    key = event["Key"]
+    ipppssoot = key.split("/")[-1].split("_")[0]
     prep = Preprocess(ipppssoot, bucket_name, key)
     prep.input_data = prep.import_data()
     prep.inputs = prep.scrub_keys()
@@ -172,12 +171,8 @@ def lambda_handler(event, context):
     memval = np.round(float(regressor(mem_reg, X)), 2)
     # Predict Wallclock Allocation (execution time in seconds)
     clocktime = int(regressor(wall_reg, X))
-    #clocktime = np.round(float(regressor(wall_reg, X)), 2)
-    predictions = {"ipppssoot":ipppssoot, "memBin":membin, "memVal":memval, "clockTime":clocktime}
+    # clocktime = np.round(float(regressor(wall_reg, X)), 2)
+    predictions = {"ipppssoot": ipppssoot, "memBin": membin, "memVal": memval, "clockTime": clocktime}
     print(predictions)
 
-    return {
-        "memBin"  : membin,
-        "memVal"  : memval,
-        "clockTime" : clocktime
-    }
+    return {"memBin": membin, "memVal": memval, "clockTime": clocktime}
