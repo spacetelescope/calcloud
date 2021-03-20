@@ -44,10 +44,6 @@ module "lambda_function_container_image" {
   lambda_role = data.aws_ssm_parameter.lambda_predict_role.value
   #lambda_role = var.lambda_predict_role
 
-  environment_variables = {
-    S3BUCKET = aws_s3_bucket.calcloud.id
-  }
-
   tags = {
     Name = "calcloud-job-predict${local.environment}"
   }
