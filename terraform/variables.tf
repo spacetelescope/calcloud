@@ -38,7 +38,59 @@ variable pinned_tf_ver {
   type = string
   default = "0.14.7"
 }
-#temp
-# variable lambda_predict_role {
-#   type = string
-# }
+
+# valid combos
+# type: iops, throughput
+# gp2: null, null
+# gp3: null, number
+# io1: number, null
+# io2: number, null
+variable lt_ebs_type {
+  description = "the type of EBS volume used to back the EC2 worker nodes"
+  type = map(string)
+  default = {
+    "-sb" = "gp2"
+    "-dev" = "gp2"
+    "-test" = "gp2"
+    "-ops" = "gp2"
+  }
+}
+
+variable lt_ebs_iops {
+  description = "the provisioned iops of the ebs."
+  type = map(number)
+  # only valid for gp3, io1, io2 volumes
+  default = {
+    "-sb" = null
+    "-dev" = null
+    "-test" = null
+    "-ops" = null
+  }
+}
+
+variable lt_ebs_throughput {
+  description = "only for gp3 ebs types, the provisioned throughput"
+  type = map(number)
+  # only valid for gp3 volumes
+  # io1 seems to require saying something that's not 0, but null works
+  default = {
+    "-sb" = null
+    "-dev" = null
+    "-test" = null
+    "-ops" = null
+  }
+}
+
+
+
+
+variable ce_max_vcpu {
+  description = "the max allowed vCPUs in the compute environment"
+  type = map(number)
+  default = {
+    "-sb" = 64
+    "-dev" = 128
+    "-test" = 128
+    "-ops" = 128
+  }
+}

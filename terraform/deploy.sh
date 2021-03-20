@@ -61,6 +61,8 @@ docker push ${CALDP_DOCKER_IMAGE}
 
 # deploy rest of terraform
 cd ../calcloud-${CALCLOUD_VER}/terraform
+# must taint the compute env to be safe about launch template handling. see comments in batch.tf
+awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.calcloud
 # manual confirmation required
 awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CAL_BASE_IMAGE##*:}"
 
