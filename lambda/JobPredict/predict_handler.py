@@ -130,7 +130,6 @@ def classifier(model, data):
     pred_proba = model.predict(data)
     print(pred_proba)
     pred = np.argmax(pred_proba, axis=-1)
-    # pred = np.argmax(model.predict(data), axis=-1)
     return pred
 
 
@@ -172,8 +171,11 @@ def lambda_handler(event, context):
     membin = int(classifier(clf, X))
     memval = np.round(float(regressor(mem_reg, X)), 2)
     # Predict Wallclock Allocation (execution time in seconds)
-    clocktime = np.round(float(regressor(wall_reg, X)), 2)
-    print(membin, memval, clocktime)
+    clocktime = int(regressor(wall_reg, X))
+    #clocktime = np.round(float(regressor(wall_reg, X)), 2)
+    predictions = {"ipppssoot":ipppssoot, "memBin":membin, "memVal":memval, "clockTime":clocktime}
+    print(predictions)
+
     return {
         "memBin"  : membin,
         "memVal"  : memval,

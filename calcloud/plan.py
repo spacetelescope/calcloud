@@ -87,7 +87,7 @@ def invoke_lambda_predict(ipppssoot):
         Payload=json.dumps(inputParams),
     )
     predictions = json.load(response["Payload"])
-    print(predictions)
+    print(f"Predictions for {ipppssoot}: \n {predictions}")
     return predictions
 
 
