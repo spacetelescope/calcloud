@@ -60,11 +60,12 @@ variable lt_ebs_iops {
   description = "the provisioned iops of the ebs."
   type = map(number)
   # only valid for gp3, io1, io2 volumes
+  # gp2 does not like null; it makes the compute env turn to invalid
   default = {
-    "-sb" = null
-    "-dev" = null
-    "-test" = null
-    "-ops" = null
+    "-sb" = 0
+    "-dev" = 0
+    "-test" = 0
+    "-ops" = 0
   }
 }
 
