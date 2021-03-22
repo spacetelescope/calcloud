@@ -15,11 +15,12 @@ from collections import namedtuple
 from . import hst
 from . import log
 from . import s3
+from . import common
 
 import json
 import boto3
 
-client = boto3.client("lambda")
+client = boto3.client("lambda", config=common.retry_config)
 
 # ----------------------------------------------------------------------
 
@@ -75,11 +76,11 @@ def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0):
     return Plan(*(job_resources + env))
 
 
-def invoke_lambda_predict(ipppssoot):
+def invoke_lambda_predict(ipppssoot, output_bucket):
     # invoke calcloud-ai lambda
-    bucket = os.environ["S3BUCKET"]
+    bucket = output_bucket.replace("s3://", "")
     key = f"control/{ipppssoot}/{ipppssoot}_MemModelFeatures.txt"
-    inputParams = {"Bucket": bucket, "Key": key}
+    inputParams = {"Bucket": bucket, "Key": key, "Ipppssoot": ipppssoot}
     job_predict_lambda = os.environ["JOBPREDICTLAMBDA"]
     response = client.invoke(
         FunctionName=job_predict_lambda,
@@ -108,7 +109,7 @@ def _get_resources(ipppssoot, output_bucket, input_path):
     input_path = input_path
     crds_config = "caldp-config-offsite"
     # invoke calcloud-ai lambda
-    predictions = invoke_lambda_predict(ipppssoot)
+    predictions = invoke_lambda_predict(ipppssoot, output_bucket)
     initial_bin = predictions["memBin"]  # 0
     kill_time = predictions["clockTime"] * 3  # 48 * 60 * 60
 

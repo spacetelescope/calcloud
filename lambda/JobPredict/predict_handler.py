@@ -6,13 +6,13 @@
 """
 import boto3
 import numpy as np
-import sklearn
 from sklearn.preprocessing import PowerTransformer
 import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras.models import load_model
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+from botocore.config import Config
+
+# mitigation of potential API rate restrictions (esp for Batch API)
+retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
+s3 = boto3.resource("s3", config=retry_config)
 
 
 class Preprocess:
@@ -49,7 +49,7 @@ class Preprocess:
             if k == "total_mb":
                 total_mb = int(np.round(float(v), 0))
             if k == "DETECTOR":
-                if v == "UVIS" or "WFC":
+                if v in ["UVIS", "WFC"]:
                     detector = 1
                 else:
                     detector = 0
@@ -119,7 +119,7 @@ class Preprocess:
 
 def get_model(model_path):
     """Loads pretrained Keras functional model"""
-    model = keras.models.load_model(model_path)
+    model = tf.keras.models.load_model(model_path)
     return model
 
 
@@ -137,10 +137,10 @@ def regressor(model, data):
     return pred
 
 
+# load models
 clf = get_model("./models/mem_clf/1/")
 mem_reg = get_model("./models/mem_reg/1/")
 wall_reg = get_model("./models/wall_reg/1/")
-s3 = boto3.resource("s3")
 
 
 def lambda_handler(event, context):
@@ -160,7 +160,7 @@ def lambda_handler(event, context):
     """
     bucket_name = event["Bucket"]
     key = event["Key"]
-    ipppssoot = key.split("/")[-1].split("_")[0]
+    ipppssoot = event["Ipppssoot"]
     prep = Preprocess(ipppssoot, bucket_name, key)
     prep.input_data = prep.import_data()
     prep.inputs = prep.scrub_keys()
@@ -170,7 +170,6 @@ def lambda_handler(event, context):
     memval = np.round(float(regressor(mem_reg, X)), 2)
     # Predict Wallclock Allocation (execution time in seconds)
     clocktime = int(regressor(wall_reg, X))
-    # clocktime = np.round(float(regressor(wall_reg, X)), 2)
     predictions = {"ipppssoot": ipppssoot, "memBin": membin, "memVal": memval, "clockTime": clocktime}
     print(predictions)
 

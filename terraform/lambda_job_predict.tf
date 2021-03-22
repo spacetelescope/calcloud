@@ -11,7 +11,7 @@ provider "docker" {
 }
 
 resource "docker_registry_image" "calcloud_predict_model" {
-  name = local.ecr_image
+  name = local.ecr_predict_lambda_image
 
   build {
     context = "../lambda/JobPredict"
@@ -42,7 +42,6 @@ module "lambda_function_container_image" {
   attach_async_event_policy = false
   # existing role for the lambda
   lambda_role = data.aws_ssm_parameter.lambda_predict_role.value
-  #lambda_role = var.lambda_predict_role
 
   tags = {
     Name = "calcloud-job-predict${local.environment}"
