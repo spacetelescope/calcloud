@@ -15,6 +15,12 @@ from collections import namedtuple
 from . import hst
 from . import log
 from . import s3
+from . import common
+
+import json
+import boto3
+
+client = boto3.client("lambda", config=common.retry_config)
 
 # ----------------------------------------------------------------------
 
@@ -70,6 +76,22 @@ def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0):
     return Plan(*(job_resources + env))
 
 
+def invoke_lambda_predict(ipppssoot, output_bucket):
+    # invoke calcloud-ai lambda
+    bucket = output_bucket.replace("s3://", "")
+    key = f"control/{ipppssoot}/{ipppssoot}_MemModelFeatures.txt"
+    inputParams = {"Bucket": bucket, "Key": key, "Ipppssoot": ipppssoot}
+    job_predict_lambda = os.environ["JOBPREDICTLAMBDA"]
+    response = client.invoke(
+        FunctionName=job_predict_lambda,
+        InvocationType="RequestResponse",
+        Payload=json.dumps(inputParams),
+    )
+    predictions = json.load(response["Payload"])
+    print(f"Predictions for {ipppssoot}: \n {predictions}")
+    return predictions
+
+
 def _get_resources(ipppssoot, output_bucket, input_path):
     """Given an HST IPPPSSOOT ID,  return information used to schedule it as a batch job.
 
@@ -86,8 +108,11 @@ def _get_resources(ipppssoot, output_bucket, input_path):
     job_name = ipppssoot
     input_path = input_path
     crds_config = "caldp-config-offsite"
-    initial_bin = 0
-    kill_time = 48 * 60 * 60
+    # invoke calcloud-ai lambda
+    predictions = invoke_lambda_predict(ipppssoot, output_bucket)
+    initial_bin = predictions["memBin"]  # 0
+    kill_time = predictions["clockTime"] * 3  # 48 * 60 * 60
+
     return JobResources(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time)
 
 

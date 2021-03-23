@@ -34,6 +34,10 @@ data aws_ssm_parameter lambda_submit_role {
   name = "/iam/roles/calcloud_lambda_submit"
 }
 
+data aws_ssm_parameter lambda_predict_role {
+  name = "/iam/roles/calcloud_lambda_predict"
+}
+
 data aws_ssm_parameter lambda_blackboard_role {
   name = "/iam/roles/calcloud_lambda_blackboard"
 }
@@ -60,4 +64,8 @@ data aws_ssm_parameter lambda_refreshCacheSubmit_role {
 
 data aws_ssm_parameter file_share_arn {
   name = "/gateway/fileshare"
+}
+
+data aws_ssm_parameter lambda_rescue_role {
+  name = "iam/roles/calcloud_lambda_rescue"
 }
