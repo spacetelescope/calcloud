@@ -51,7 +51,7 @@ variable lt_ebs_type {
   default = {
     "-sb" = "gp2"
     "-dev" = "gp2"
-    "-test" = "gp2"
+    "-test" = "gp3"
     "-ops" = "gp2"
   }
 }
@@ -64,7 +64,7 @@ variable lt_ebs_iops {
   default = {
     "-sb" = 0
     "-dev" = 0
-    "-test" = 0
+    "-test" = 3000
     "-ops" = 0
   }
 }
@@ -77,13 +77,10 @@ variable lt_ebs_throughput {
   default = {
     "-sb" = null
     "-dev" = null
-    "-test" = null
+    "-test" = 250
     "-ops" = null
   }
 }
-
-
-
 
 variable ce_max_vcpu {
   description = "the max allowed vCPUs in the compute environment"
