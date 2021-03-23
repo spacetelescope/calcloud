@@ -51,7 +51,7 @@ variable lt_ebs_type {
   default = {
     "-sb" = "gp2"
     "-dev" = "gp2"
-    "-test" = "gp2"
+    "-test" = "gp3"
     "-ops" = "gp2"
   }
 }
@@ -60,11 +60,12 @@ variable lt_ebs_iops {
   description = "the provisioned iops of the ebs."
   type = map(number)
   # only valid for gp3, io1, io2 volumes
+  # gp2 does not like null; it makes the compute env turn to invalid
   default = {
-    "-sb" = null
-    "-dev" = null
-    "-test" = null
-    "-ops" = null
+    "-sb" = 0
+    "-dev" = 0
+    "-test" = 3000
+    "-ops" = 0
   }
 }
 
@@ -76,13 +77,10 @@ variable lt_ebs_throughput {
   default = {
     "-sb" = null
     "-dev" = null
-    "-test" = null
+    "-test" = 250
     "-ops" = null
   }
 }
-
-
-
 
 variable ce_max_vcpu {
   description = "the max allowed vCPUs in the compute environment"
