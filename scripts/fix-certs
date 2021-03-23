@@ -1,0 +1,10 @@
+#! /bin/bash -eu
+
+find /opt/conda -name '*.pem' | grep -E 'ssl/cert.pem|ssl/cacert.pem' >/tmp/certs
+
+for cert in `cat /tmp/certs`;
+do
+    echo "Replacing $cert"
+    rm -v -f $cert
+    ln -v -s /etc/ssl/certs/ca-certificates.crt $cert
+done
