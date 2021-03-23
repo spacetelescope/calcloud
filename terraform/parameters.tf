@@ -67,5 +67,5 @@ data aws_ssm_parameter file_share_arn {
 }
 
 data aws_ssm_parameter lambda_rescue_role {
-  name = "iam/roles/calcloud_lambda_rescue"
+  name = "/iam/roles/calcloud_lambda_rescue"
 }
