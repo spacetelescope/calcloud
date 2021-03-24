@@ -8,6 +8,7 @@ provider "docker" {
     username = data.aws_ecr_authorization_token.token.user_name
     password = data.aws_ecr_authorization_token.token.password
   }
+  ca_material = pathexpand("../lambda/JobPredict/certs/tls-cs-bundle.pem")
 }
 
 resource "docker_registry_image" "calcloud_predict_model" {
