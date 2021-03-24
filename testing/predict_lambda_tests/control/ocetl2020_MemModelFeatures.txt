@@ -1,0 +1,4 @@
+n_files=5
+total_mb=10.71936
+DETECTOR=NUV-MAMA
+SUBARRAY=False
