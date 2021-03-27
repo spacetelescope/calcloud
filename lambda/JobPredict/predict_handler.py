@@ -32,6 +32,7 @@ class Preprocess:
         for line in body:
             k, v = str(line).strip("b'").split("=")
             input_data[k] = v
+        print(input_data)
         return input_data
 
     def scrub_keys(self):
@@ -93,6 +94,7 @@ class Preprocess:
             instr = 3
 
         inputs = np.array([n_files, total_mb, drizcorr, pctecorr, crsplit, subarray, detector, dtype, instr])
+        print(inputs)
         return inputs
 
     def transformer(self):
@@ -108,12 +110,15 @@ class Preprocess:
         pt = PowerTransformer(standardize=False)
         pt.lambdas_ = np.array([-0.96074766, -0.32299156])
         xt = pt.transform(x)
+        print(xt)
         # normalization (zero mean, unit variance)
         f_mean, f_sigma = 0.653480238393804, 0.14693259765350208
         s_mean, s_sigma = 1.1648725537429683, 0.7444473983812471
         x_files = np.round(((xt[0, 0] - f_mean) / f_sigma), 5)
         x_size = np.round(((xt[0, 1] - s_mean) / s_sigma), 5)
+        print(f'Power Transformed variables: {x_files}, {x_size}')
         X = np.array([x_files, x_size, X[2], X[3], X[4], X[5], X[6], X[7], X[8]]).reshape(1, -1)
+        print(X)
         return X
 
 

@@ -1,4 +1,4 @@
-n_files=5
-total_mb=10.71936
+n_files=6
+total_mb=78.5232
 DETECTOR=NUV-MAMA
 SUBARRAY=False
