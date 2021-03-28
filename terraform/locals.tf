@@ -13,4 +13,10 @@ locals {
 
        ecr_address = format("%v.dkr.ecr.%v.amazonaws.com", data.aws_caller_identity.this.account_id, data.aws_region.current.name)
        ecr_predict_lambda_image   = format("%v/%v:model", local.ecr_address, aws_ecr_repository.caldp_ecr.name)
+
+       # if bucket == test, return test ssm param, elif bucket == ops, return ops ssm param, else return test ssm param
+       crds_bucket = lookup(var.crds_bucket, local.environment, "test") == "test" ? data.aws_ssm_parameter.crds_test.value : (lookup(var.crds_bucket, local.environment, "test") == "ops" ? data.aws_ssm_parameter.crds_ops.value : data.aws_ssm_parameter.crds_test.value)
+       
+       # code is cleaner to put this in locals
+       crds_context = lookup(var.crds_context, local.environment, var.crds_context["-sb"])
 }

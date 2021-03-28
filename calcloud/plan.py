@@ -107,7 +107,7 @@ def _get_resources(ipppssoot, output_bucket, input_path):
     instr = hst.get_instrument(ipppssoot)
     job_name = ipppssoot
     input_path = input_path
-    crds_config = "caldp-config-offsite"
+    crds_config = "caldp-config-aws"
     # invoke calcloud-ai lambda
     predictions = invoke_lambda_predict(ipppssoot, output_bucket)
     initial_bin = predictions["memBin"]  # 0
