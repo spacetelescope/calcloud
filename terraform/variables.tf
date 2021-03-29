@@ -92,3 +92,24 @@ variable ce_max_vcpu {
     "-ops" = 128
   }
 }
+
+variable crds_context {
+  description = "the crds context to be the default for the environment"
+  type = map(string)
+  default = {
+    "-sb" = "hst_0866.pmap"
+    "-dev" = "hst_0866.pmap"
+    "-test" = "hst_0866.pmap"
+    "-ops" = "hst_0869.pmap"
+  }
+}
+
+variable crds_bucket {
+  type = map(string)
+  default = {
+    "-sb" = "test"
+    "-dev" = "test"
+    "-test" = "test"
+    "-ops" = "ops"
+  }
+}

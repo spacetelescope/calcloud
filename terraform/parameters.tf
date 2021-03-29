@@ -69,3 +69,11 @@ data aws_ssm_parameter file_share_arn {
 data aws_ssm_parameter lambda_rescue_role {
   name = "/iam/roles/calcloud_lambda_rescue"
 }
+
+data aws_ssm_parameter crds_ops {
+  name = "/s3/external/crds-ops"
+}
+
+data aws_ssm_parameter crds_test {
+  name = "/s3/external/crds-test"
+}
