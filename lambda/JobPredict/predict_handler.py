@@ -143,7 +143,7 @@ def regressor(model, data):
 
 
 # load models
-clf = get_model("./models/mem_clf/1/")
+clf = get_model("./models/mem_clf/2/")
 mem_reg = get_model("./models/mem_reg/1/")
 wall_reg = get_model("./models/wall_reg/1/")
 
