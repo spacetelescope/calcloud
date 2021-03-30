@@ -11,12 +11,28 @@ provider "docker" {
   ca_material = pathexpand("../lambda/JobPredict/certs/tls-cs-bundle.pem")
 }
 
-resource "docker_registry_image" "calcloud_predict_model" {
-  name = local.ecr_predict_lambda_image
+# resource "docker_registry_image" "calcloud_predict_model" {
+#   name = local.ecr_predict_lambda_image
 
+#   build {
+#     context = "../lambda/JobPredict"
+#   }
+# }
+
+data "docker_registry_image" "calcloud_predict_model" {
+  name = local.ecr_predict_lambda_image
   build {
     context = "../lambda/JobPredict"
   }
+  keep_remotely = false
+  remove = true
+  pull_parent = true
+}
+
+resource "docker_image" "calcloud_predict_model" {
+  name = data.docker_registry_image.calcloud_predict_model.name
+  pull_triggers = [data.docker_registry_image.calcloud_predict_model.sha256_digest]
+  keep_locally = false
 }
 
 module "lambda_function_container_image" {
@@ -24,7 +40,7 @@ module "lambda_function_container_image" {
   function_name = "calcloud-job-predict${local.environment}"
   description   = "pretrained neural networks for predicting job resource requirements (memory bin and max execution time)"
 
-  depends_on = [docker_registry_image.calcloud_predict_model]
+  depends_on = [docker_image.calcloud_predict_model]
 
   create_package = false
   image_uri = docker_registry_image.calcloud_predict_model.name
