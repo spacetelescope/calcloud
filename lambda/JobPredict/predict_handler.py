@@ -116,7 +116,7 @@ class Preprocess:
         s_mean, s_sigma = 1.1648725537429683, 0.7444473983812471
         x_files = np.round(((xt[0, 0] - f_mean) / f_sigma), 5)
         x_size = np.round(((xt[0, 1] - s_mean) / s_sigma), 5)
-        print(f'Power Transformed variables: {x_files}, {x_size}')
+        print(f"Power Transformed variables: {x_files}, {x_size}")
         X = np.array([x_files, x_size, X[2], X[3], X[4], X[5], X[6], X[7], X[8]]).reshape(1, -1)
         print(X)
         return X
