@@ -3,9 +3,10 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="0.3.0"
-CALDP_VER="0.2.0"
-CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20201208_DRZ_final"
+CALCLOUD_VER="0.3.1"
+CALDP_VER="0.2.1"
+CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210323_CAL_final"
+CSYS_VER="CALDP_20210323"
 # this is the tag that the image will have in AWS ECR
 CALDP_IMAGE_TAG="latest"
 
@@ -64,7 +65,7 @@ cd ../calcloud-${CALCLOUD_VER}/terraform
 # must taint the compute env to be safe about launch template handling. see comments in batch.tf
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.calcloud
 # manual confirmation required
-awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CAL_BASE_IMAGE##*:}"
+awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}"
 
 # make sure needed prefixes exist in primary s3 bucket
 # pulls the bucket name in from a tag called Name

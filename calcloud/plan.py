@@ -107,11 +107,11 @@ def _get_resources(ipppssoot, output_bucket, input_path):
     instr = hst.get_instrument(ipppssoot)
     job_name = ipppssoot
     input_path = input_path
-    crds_config = "caldp-config-offsite"
+    crds_config = "caldp-config-aws"
     # invoke calcloud-ai lambda
     predictions = invoke_lambda_predict(ipppssoot, output_bucket)
     initial_bin = predictions["memBin"]  # 0
-    kill_time = predictions["clockTime"] * 3  # 48 * 60 * 60
+    kill_time = min(max(predictions["clockTime"] * 5, 600), 48 * 60 * 60)  # between 10 mins and 2 days
 
     return JobResources(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time)
 
