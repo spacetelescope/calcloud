@@ -125,7 +125,7 @@ resource "aws_batch_compute_environment" "calcloud" {
     subnets             = local.batch_subnet_ids
     security_group_ids  = local.batch_sgs
     instance_type = ["optimal"]
-    max_vcpus = 128
+    max_vcpus = lookup(var.ce_max_vcpu, local.environment, 64)
     min_vcpus = 0
     desired_vcpus = 0
 
