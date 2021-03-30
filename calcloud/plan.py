@@ -122,28 +122,32 @@ def _get_environment(job_resources, memory_retries):
     (queue,  job_definition_for_memory,  kill seconds)
     """
     job_defs = os.environ["JOBDEFINITIONS"].split(",")
+    job_queues = os.environ["JOBQUEUES"].split(",")
     job_resources = JobResources(*job_resources)
-    normal_queue = os.environ["NORMALQUEUE"]
 
     final_bin = job_resources.initial_modeled_bin + memory_retries
     if final_bin < len(job_defs):
-        job_definition = job_defs[final_bin]
         log.info(
-            "Selected job definition",
-            job_definition,
-            "for",
+            "Selecting resources for",
             job_resources.ipppssoot,
-            "based on initial bin",
+            "Initial modeled bin",
             job_resources.initial_modeled_bin,
-            "and",
+            "Memory retries",
             memory_retries,
-            "retries.",
+            "Final bin index",
+            final_bin,
         )
+
+        job_definition = job_defs[final_bin]
+        log.info("Selected job definition", job_definition)
+
+        job_queue = job_queues[final_bin]
+        log.info("Selected job queue", job_queue)
     else:
         log.info("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
         raise AllBinsTriedQuit("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
 
-    return JobEnv(normal_queue, job_definition, "caldp-process")
+    return JobEnv(job_queue, job_definition, "caldp-process")
 
 
 # ----------------------------------------------------------------------

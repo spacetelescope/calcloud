@@ -66,6 +66,7 @@ cd ../calcloud-${CALCLOUD_VER}/terraform
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.calcloud
 awsudo $ADMIN_ARN terraform taint docker_registry_image.calcloud_predict_model
 awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
+
 # manual confirmation required
 awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}"
 

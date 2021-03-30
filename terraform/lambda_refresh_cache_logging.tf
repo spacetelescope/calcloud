@@ -4,7 +4,7 @@ module "calcloud_lambda_refresh_cache_logs" {
 
   function_name = "calcloud-fileshare-refresh_cache_logs${local.environment}"
   description   = "listens for refresh cache operations and logs them"
-  # the path is relative to the path inside the lambda env, not in the local filesystem. 
+  # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "refresh_cache_logs.lambda_handler"
   runtime       = "python3.6"
   publish       = false
@@ -37,12 +37,12 @@ module "calcloud_lambda_refresh_cache_logs" {
   attach_tracing_policy = false
   attach_async_event_policy = false
   # existing role for the lambda
-  # will need to parametrize when ITSD takes over role creation. 
+  # will need to parametrize when ITSD takes over role creation.
   # for now this role was created by hand in the console, it is not terraform managed
   lambda_role = data.aws_ssm_parameter.lambda_cloudwatch_role.value
 
 #   environment_variables = {
-#     JOBQUEUES=aws_batch_job_queue.batch_queue.name
+#     JOBQUEUES=local.job_queues
 #   }
 
   tags = {
