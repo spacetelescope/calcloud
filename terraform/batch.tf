@@ -147,6 +147,30 @@ resource "aws_ecr_repository" "caldp_ecr" {
   }
 }
 
+resource "aws_ecr_lifecycle_policy" "ecr_lifecycle" {
+  repository = aws_ecr_repository.caldp_ecr.name
+
+  policy = <<EOF
+{
+    "rules": [
+        {
+            "rulePriority": 1,
+            "description": "Expire untagged images older than 7 days",
+            "selection": {
+                "tagStatus": "untagged",
+                "countType": "sinceImagePushed",
+                "countUnit": "days",
+                "countNumber": 7
+            },
+            "action": {
+                "type": "expire"
+            }
+        }
+    ]
+}
+EOF
+}
+
 data "aws_ecr_image" "caldp_latest" {
   repository_name = aws_ecr_repository.caldp_ecr.name
   image_tag = var.image_tag

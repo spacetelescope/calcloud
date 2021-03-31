@@ -16,6 +16,8 @@ resource "docker_registry_image" "calcloud_predict_model" {
 
   build {
     context = "../lambda/JobPredict"
+    no_cache=true
+    remove=true
   }
 }
 
