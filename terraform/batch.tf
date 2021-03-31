@@ -125,7 +125,7 @@ resource "aws_batch_compute_environment" "calcloud" {
     subnets             = local.batch_subnet_ids
     security_group_ids  = local.batch_sgs
     instance_type = ["optimal"]
-    max_vcpus = 128
+    max_vcpus = lookup(var.ce_max_vcpu, local.environment, 64)
     min_vcpus = 0
     desired_vcpus = 0
 
@@ -145,6 +145,30 @@ resource "aws_ecr_repository" "caldp_ecr" {
   image_scanning_configuration {
     scan_on_push = true
   }
+}
+
+resource "aws_ecr_lifecycle_policy" "ecr_lifecycle" {
+  repository = aws_ecr_repository.caldp_ecr.name
+
+  policy = <<EOF
+{
+    "rules": [
+        {
+            "rulePriority": 1,
+            "description": "Expire untagged images older than 7 days",
+            "selection": {
+                "tagStatus": "untagged",
+                "countType": "sinceImagePushed",
+                "countUnit": "days",
+                "countNumber": 7
+            },
+            "action": {
+                "type": "expire"
+            }
+        }
+    ]
+}
+EOF
 }
 
 data "aws_ecr_image" "caldp_latest" {
