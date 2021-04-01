@@ -40,7 +40,7 @@ module "calcloud_env_crds" {
   # existing role for the lambda
   # will need to parametrize when ITSD takes over role creation.
   # for now this role was created by hand in the console, it is not terraform managed
-  lambda_role = "arn:aws:iam::218835028644:role/calcloud-lambda-crds"
+  lambda_role = data.aws_ssm_parameter.lambda_crds_role.value
 
   environment_variables = {
     JOBDEFINITIONS = local.job_definitions

@@ -62,6 +62,10 @@ data aws_ssm_parameter lambda_refreshCacheSubmit_role {
   name = "/iam/roles/calcloud_lambda_refreshCacheSubmit"
 }
 
+data aws_ssm_parameter lambda_crds_role {
+  name = "/iam/roles/calcloud_lambda_crds"
+}
+
 data aws_ssm_parameter file_share_arn {
   name = "/gateway/fileshare"
 }
