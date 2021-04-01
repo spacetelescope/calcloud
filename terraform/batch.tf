@@ -1,3 +1,5 @@
+
+
 provider "aws" {
   region  = var.region
 }
@@ -102,17 +104,16 @@ resource "aws_launch_template" "hstdp" {
 }
 
 resource "aws_batch_job_queue" "batch_queue" {
-  name = "calcloud-hst-queue${local.environment}"
-  compute_environments = [
-    aws_batch_compute_environment.calcloud.arn
-  ]
-  priority = 10
+  name = "calcloud-hst-queue-${local.ladder[count.index].name}${local.environment}"
+  count = 4
+  compute_environments = [aws_batch_compute_environment.compute_env[count.index].arn]
+  priority = 10   # need to vectorize?
   state = "ENABLED"
-
 }
 
-resource "aws_batch_compute_environment" "calcloud" {
-  compute_environment_name_prefix = "calcloud-hst${local.environment}-"
+resource "aws_batch_compute_environment" "compute_env" {
+  count = 4
+  compute_environment_name_prefix = "calcloud-hst-${local.ladder[count.index].name}${local.environment}"
   type = "MANAGED"
   service_role = data.aws_ssm_parameter.batch_service_role.value
 
@@ -124,19 +125,19 @@ resource "aws_batch_compute_environment" "calcloud" {
     tags = {}
     subnets             = local.batch_subnet_ids
     security_group_ids  = local.batch_sgs
-    instance_type = ["optimal"]
-    max_vcpus = lookup(var.ce_max_vcpu, local.environment, 64)
-    min_vcpus = 0
-    desired_vcpus = 0
+    instance_type = local.ladder[count.index].ce_instance_type
+    max_vcpus = local.ladder[count.index].ce_max_vcpus
+    min_vcpus = local.ladder[count.index].ce_min_vcpus
+    desired_vcpus = local.ladder[count.index].ce_desired_vcpus
 
     launch_template {
       launch_template_id = aws_launch_template.hstdp.id
       version = "$Latest"
     }
   }
-  lifecycle { 
+  lifecycle {
     ignore_changes = [compute_resources.0.desired_vcpus]
-    create_before_destroy = true 
+    create_before_destroy = true
   }
 }
 
@@ -180,8 +181,9 @@ data "aws_ecr_image" "caldp_latest" {
 
 # 2G -----------------  also reserve 128M per 1G for Batch ECS + STScI overheads
 
-resource "aws_batch_job_definition" "calcloud_2g" {
-  name                 = "calcloud-jobdef-2g${local.environment}"
+resource "aws_batch_job_definition" "job_def" {
+  name                 = "calcloud-jobdef-${local.ladder[count.index].name}${local.environment}"
+  count = 4
   type                 = "container"
   container_properties = <<CONTAINER_PROPERTIES
   {
@@ -197,8 +199,8 @@ resource "aws_batch_job_definition" "calcloud_2g" {
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
     "mountPoints": [],
     "resourceRequirements": [
-        {"value" : "${2*(1024-128)}", "type" : "MEMORY"},
-        {"value" : "1", "type": "VCPU"}
+        {"value" :  "${local.ladder[count.index].jd_memory}", "type" : "MEMORY"},
+        {"value" : "${local.ladder[count.index].jd_vcpu}", "type": "VCPU"}
     ],
     "ulimits": [],
     "volumes": []
