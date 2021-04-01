@@ -42,7 +42,7 @@ module "calcloud_lambda_cleanJob" {
   lambda_role = data.aws_ssm_parameter.lambda_cleanup_role.value
 
   environment_variables = {
-    JOBQUEUES=aws_batch_job_queue.batch_queue.name
+    JOBQUEUES=local.job_queues,
   }
 
   tags = {
