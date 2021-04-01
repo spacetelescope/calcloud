@@ -15,7 +15,7 @@ locals {
 
        ladder = [
               { # -------------------------------------------------------------------
-                name : "2g",
+                name : "02g",
 
                 # 2g job def -> 2g queue -> 2g compute env (m or c series, 8-16 cores per ec2)
                 ce_instance_type = [
@@ -32,7 +32,7 @@ locals {
                 jd_vcpu = 1,
               },
               { # -------------------------------------------------------------------
-                name : "8g",
+                name : "08g",
 
                 # 8g job def -> 8g queue -> 8g compute env (m,c, or r series, 8-16 cores per ec2)
                 ce_instance_type = [
