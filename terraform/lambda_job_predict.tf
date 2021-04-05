@@ -23,6 +23,7 @@ resource "docker_registry_image" "calcloud_predict_model" {
 
 module "lambda_function_container_image" {
   source = "terraform-aws-modules/lambda/aws"
+  version = "~> 1.43.0"
   function_name = "calcloud-job-predict${local.environment}"
   description   = "pretrained neural networks for predicting job resource requirements (memory bin and max execution time)"
 

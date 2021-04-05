@@ -4,7 +4,7 @@ module "calcloud_lambda_deleteJob" {
 
   function_name = "calcloud-job-delete${local.environment}"
   description   = "accepts messages from s3 event and deletes either individual jobs by ipppssoot, or all active jobs"
-  # the path is relative to the path inside the lambda env, not in the local filesystem. 
+  # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "delete_handler.lambda_handler"
   runtime       = "python3.6"
   publish       = false
@@ -37,12 +37,12 @@ module "calcloud_lambda_deleteJob" {
   attach_tracing_policy = false
   attach_async_event_policy = false
   # existing role for the lambda
-  # will need to parametrize when ITSD takes over role creation. 
+  # will need to parametrize when ITSD takes over role creation.
   # for now this role was created by hand in the console, it is not terraform managed
   lambda_role = data.aws_ssm_parameter.lambda_delete_role.value
 
   environment_variables = {
-    JOBQUEUES=aws_batch_job_queue.batch_queue.name
+    JOBQUEUES=local.job_queues
   }
 
   tags = {

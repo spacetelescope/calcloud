@@ -4,7 +4,7 @@ module "calcloud_lambda_blackboard" {
 
   function_name = "calcloud-job-blackboard${local.environment}"
   description   = "scrapes the Batch console for job metadata and posts to S3 bucket for on-premise poller"
-  # the path is relative to the path inside the lambda env, not in the local filesystem. 
+  # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "scrape_batch.lambda_handler"
   runtime       = "python3.6"
   publish       = false
@@ -37,14 +37,14 @@ module "calcloud_lambda_blackboard" {
   attach_tracing_policy = false
   attach_async_event_policy = false
   # existing role for the lambda
-  # will need to parametrize when ITSD takes over role creation. 
+  # will need to parametrize when ITSD takes over role creation.
   # for now this role was created by hand in the console, it is not terraform managed
   # lambda_role = data.aws_ssm_parameter.lambda_submit_role.value
   lambda_role = data.aws_ssm_parameter.lambda_blackboard_role.value
 
   environment_variables = {
     # comma delimited list of job queues, because batch can only list jobs per queue
-    JOBQUEUES=aws_batch_job_queue.batch_queue.name
+    JOBQUEUES=local.job_queues
     BUCKET=aws_s3_bucket.calcloud.id
     FILESHARE=data.aws_ssm_parameter.file_share_arn.value
   }
