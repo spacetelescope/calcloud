@@ -38,7 +38,6 @@ MESSAGE_TYPES = [
     "cancel",
     "rescue",
     "clean",
-    "crds",
 ]
 
 MAX_BROADCAST_MSGS = 10 ** 6  # safety
