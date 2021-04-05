@@ -192,8 +192,7 @@ resource "aws_batch_job_definition" "job_def" {
       {"name": "AWSDPVER", "value": "${var.awsdpver}"},
       {"name": "AWSYSVER", "value": "${var.awsysver}"},
       {"name": "CSYS_VER", "value": "${var.csys_ver}"},
-      {"name": "CRDSBUCKET", "value": "${local.crds_bucket}"},
-      {"name": "CRDS_CONTEXT", "value": "${local.crds_context}"}
+      {"name": "CRDSBUCKET", "value": "${local.crds_bucket}"}
     ],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
