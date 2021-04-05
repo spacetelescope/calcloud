@@ -54,7 +54,7 @@ def lambda_handler(event, context):
                         submitDate = int(j["createdAt"] / 1000.0)
 
                         jobStartDate = int(j.get("startedAt", default_timestamp) / 1000.0)
-                        completionDate = int(j.get("startedAt", default_timestamp) / 1000.0)
+                        completionDate = int(j.get("stoppeddAt", default_timestamp) / 1000.0)
 
                         jobDuration = int(completionDate - jobStartDate)
                         imageSize = 0
