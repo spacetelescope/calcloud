@@ -18,12 +18,9 @@ locals {
               { # -------------------------------------------------------------------
                 name : "02g",
 
-                # 2g job def -> 2g queue -> 2g compute env (m or c series, 8-16 cores per ec2)
+                # 2g job def -> 2g queue -> 2g compute env
                 ce_instance_type = [
-                    "c5.2xlarge",    #  8 cores,  16G    $0.340 / hr
-                    "c5.4xlarge",    #  16 cores, 32G    $0.680 / hr
-                    "m5.2xlarge",    #  8 cores,  32G    $0.384 / hr
-                    "m5.4xlarge",    #  16 cores,  64G   $0.768 / hr
+                    "c5a.2xlarge",    #  8 cores,  16G    $0.308 / hr, 8 concurrent jobs
                  ],
                 ce_min_vcpus : 0,
                 ce_max_vcpus : lookup(var.ce_max_vcpu, local.environment, 64),
@@ -35,14 +32,9 @@ locals {
               { # -------------------------------------------------------------------
                 name : "08g",
 
-                # 8g job def -> 8g queue -> 8g compute env (m,c, or r series, 8-16 cores per ec2)
+                # 8g job def -> 8g queue -> 8g compute env
                 ce_instance_type = [
-                    "c5.2xlarge",    #  8 cores,  16G     $0.340 / hr
-                    "c5.4xlarge",    #  16 cores, 32G     $0.680 / hr
-                    "m5.2xlarge",    #  8 cores,  32G     $0.384 / hr
-                    "m5.4xlarge",    #  16 cores, 64G     $0.768 / hr
-                    "r5.2xlarge",    #  8 cores,  64G     $0.452 / hr
-                    "r5.4xlarge",    #  16 cores, 128G    $1.008 / hr
+                    "m5a.2xlarge",    #  8 cores, 32G     $0.344 / hr, 4 concurrent jobs
                 ],
 
                 ce_min_vcpus : 0,
@@ -50,15 +42,14 @@ locals {
                 ce_desired_vcpus : 0,
 
                 jd_memory = 8*(1024-128),
-                jd_vcpu = 4,
+                jd_vcpu = 2,
               },
               { # -------------------------------------------------------------------
                 name : "16g",
 
-                # 16g job def -> 16g queue -> 16g compute env (r series, enough memory to fit 4-8 jobs per ec2)
+                # 16g job def -> 16g queue -> 16g compute env
                 ce_instance_type = [
-                    "r5.2xlarge",    #  8 cores,  64G    $0.452 / hr
-                    "r5.4xlarge",    #  16 cores, 128G   $1.008 / hr
+                    "r5a.xlarge",    #  4 cores,  32G    $0.226 / hr, 2 concurrent jobs
                 ],
 
                 ce_min_vcpus : 0,
@@ -66,14 +57,14 @@ locals {
                 ce_desired_vcpus : 0,
 
                 jd_memory = 16*(1024-128),
-                jd_vcpu = 2,  # < available speedup?
+                jd_vcpu = 2,
               },
               { # -------------------------------------------------------------------
                 name : "64g",
 
                 # 64g job def -> 64g queue -> 64g compute env (r series or something else, enough memory to fit ~2 jobs per ec2)
                 ce_instance_type = [
-                    "r5.4xlarge",    #  16 cores, 128G   $1.008 / hr
+                    "r5a.2xlarge",    #  8 cores, 64G   $0.452 / hr, 1 concurrent job
                 ],
 
                 ce_min_vcpus : 0,
@@ -81,7 +72,7 @@ locals {
                 ce_desired_vcpus : 0,
 
                 jd_memory = 64*(1024-128),
-                jd_vcpu = 8,  # > available speedup?
+                jd_vcpu = 8,
               },
        ]
 
