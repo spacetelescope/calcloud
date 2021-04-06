@@ -4,7 +4,7 @@ module "calcloud_lambda_refresh_cache_submit" {
 
   function_name = "calcloud-fileshare-refresh_cache_submit${local.environment}"
   description   = "submits refresh cache operations"
-  # the path is relative to the path inside the lambda env, not in the local filesystem. 
+  # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "refresh_cache_submit.lambda_handler"
   runtime       = "python3.6"
   publish       = false
@@ -37,7 +37,7 @@ module "calcloud_lambda_refresh_cache_submit" {
   attach_tracing_policy = false
   attach_async_event_policy = false
   # existing role for the lambda
-  # will need to parametrize when ITSD takes over role creation. 
+  # will need to parametrize when ITSD takes over role creation.
   # for now this role was created by hand in the console, it is not terraform managed
   lambda_role = data.aws_ssm_parameter.lambda_refreshCacheSubmit_role.value
 
@@ -52,7 +52,7 @@ module "calcloud_lambda_refresh_cache_submit" {
 }
 
 resource "aws_cloudwatch_event_rule" "refresh_cache_schedule" {
-  name                = "refresh-cache-scheduler"
+  name                = "refresh-cache-scheduler${local.environment}"
   description         = "Fires every five minutes"
   schedule_expression = "rate(5 minutes)"
 }
