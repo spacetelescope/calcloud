@@ -43,3 +43,7 @@ output predict_lambda_function_arn {
 output s3_output_bucket {
   value = aws_s3_bucket.calcloud.id
 }
+
+output crds_context {
+  value = var.crds_context[local.environment]
+}

@@ -63,7 +63,11 @@ docker push ${CALDP_DOCKER_IMAGE}
 # deploy rest of terraform
 cd ../calcloud-${CALCLOUD_VER}/terraform
 # must taint the compute env to be safe about launch template handling. see comments in batch.tf
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.calcloud
+awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[0]
+awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[1]
+awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[2]
+awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[3]
+
 awsudo $ADMIN_ARN terraform taint docker_registry_image.calcloud_predict_model
 awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
 
@@ -77,11 +81,17 @@ bucket_url=${bucket_url_response##*=}
 # removes double quotes from variable
 bucket_url=`echo $bucket_url | tr -d '"'`
 
+# get the crds context
+crds_response=`awsudo $ADMIN_ARN terraform output | grep "crds"`
+crds_context=${crds_response##*=}
+crds_context=`echo $crds_context | tr -d '"'`
+
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key messages/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key inputs/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key outputs/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key control/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key blackboard/
+awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key crds_env_vars/${crds_context}
 
 cd $HOME
 rm -rf $TMP_INSTALL_DIR
