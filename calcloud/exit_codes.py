@@ -75,9 +75,7 @@ def explain(exit_code):
     'EXIT - SUBPROCESS_MEMORY_ERROR[31]: A Python MemoryError was detected by scanning the process.txt log.'
 
     >>> explain(999)
-    Traceback (most recent call last):
-    ...
-    ValueError: Unhandled exit_code: 999
+    'EXIT - unhandled exit code: 999'
     """
     if exit_code in _CODE_TO_NAME:
         name = _CODE_TO_NAME[exit_code]
@@ -87,7 +85,7 @@ def explain(exit_code):
         exit_code = globals()[name]
         explanation = _NAME_EXPLANATIONS[name]
     else:
-        raise ValueError("Unhandled exit_code: " + repr(exit_code))
+        return f"EXIT - unhandled exit code: {exit_code}"
     return f"EXIT - {name}[{exit_code}]: {explanation}"
 
 
@@ -115,3 +113,11 @@ def is_memory_error(exit_code):
     True
     """
     return (exit_code in [globals()[name] for name in _MEMORY_ERROR_NAMES]) or (exit_code in _MEMORY_ERROR_NAMES)
+
+def test():     # pragma: no cover
+    from doctest import testmod
+    from . import exit_codes
+    return testmod(exit_codes)
+
+if __name__ == "__main__":   # pragma: no cover
+    print(test())
