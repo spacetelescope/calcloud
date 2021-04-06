@@ -18,6 +18,10 @@ from . import plan
 from . import submit
 
 
+class CalcloudInputsFailure(RuntimeError):
+    """The inputs needed to plan and run this job were not ready in time."""
+
+
 def main(comm, ipppssoot, bucket_name):
     """Submit the job for `ipppssoot` using `bucket_name` and io bundle `comm`.
 
@@ -27,16 +31,22 @@ def main(comm, ipppssoot, bucket_name):
     4. Submits the Plan creating a Batch job.
     5. Saves the job_id reported by the Batch submission in the metadata file.
     6. Nominally sends "submit-ipppssoot" message.
-    7. On error anywhere, sends the "error-ipppssoot" message.
+    7. If an exception occurs but a terminate-ipppssoot message exists,
+       a terminated-ipppssoot message is sent.
+    8. If an exception occurs but a terminate-ipppssoot message does not exist,
+       an error-ipppssoot messaage is sent.
     """
     try:
+        terminated = comm.messages.listl(f"terminated-{ipppssoot}")
         _main(comm, ipppssoot, bucket_name)
-        comm.messages.put(f"submit-{ipppssoot}")
     except Exception as exc:
-        print("Exception in lambda_submit.main for", ipppssoot, "=", exc)
+        print(f"Exception in lambda_submit.main for {ipppssoot} = {exc}")
+        if terminated:
+            status = "terminated-" + ipppssoot
+        else:
+            status = "error-" + ipppssoot
         comm.messages.delete(f"all-{ipppssoot}")
-        comm.messages.put(f"error-{ipppssoot}")
-        raise
+        comm.messages.put({status: "submit lambda exception handler " + bucket_name})
 
 
 def _main(comm, ipppssoot, bucket_name):
@@ -62,10 +72,7 @@ def _main(comm, ipppssoot, bucket_name):
     print("Submitted job for", ipppssoot, "as ID", response["jobId"])
     metadata["job_id"] = response["jobId"]
     comm.xdata.put(ipppssoot, metadata)
-
-
-class CalcloudInputsFailure(RuntimeError):
-    """The inputs needed to plan and run this job were not ready in time."""
+    comm.messages.put(f"submit-{ipppssoot}")
 
 
 def wait_for_inputs(comm, ipppssoot):

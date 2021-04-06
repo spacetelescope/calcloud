@@ -42,12 +42,8 @@ module "calcloud_lambda_blackboard" {
   # lambda_role = data.aws_ssm_parameter.lambda_submit_role.value
   lambda_role = data.aws_ssm_parameter.lambda_blackboard_role.value
 
-  environment_variables = {
-    # comma delimited list of job queues, because batch can only list jobs per queue
-    JOBQUEUES=local.job_queues
-    BUCKET=aws_s3_bucket.calcloud.id
-    FILESHARE=data.aws_ssm_parameter.file_share_arn.value
-  }
+  environment_variables = merge(local.common_env_vars, {
+  })
 
   tags = {
     Name = "calcloud-job-blackboard${local.environment}"

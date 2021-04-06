@@ -41,10 +41,8 @@ module "calcloud_lambda_refresh_cache_submit" {
   # for now this role was created by hand in the console, it is not terraform managed
   lambda_role = data.aws_ssm_parameter.lambda_refreshCacheSubmit_role.value
 
-  environment_variables = {
-    # comma delimited list of job queues, because batch can only list jobs per queue
-    FILESHARE=data.aws_ssm_parameter.file_share_arn.value
-  }
+  environment_variables = merge(local.common_env_vars, {
+  })
 
   tags = {
     Name = "calcloud-fileshare-refresh_cache_submits${local.environment}"

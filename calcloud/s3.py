@@ -47,7 +47,7 @@ def get_default_client():
     return DEFAULT_S3_CLIENT
 
 
-DEFAULT_BUCKET = os.environ.get("S3_PROCESSING_BUCKET", "s3://calcloud-UNDEFINED-bucket")
+DEFAULT_BUCKET = "s3://" + os.environ.get("BUCKET", "calcloud-UNDEFINED-bucket")
 
 MAX_LIST_OBJECTS = 10 ** 7
 

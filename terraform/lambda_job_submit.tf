@@ -42,11 +42,9 @@ module "calcloud_lambda_submit" {
   # for now this role was created by hand in the console, it is not terraform managed
   lambda_role = data.aws_ssm_parameter.lambda_submit_role.value
 
-  environment_variables = {
-    JOBDEFINITIONS = local.job_definitions,
-    JOBQUEUES = local.job_queues,
-    JOBPREDICTLAMBDA = module.lambda_function_container_image.this_lambda_function_arn
-  }
+  environment_variables = merge(local.common_env_vars, {
+      JOBPREDICTLAMBDA = module.lambda_function_container_image.this_lambda_function_arn,
+  })
 
   tags = {
     Name = "calcloud-job-submit${local.environment}"
