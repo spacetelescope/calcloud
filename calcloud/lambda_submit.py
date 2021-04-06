@@ -18,6 +18,16 @@ from . import plan
 from . import submit
 
 
+class CalcloudInputsFailure(RuntimeError):
+    """The inputs needed to plan and run this job were not ready in time."""
+
+
+class CalcloudAlreadyCancelled(RuntimeError):
+    """Between placing and planning,  a job was cancelled and so should not
+    be submitted.
+    """
+
+
 def main(comm, ipppssoot, bucket_name):
     """Submit the job for `ipppssoot` using `bucket_name` and io bundle `comm`.
 
@@ -31,12 +41,14 @@ def main(comm, ipppssoot, bucket_name):
     """
     try:
         _main(comm, ipppssoot, bucket_name)
-        comm.messages.put(f"submit-{ipppssoot}")
     except Exception as exc:
         print("Exception in lambda_submit.main for", ipppssoot, "=", exc)
+        if comm.messages.listl(f"terminated-{ipppssoot}"):
+            status = "terminated-" + ipppssoot
+        else:
+            status = "error-" + ipppssoot
         comm.messages.delete(f"all-{ipppssoot}")
-        comm.messages.put(f"error-{ipppssoot}")
-        raise
+        comm.messages.put(status)
 
 
 def _main(comm, ipppssoot, bucket_name):
@@ -50,7 +62,7 @@ def _main(comm, ipppssoot, bucket_name):
     # retries don't climb ladder,  memory_retries do,  increasing bin sizes each try
     try:
         metadata = comm.xdata.get(ipppssoot)  # retry/rescue path
-    except comm.xdata.client.exceptions.NoSuchKey:
+    except comm.client.exceptions.NoSuchKey:
         metadata = dict(retries=0, memory_retries=0, job_id=None, terminated=False)
 
     # get_plan() raises AllBinsTriedQuit when retries exhaust higher memory job definitions
@@ -62,10 +74,7 @@ def _main(comm, ipppssoot, bucket_name):
     print("Submitted job for", ipppssoot, "as ID", response["jobId"])
     metadata["job_id"] = response["jobId"]
     comm.xdata.put(ipppssoot, metadata)
-
-
-class CalcloudInputsFailure(RuntimeError):
-    """The inputs needed to plan and run this job were not ready in time."""
+    comm.messages.put(f"submit-{ipppssoot}")
 
 
 def wait_for_inputs(comm, ipppssoot):

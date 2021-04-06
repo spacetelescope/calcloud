@@ -597,6 +597,8 @@ class IoBundle:
 
     def reset(self, ids="all"):
         """Delete outputs, messages, and control files."""
+        if ids == "all":
+            ids = self.messages.ids()
         if isinstance(ids, str):
             ids = [ids]
         for tail in ids:
@@ -644,6 +646,15 @@ class IoBundle:
         items.extend(list(self.messages.list_s3(prefixes)))
         items.extend(list(self.outputs.list_s3(prefixes)))
         return items
+
+    def send(self, msg_type, ipppssoots="all"):
+        """Send the message `msg_type` to every ipppssoot in `ipppssoots`.
+
+        If ipppssoots="all", define ipppssoots using self.messsages.ids()
+        """
+        if ipppssoots == "all":
+            ipppssoots = self.inputs.ids()
+        self.messages.put([msg_type + "-" + ipppssoot for ipppssoot in ipppssoots])
 
 
 def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):

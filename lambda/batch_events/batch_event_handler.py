@@ -76,6 +76,7 @@ def lambda_handler(event, context):
             print("Automatic CannotInspectContainer retries for", ipppssoot, "exhausted at", metadata["retries"])
     elif status_reason.startswith("Operator cancelled"):
         print("Operator cancelled job", job_id, "for", ipppssoot, "no automatic retry.")
+        continuation_msg = "terminated-" + ipppssoot
     else:
         print("Failure for", ipppssoot, "no automatic retry for", combined_reason)
 

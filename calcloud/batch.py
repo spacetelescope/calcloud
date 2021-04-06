@@ -78,6 +78,26 @@ def _list_jobs_iterator(queue, status, PageSize=10, client=None):
     return paginator.paginate(jobQueue=queue, jobStatus=status, PaginationConfig={"PageSize": PageSize})
 
 
+def describe_job(job_id, client=None):
+    """Return the description from describe_jobs() for `job_id` or None."""
+    client = client or get_default_client()
+    response = client.describe_jobs(jobs=[job_id])
+    jobs = response["jobs"]
+    if len(jobs):
+        return jobs[0]
+    else:
+        return
+
+
+def get_job_name(job_id, client=None):
+    """Return the name of job `job_id`."""
+    description = describe_job(job_id, client)
+    if description:
+        return description["jobName"]
+    else:
+        return "unknown"
+
+
 def _format_job_listing(job):
     revised = dict(job)
     _format_seconds(revised, "createdAt")

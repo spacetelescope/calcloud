@@ -1,26 +1,30 @@
 """This lambda handles job terminations based on cancel-all or cancel-ipppssoot
 S3 trigger messages.
 
-For cancel-all,  the lambda first lists all error and terminated messages,  then
-iterates through them issuing cancel-ipppssoot messages to trigger individual
-lambdas to do the primary cancellation work.
+For cancel-all,  the lambda first determines the job id's of all jobs in a killable
+state,  then broadcasts the cancel-job_id form of single job kill message.
 
-When an individual cancel-ipppssoot message is processed:
+For cancel-job_id,  the lambda determines the ipppssoot from the job name,  kills
+the job,  and adjusts messages and the control file based on the ipppssoot.
 
-1. The job's control metadata "terminated" flag is set to True
-2. The batch.terminate_job function is called using the job_id in the control metadata
+For cancel-ipppssoot,  the lambda determines the job_id from the control file,  kills
+the job,  and adjusts messages and the control file based on the ipppssoot.
+
+1. The job's control metadata "terminated" flag is set to True.
+2. The batch.terminate_job function is called.
 3. All messages for the ipppssoot are deleted.
 4. The terminated-ipppssoot message is sent.
 
 The control metadata of the cancelled ipppssoot is updated,  not deleted, in
 order to short circuit memory based retries on subsequent rescues.
 """
+
+import contextlib
+
 from calcloud import batch
 from calcloud import io
 from calcloud import s3
 from calcloud import hst
-
-CLEANUP_TYPES = ["processing", "submit", "processed", "error"]
 
 
 def lambda_handler(event, context):
@@ -34,37 +38,54 @@ def lambda_handler(event, context):
         comm.messages.delete_literal("cancel-all")
 
         # Define jobs as anything with a control metadata file
-        ipppssoots = comm.xdata.listl("all")
-        comm.messages.broadcast("cancel", ipppssoots)
+        # ipppssoots = comm.xdata.listl("all")
+        # comm.messages.broadcast("cancel", ipppssoots)
 
-        # Pick up any orphan jobs by listing them all. These deletes compete with ipppssoots
-        job_ids = batch.get_job_ids()
-        comm.messages.broadcast("cancel", job_ids)
+        # Cancel all jobs in a killable state one-by-one using broadcast
+        comm.messages.broadcast("cancel", batch.get_job_ids())
+    else:
+        cancel_one(comm, ipst)
 
-    elif hst.IPPPSSOOT_RE.match(ipst):
-        # Terminate a single ipppssoot
-        try:
+
+def cancel_one(comm, ipst):
+    """Cancel one job based on `ipst` which should either be an ipppssoot or Batch job id."""
+
+    if hst.IPPPSSOOT_RE.match(ipst):  # most likely from singleton operator messages
+        metadata = dict(job_id="unknown")
+        with trap_exception("retrieving control file for", ipst):
             metadata = comm.xdata.get(ipst)
-            metadata["terminated"] = True
-            comm.xdata.put(ipst, metadata)
-        except Exception as exc:
-            print("Exception updating control file for", ipst, "was", exc)
-
-        try:
-            batch.terminate_job(metadata["job_id"], ipst, "Operator cancelled")
-        except Exception as exc:
-            print("Exception terminating", ipst, "was", exc)
-
-        try:
-            comm.messages.delete(f"all-{ipst}")
-            comm.messages.put(f"terminated-{ipst}")
-        except Exception as exc:
-            print("Exception updating messages for", ipst, "to terminated was", exc)
-    elif batch.JOB_ID_RE.match(ipst):
-        try:
-            batch.terminate_job(ipst, ipst, "cancel-all terminated job directly")
-        except Exception as exc:
-            print("Exception terminating", ipst, "was", exc)
-        comm.messages.delete(f"cancel-{ipst}")
+        job_id = metadata["job_id"]
+        metadata["cancel_type"] = "ipppssoot"
+    elif batch.JOB_ID_RE.match(ipst):  # most likely from cancel-all broadcast
+        comm.messages.delete(f"cancel-{ipst}")  # job-id form of cancel message
+        job_id, ipst = ipst.replace("_", "-"), "unknown"
+        metadata = dict(job_id=job_id, cancel_type="job_id")
+        with trap_exception("describing job", job_id, "to determine ipppssoot."):
+            ipst = batch.get_job_name(job_id)  # ipst or "unknown"
     else:
         print("Bad cancel ID", ipst)
+        return
+
+    print("Cancelling ipppssoot", ipst, "job_id", job_id)
+
+    if ipst != "unknown":
+        with trap_exception("updating control file for", ipst, "job_id", job_id):
+            metadata["terminated"] = True
+            comm.xdata.put(ipst, metadata)
+
+        with trap_exception("handling messages for", ipst, "job_id", job_id):
+            comm.messages.delete(f"all-{ipst}")
+            comm.messages.put(f"terminated-{ipst}")
+
+    if job_id != "unknown":
+        with trap_exception("terminating", ipst, "job_id", job_id):
+            batch.terminate_job(job_id, ipst, "Operator cancelled")
+
+
+@contextlib.contextmanager
+def trap_exception(*args):
+    """Print a message and continue on exception inside with-block."""
+    try:
+        yield
+    except Exception as exc:
+        print("Exception", *args, "was:", exc)
