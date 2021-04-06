@@ -137,12 +137,8 @@ def _get_environment(job_resources, memory_retries):
             "Final bin index",
             final_bin,
         )
-
         job_definition = job_defs[final_bin]
-        log.info("Selected job definition", job_definition)
-
         job_queue = job_queues[final_bin]
-        log.info("Selected job queue", job_queue)
     else:
         log.info("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
         raise AllBinsTriedQuit("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
@@ -174,7 +170,7 @@ def _planner(ipppssoots_file, output_bucket=s3.DEFAULT_BUCKET, input_path=s3.DEF
             continue
         for ipst in line.split():
             print(
-                tuple(get_plan(ipst, output_bucket, input_path, retries))
+                tuple(get_plan(ipst, "s3://" + output_bucket, "s3://" + input_path, retries))
             )  # Drop type to support literal_eval() vs. eval()
 
 

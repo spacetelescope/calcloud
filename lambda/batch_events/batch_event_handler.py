@@ -39,6 +39,8 @@ def lambda_handler(event, context):
     exit_code = container.get("exitCode", "undefined")
     exit_reason = exit_codes.explain(exit_code) if exit_code != "undefined" else exit_code
 
+    io.reject_cross_env_bucket(bucket)
+
     comm = io.get_io_bundle(bucket)
 
     metadata = comm.xdata.get(ipppssoot)
@@ -76,6 +78,7 @@ def lambda_handler(event, context):
             print("Automatic CannotInspectContainer retries for", ipppssoot, "exhausted at", metadata["retries"])
     elif status_reason.startswith("Operator cancelled"):
         print("Operator cancelled job", job_id, "for", ipppssoot, "no automatic retry.")
+        continuation_msg = "terminated-" + ipppssoot
     else:
         print("Failure for", ipppssoot, "no automatic retry for", combined_reason)
 
@@ -83,4 +86,4 @@ def lambda_handler(event, context):
     print(metadata)
     comm.xdata.put(ipppssoot, metadata)
     comm.messages.delete("all-" + ipppssoot)
-    comm.messages.put(continuation_msg)
+    comm.messages.put({continuation_msg: "batch failure event handler " + bucket})

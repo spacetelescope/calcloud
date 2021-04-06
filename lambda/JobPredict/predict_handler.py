@@ -164,6 +164,7 @@ def lambda_handler(event, context):
     MEMORY REGRESSION: A third regression model is used to estimate the actual value of memory needed for the job. This is mainly for the purpose of logging/future analysis and is not currently being used for allocating memory in calcloud jobs.
     """
     bucket_name = event["Bucket"]
+
     key = event["Key"]
     ipppssoot = event["Ipppssoot"]
     prep = Preprocess(ipppssoot, bucket_name, key)

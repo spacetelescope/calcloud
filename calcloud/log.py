@@ -60,6 +60,7 @@ import sys
 import os
 import logging
 import pprint
+import contextlib
 
 DEFAULT_VERBOSITY_LEVEL = 50
 
@@ -345,6 +346,18 @@ def divider(name="", char="-", n=75, func=info, **keys):
         func(char * n2, name, char * n2, **keys)
     else:
         func(char * n, **keys)
+
+
+# ===================================================================
+
+
+@contextlib.contextmanager
+def trap_exception(*args):
+    """Print a message and continue on exception inside with-block."""
+    try:
+        yield
+    except Exception as exc:
+        info("Trapped exception", " ".join(args), "was:", exc)
 
 
 # ===================================================================

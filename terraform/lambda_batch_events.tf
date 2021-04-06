@@ -41,11 +41,10 @@ module "calcloud_lambda_batchEvents" {
   # for now this role was created by hand in the console, it is not terraform managed
   lambda_role = data.aws_ssm_parameter.lambda_submit_role.value
 
-  environment_variables = {
-    JOBQUEUES=local.job_queues,
+  environment_variables = merge(local.common_env_vars, {
     MAX_MEMORY_RETRIES="4",
     MAX_INSPECT_RETRIES="4"
-  }
+  })
 
   tags = {
     Name = "calcloud-job-events${local.environment}"
