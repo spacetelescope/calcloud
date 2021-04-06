@@ -56,7 +56,7 @@ module "calcloud_lambda_blackboard" {
 
 # for cron-like schedule of blackboard lambda
 resource "aws_cloudwatch_event_rule" "every_five_minutes" {
-  name                = "every-five-minutes"
+  name                = "every-five-minutes${local.environment}"
   description         = "Fires every five minutes"
   schedule_expression = "rate(5 minutes)"
 }

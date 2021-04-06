@@ -54,7 +54,7 @@ module "calcloud_lambda_batchEvents" {
 
 # the event rule for this lambda/cloudwatch interaction is AWS failure events
 resource "aws_cloudwatch_event_rule" "batch" {
-  name = "capture-batch-failure-events"
+  name = "capture-batch-failure-events${local.environment}"
   description = "capture AWS Batch failures to send to lambda for evaluation"
 
   event_pattern = <<EOF
