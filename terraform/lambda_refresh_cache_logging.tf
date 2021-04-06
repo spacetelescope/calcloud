@@ -52,7 +52,7 @@ module "calcloud_lambda_refresh_cache_logs" {
 
 # the event rule for this lambda/cloudwatch interaction is AWS failure events
 resource "aws_cloudwatch_event_rule" "refresh_cache_logs" {
-  name = "capture-refresh-cache-operations"
+  name = "capture-refresh-cache-operations${local.environment}"
   description = "capture file share refresh cache operations to track and evaluate them in log stream"
 
   event_pattern = <<EOF
