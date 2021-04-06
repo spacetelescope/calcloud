@@ -13,6 +13,7 @@ locals {
 
        job_queues = join(",", aws_batch_job_queue.batch_queue[*].name)   # for env vars
 
+       # Reserving 128M/1024M for ECS overheads
        ladder = [
               { # -------------------------------------------------------------------
                 name : "02g",

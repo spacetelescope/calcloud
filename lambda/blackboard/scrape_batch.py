@@ -63,7 +63,13 @@ def lambda_handler(event, context):
                         # if the job hasn't started container doesn't seem to be in the keys
                         container = j.get("container", {})
                         exitCode = container.get("exitCode", 0)
-                        exitReason = container.get("reason", j.get("statusReason", "None"))
+
+                        containerReason = container.get("reason", "None")
+                        jobReason = j.get("statusReason", "None")
+                        if jobReason.startswith("Essential"):
+                            exitReason = containerReason[:120] + "; " + jobReason[:120]
+                        else:
+                            exitReason = container.get("reason", j.get("statusReason", "None"))[:255]
 
                         dataset = j["jobName"].split("-")[-1]
 

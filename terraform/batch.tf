@@ -179,7 +179,8 @@ data "aws_ecr_image" "caldp_latest" {
 
 # ------------------------------------------------------------------------------------------
 
-# 2G -----------------  also reserve 128M per 1G for Batch ECS + STScI overheads
+# Env setting to simulate caught errors:
+#      {"name": "CALDP_SIMULATE_ERROR", "value": "32"}
 
 resource "aws_batch_job_definition" "job_def" {
   name                 = "calcloud-jobdef-${local.ladder[count.index].name}${local.environment}"
