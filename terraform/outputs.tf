@@ -45,5 +45,5 @@ output s3_output_bucket {
 }
 
 output crds_context {
-  value = var.crds_context[local.environment]
+  value = lookup(var.crds_context, local.environment, var.crds_context["-sb"])
 }
