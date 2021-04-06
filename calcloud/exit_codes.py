@@ -114,10 +114,13 @@ def is_memory_error(exit_code):
     """
     return (exit_code in [globals()[name] for name in _MEMORY_ERROR_NAMES]) or (exit_code in _MEMORY_ERROR_NAMES)
 
-def test():     # pragma: no cover
+
+def test():  # pragma: no cover
     from doctest import testmod
     from . import exit_codes
+
     return testmod(exit_codes)
 
-if __name__ == "__main__":   # pragma: no cover
+
+if __name__ == "__main__":  # pragma: no cover
     print(test())
