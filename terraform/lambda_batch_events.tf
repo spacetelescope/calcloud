@@ -43,7 +43,8 @@ module "calcloud_lambda_batchEvents" {
 
   environment_variables = {
     JOBQUEUES=local.job_queues,
-    MAX_MEMORY_RETRIES="4"
+    MAX_MEMORY_RETRIES="4",
+    MAX_INSPECT_RETRIES="4"
   }
 
   tags = {

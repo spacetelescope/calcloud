@@ -47,10 +47,11 @@ def _main(comm, ipppssoot, bucket_name):
     comm.messages.delete(f"all-{ipppssoot}")
     comm.outputs.delete(f"{ipppssoot}")
 
+    # retries don't climb ladder,  memory_retries do,  increasing bin sizes each try
     try:
         metadata = comm.xdata.get(ipppssoot)  # retry/rescue path
     except comm.xdata.client.exceptions.NoSuchKey:
-        metadata = dict(memory_retries=0, job_id=None, terminated=False)
+        metadata = dict(retries=0, memory_retries=0, job_id=None, terminated=False)
 
     # get_plan() raises AllBinsTriedQuit when retries exhaust higher memory job definitions
     p = plan.get_plan(ipppssoot, bucket_name, f"{bucket_name}/inputs", metadata["memory_retries"])
