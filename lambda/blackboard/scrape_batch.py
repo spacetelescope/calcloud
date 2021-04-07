@@ -1,4 +1,4 @@
-#TODO: add queue name to metadata
+# TODO: add queue name to metadata
 def lambda_handler(event, context):
     import boto3
     import os
