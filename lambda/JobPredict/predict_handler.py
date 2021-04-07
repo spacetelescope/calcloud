@@ -173,6 +173,6 @@ def lambda_handler(event, context):
     print(features)
     predictions = {"ipppssoot": ipppssoot, "memBin": membin, "memVal": memval, "clockTime": clocktime}
     print(predictions)
-    probabilities = {"ipppssoot": ipppssoot, "probabiltiies": pred_proba}
+    probabilities = {"ipppssoot": ipppssoot, "probabilities": pred_proba}
 
     return {"memBin": membin, "memVal": memval, "clockTime": clocktime}
