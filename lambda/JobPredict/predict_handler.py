@@ -32,7 +32,6 @@ class Preprocess:
         for line in body:
             k, v = str(line).strip("b'").split("=")
             input_data[k] = v
-        print(input_data)
         return input_data
 
     def scrub_keys(self):
@@ -94,7 +93,6 @@ class Preprocess:
             instr = 3
 
         inputs = np.array([n_files, total_mb, drizcorr, pctecorr, crsplit, subarray, detector, dtype, instr])
-        print(inputs)
         return inputs
 
     def transformer(self):
@@ -108,17 +106,14 @@ class Preprocess:
         # apply power transformer normalization to continuous vars
         x = np.array([[n_files], [total_mb]]).reshape(1, -1)
         pt = PowerTransformer(standardize=False)
-        pt.lambdas_ = np.array([-0.96074766, -0.32299156])
+        pt.lambdas_ = np.array([-0.32869206, -0.20556335])
         xt = pt.transform(x)
-        print(xt)
         # normalization (zero mean, unit variance)
-        f_mean, f_sigma = 0.653480238393804, 0.14693259765350208
-        s_mean, s_sigma = 1.1648725537429683, 0.7444473983812471
+        f_mean, f_sigma = 1.1401248666163957, 0.3255255190897535
+        s_mean, s_sigma = 1.606744623472836 0.9056237340772334
         x_files = np.round(((xt[0, 0] - f_mean) / f_sigma), 5)
         x_size = np.round(((xt[0, 1] - s_mean) / s_sigma), 5)
-        print(f"Power Transformed variables: {x_files}, {x_size}")
         X = np.array([x_files, x_size, X[2], X[3], X[4], X[5], X[6], X[7], X[8]]).reshape(1, -1)
-        print(X)
         return X
 
 
@@ -131,9 +126,8 @@ def get_model(model_path):
 def classifier(model, data):
     """Returns class prediction"""
     pred_proba = model.predict(data)
-    print(pred_proba)
     pred = np.argmax(pred_proba, axis=-1)
-    return pred
+    return pred, pred_proba
 
 
 def regressor(model, data):
@@ -144,8 +138,8 @@ def regressor(model, data):
 
 # load models
 clf = get_model("./models/mem_clf/2/")
-mem_reg = get_model("./models/mem_reg/1/")
-wall_reg = get_model("./models/wall_reg/1/")
+mem_reg = get_model("./models/mem_reg/2/")
+wall_reg = get_model("./models/wall_reg/2/")
 
 
 def lambda_handler(event, context):
@@ -171,11 +165,14 @@ def lambda_handler(event, context):
     prep.inputs = prep.scrub_keys()
     X = prep.transformer()
     # Predict Memory Allocation (bin and value preds)
-    membin = int(classifier(clf, X))
+    membin, pred_proba = int(classifier(clf, X))
     memval = np.round(float(regressor(mem_reg, X)), 2)
     # Predict Wallclock Allocation (execution time in seconds)
     clocktime = int(regressor(wall_reg, X))
+    features = {"ipppssoot": ipppssoot, "keywords": prep.input_data, "inputs": prep.inputs, "X": X}
+    print(features)
     predictions = {"ipppssoot": ipppssoot, "memBin": membin, "memVal": memval, "clockTime": clocktime}
     print(predictions)
+    probabilities = {"ipppssoot": ipppssoot, "probabiltiies": pred_proba}
 
     return {"memBin": membin, "memVal": memval, "clockTime": clocktime}
