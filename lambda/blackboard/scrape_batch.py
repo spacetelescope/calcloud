@@ -1,3 +1,4 @@
+#TODO: add queue name to metadata
 def lambda_handler(event, context):
     import boto3
     import os
@@ -56,7 +57,12 @@ def lambda_handler(event, context):
                         jobStartDate = int(j.get("startedAt", default_timestamp) / 1000.0)
                         completionDate = int(j.get("stoppedAt", default_timestamp) / 1000.0)
 
-                        jobDuration = int(completionDate - jobStartDate)
+                        # if the job hasn't completed yet, set duration to 0 so it's not -50 years
+                        # we check for the stoppedAt attribute, and default to startDate
+                        durationCheck = int(j.get("stoppedAt", jobStartDate) / 1000.0)
+                        jobDuration = int(durationCheck - jobStartDate)
+
+                        # imageSize currently not implemented. could be pulled from metrics file
                         imageSize = 0
                         jobState = jobStatus
 
