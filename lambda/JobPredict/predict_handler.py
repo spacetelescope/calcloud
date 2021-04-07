@@ -110,7 +110,7 @@ class Preprocess:
         xt = pt.transform(x)
         # normalization (zero mean, unit variance)
         f_mean, f_sigma = 1.1401248666163957, 0.3255255190897535
-        s_mean, s_sigma = 1.606744623472836 0.9056237340772334
+        s_mean, s_sigma = 1.606744623472836, 0.9056237340772334
         x_files = np.round(((xt[0, 0] - f_mean) / f_sigma), 5)
         x_size = np.round(((xt[0, 1] - s_mean) / s_sigma), 5)
         X = np.array([x_files, x_size, X[2], X[3], X[4], X[5], X[6], X[7], X[8]]).reshape(1, -1)
