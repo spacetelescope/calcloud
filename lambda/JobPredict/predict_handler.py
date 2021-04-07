@@ -126,7 +126,7 @@ def get_model(model_path):
 def classifier(model, data):
     """Returns class prediction"""
     pred_proba = model.predict(data)
-    pred = np.argmax(pred_proba, axis=-1)
+    pred = int(np.argmax(pred_proba, axis=-1))
     return pred, pred_proba
 
 
@@ -165,7 +165,7 @@ def lambda_handler(event, context):
     prep.inputs = prep.scrub_keys()
     X = prep.transformer()
     # Predict Memory Allocation (bin and value preds)
-    membin, pred_proba = int(classifier(clf, X))
+    membin, pred_proba = classifier(clf, X)
     memval = np.round(float(regressor(mem_reg, X)), 2)
     # Predict Wallclock Allocation (execution time in seconds)
     clocktime = int(regressor(wall_reg, X))
