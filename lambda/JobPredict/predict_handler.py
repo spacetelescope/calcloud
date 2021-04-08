@@ -109,8 +109,8 @@ class Preprocess:
         pt.lambdas_ = np.array([-0.42619869, -0.16236975])
         xt = pt.transform(x)
         # normalization (zero mean, unit variance)
-        f_mean, f_sigma = 1.014731584219394 0.3037877895551685
-        s_mean, s_sigma = 1.7582280004717683 1.020462125330728
+        f_mean, f_sigma = 1.014731584219394, 0.3037877895551685
+        s_mean, s_sigma = 1.7582280004717683, 1.020462125330728
         x_files = np.round(((xt[0, 0] - f_mean) / f_sigma), 5)
         x_size = np.round(((xt[0, 1] - s_mean) / s_sigma), 5)
         X = np.array([x_files, x_size, X[2], X[3], X[4], X[5], X[6], X[7], X[8]]).reshape(1, -1)
