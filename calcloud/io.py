@@ -654,6 +654,7 @@ class IoBundle:
         """
         if ipppssoots == "all":
             ipppssoots = self.inputs.ids()
+        assert msg_type in MESSAGE_TYPES
         self.messages.put([msg_type + "-" + ipppssoot for ipppssoot in ipppssoots])
 
 

@@ -68,16 +68,16 @@ def cancel_one(comm, ipst):
 
     print("Cancelling ipppssoot", ipst, "job_id", job_id)
 
-    if ipst != "unknown":
+    if ipst != "unknown":  # can't update control metadata or messages w/o ipppssoot
         with trap_exception("updating control file for", ipst, "job_id", job_id):
             metadata["terminated"] = True
             comm.xdata.put(ipst, metadata)
 
         with trap_exception("handling messages for", ipst, "job_id", job_id):
             comm.messages.delete(f"all-{ipst}")
-            comm.messages.put(f"terminated-{ipst}")
+            comm.messages.put({f"terminated-{ipst}": "cancel lambda"})
 
-    if job_id != "unknown":
+    if job_id != "unknown":  # can't cancel job w/o job_id
         with trap_exception("terminating", ipst, "job_id", job_id):
             batch.terminate_job(job_id, ipst, "Operator cancelled")
 

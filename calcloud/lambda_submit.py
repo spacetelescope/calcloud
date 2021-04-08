@@ -31,18 +31,22 @@ def main(comm, ipppssoot, bucket_name):
     4. Submits the Plan creating a Batch job.
     5. Saves the job_id reported by the Batch submission in the metadata file.
     6. Nominally sends "submit-ipppssoot" message.
-    7. On error anywhere, sends the "error-ipppssoot" message.
+    7. If an exception occurs but a terminate-ipppssoot message exists,
+       a terminated-ipppssoot message is sent.
+    8. If an exception occurs but a terminate-ipppssoot message does not exist,
+       an error-ipppssoot messaage is sent.
     """
     try:
+        terminated = comm.messages.listl(f"terminated-{ipppssoot}")
         _main(comm, ipppssoot, bucket_name)
     except Exception as exc:
         print("Exception in lambda_submit.main for", ipppssoot, "=", exc)
-        if comm.messages.listl(f"terminated-{ipppssoot}"):
+        if terminated:
             status = "terminated-" + ipppssoot
         else:
             status = "error-" + ipppssoot
         comm.messages.delete(f"all-{ipppssoot}")
-        comm.messages.put(status)
+        comm.messages.put({status: "submit lambda exception handler"})
 
 
 def _main(comm, ipppssoot, bucket_name):
