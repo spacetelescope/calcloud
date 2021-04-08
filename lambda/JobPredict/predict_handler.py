@@ -169,8 +169,9 @@ def lambda_handler(event, context):
     memval = np.round(float(regressor(mem_reg, X)), 2)
     # Predict Wallclock Allocation (execution time in seconds)
     clocktime = int(regressor(wall_reg, X))
-    features = {"ipppssoot": ipppssoot, "keywords": prep.input_data, "inputs": prep.inputs, "X": X}
-    print(features)
+    print(f"ipppssoot: {ipppssoot} keys: {prep.input_data}")
+    print(f"ipppssoot: {ipppssoot} features: {prep.inputs}")
+    print(f"ipppssoot: {ipppssoot} X: {X}")
     predictions = {"ipppssoot": ipppssoot, "memBin": membin, "memVal": memval, "clockTime": clocktime}
     print(predictions)
     probabilities = {"ipppssoot": ipppssoot, "probabilities": pred_proba}
