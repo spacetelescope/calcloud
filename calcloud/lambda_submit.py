@@ -22,12 +22,6 @@ class CalcloudInputsFailure(RuntimeError):
     """The inputs needed to plan and run this job were not ready in time."""
 
 
-class CalcloudAlreadyCancelled(RuntimeError):
-    """Between placing and planning,  a job was cancelled and so should not
-    be submitted.
-    """
-
-
 def main(comm, ipppssoot, bucket_name):
     """Submit the job for `ipppssoot` using `bucket_name` and io bundle `comm`.
 
