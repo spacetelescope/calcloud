@@ -59,7 +59,7 @@ def lambda_handler(event, context):
 
                         # if the job hasn't completed yet, set duration to 0 so it's not -50 years
                         # we check for the stoppedAt attribute, and default to startDate
-                        durationCheck = int(j.get("stoppedAt", jobStartDate) / 1000.0)
+                        durationCheck = int(j.get("stoppedAt", j.get("startedAt", default_timestamp)) / 1000.0)
                         jobDuration = int(durationCheck - jobStartDate)
 
                         # imageSize currently not implemented. could be pulled from metrics file
