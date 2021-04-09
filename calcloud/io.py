@@ -152,9 +152,7 @@ class S3Io:
         """
         msgs = self.normalize_put_parameters(msgs, payload)
         for msg, value in msgs.items():
-            if "error" in msg:
-                raise ValueError("Error msg detected for: " + repr(payload))
-            s3.put_object(payload or value, self.path(msg), encoding=encoding, client=self.client)
+            s3.put_object(value, self.path(msg), encoding=encoding, client=self.client)
 
     def normalize_put_parameters(self, msgs, payload):
         """Consolidate put() parameters into normalized dictionary form where each item
@@ -274,7 +272,7 @@ class JsonIo(S3Io):
         JsonIo,  including handling of `encoding`.
         """
         msgs = self.normalize_put_parameters(msgs, payload)
-        super().put({pref: json.dumps(payload or obj) for (pref, obj) in msgs.items()}, encoding=encoding)
+        super().put({msg: json.dumps(value) for (msg, value) in msgs.items()}, encoding=encoding)
 
 
 class MessageIo(JsonIo):
