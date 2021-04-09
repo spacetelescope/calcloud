@@ -144,18 +144,21 @@ class S3Io:
             return {prefix: self.get(prefix, encoding) for prefix in prefixes}
 
     def put(self, msgs, payload="", encoding="utf-8"):
-        """Put messages `msgs` into S3,  accepting several forms. See normalize_put_parameters()
-        for permissible values and handling of `msgs` and `payload`.
+        """Put messages `msgs` into S3,  accepting several forms.
 
+        See normalize_put_parameters() for permissible values and handling of
+        `msgs` and `payload`.
 
         """
         msgs = self.normalize_put_parameters(msgs, payload)
         for msg, value in msgs.items():
+            if "error" in msg:
+                raise ValueError("Error msg detected for: " + repr(payload))
             s3.put_object(payload or value, self.path(msg), encoding=encoding, client=self.client)
 
     def normalize_put_parameters(self, msgs, payload):
         """Consolidate put() parameters into normalized dictionary form where each item
-        specifies both a fully specified message and corresponding payload.
+        specifies a fully specified message and corresponding payload.
 
         Any payload must be specified as a string or bytes for
 
@@ -183,10 +186,12 @@ class S3Io:
         byte strings directly.
         """
         if isinstance(msgs, str):
-            msgs = [(msgs, payload)]
+            msgs = {msgs: payload}
         elif isinstance(msgs, (list, tuple, set)):
             msgs = {msg: payload for msg in msgs}
-        elif not isinstance(msgs, dict):
+        elif isinstance(msgs, dict):
+            msgs = dict((msg, payload or value) for (msg, value) in msgs.items())
+        else:
             raise ValueError("msgs parameter to put() must be str, list, tuple, set, or dict.")
         return msgs
 
