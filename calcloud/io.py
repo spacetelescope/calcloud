@@ -144,7 +144,20 @@ class S3Io:
             return {prefix: self.get(prefix, encoding) for prefix in prefixes}
 
     def put(self, msgs, payload="", encoding="utf-8"):
-        """Put messages `msgs` into S3,  accepting several forms:
+        """Put messages `msgs` into S3,  accepting several forms. See normalize_put_parameters()
+        for permissible values and handling of `msgs` and `payload`.
+
+
+        """
+        msgs = self.normalize_put_parameters(msgs, payload)
+        for msg, value in msgs.items():
+            s3.put_object(payload or value, self.path(msg), encoding=encoding, client=self.client)
+
+    def normalize_put_parameters(self, msgs, payload):
+        """Consolidate put() parameters into normalized dictionary form where each item
+        specifies both a fully specified message and corresponding payload.
+
+        Any payload must be specified as a string or bytes for
 
         The forms called with the default payload="" put an encoded empty string:
 
@@ -173,10 +186,9 @@ class S3Io:
             msgs = [(msgs, payload)]
         elif isinstance(msgs, (list, tuple, set)):
             msgs = {msg: payload for msg in msgs}
-        elif isinstance(msgs, dict):
-            msgs = msgs.items()
-        for msg, value in msgs:
-            s3.put_object(payload or value, self.path(msg), encoding=encoding, client=self.client)
+        elif not isinstance(msgs, dict):
+            raise ValueError("msgs parameter to put() must be str, list, tuple, set, or dict.")
+        return msgs
 
     def delete(self, prefixes, check_exists=True):  # dangerous to support 'all' as default
         """Given typical *message* prefixes, locate and delete the corresponding objects,
@@ -244,31 +256,20 @@ class JsonIo(S3Io):
         else:
             return {prefix: self.get(prefix) for prefix in prefixes}
 
-    def put(self, prefix, payload="", encoding="utf-8"):
-        """Put messages defined by message name `prefix` and  payload `value`.
+    def put(self, msgs, payload="", encoding="utf-8"):
+        """Put messages defined by message name `msgs` and payload `value`.
 
-        >>>
+        See S3IO.normalize_put_parameters() for more information on permissible values
+        for `msgs` and `payload`.
 
-        1. If `prefix` is a string, it is the message name and `value` defines the payload.
-
-        2. If `prefix` is a list, tuple, or set of strings, they are complete message names,
-        and `value` defines the common payload.
-
-        3. If `prefix` is a dict, the keys are messages names,  the values are message
-        payload values.   If payload is specified as non-empty, it overrides the values
-        specified  in the dictionary.
-
-        Prior to putting,  any payloads passed to S3Io, including the empty string,
+        Prior to putting, any payloads passed to S3Io, including the empty string,
         are encoded in JSON using json.dumps().
 
-        See S3Io for more information about putting JSON encoded payloads coming from
-        JsonIo
+        See S3Io.put() for more information about putting JSON encoded payloads coming from
+        JsonIo,  including handling of `encoding`.
         """
-        if isinstance(prefix, str):
-            prefix = [(prefix, payload)]
-        elif isinstance(prefix, (tuple, list, set)):
-            prefix = {pref: payload for pref in prefix}
-        super().put({pref: json.dumps(payload or obj) for (pref, obj) in prefix.items()}, encoding=encoding)
+        msgs = self.normalize_put_parameters(msgs, payload)
+        super().put({pref: json.dumps(payload or obj) for (pref, obj) in msgs.items()}, encoding=encoding)
 
 
 class MessageIo(JsonIo):
