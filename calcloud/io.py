@@ -152,6 +152,12 @@ class S3Io:
         """
         msgs = self.normalize_put_parameters(msgs, payload)
         for msg, value in msgs.items():
+            if "error" in msg:
+                import inspect
+                for frame in inspect.stack():
+                    print(frame)
+                sys.exit(-1)
+                raise ValueError("error found in put() messsage.")
             s3.put_object(value, self.path(msg), encoding=encoding, client=self.client)
 
     def normalize_put_parameters(self, msgs, payload):

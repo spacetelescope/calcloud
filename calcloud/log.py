@@ -89,7 +89,7 @@ class HstdpLogger:
 
         # verbose_level handles HSTDP verbosity,  defaulting to 0 for no debug
         try:
-            verbose_level = os.environ.get("CALCLOUD_VERBOSITY", 0)
+            verbose_level = os.environ.get("CALCLOUD_VERBOSITY", 50)
             self.verbose_level = int(verbose_level)
         except Exception:
             warning(
