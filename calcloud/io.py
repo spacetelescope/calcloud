@@ -143,28 +143,40 @@ class S3Io:
         else:
             return {prefix: self.get(prefix, encoding) for prefix in prefixes}
 
-    def put(self, msgs, encoding="utf-8"):
+    def put(self, msgs, payload="", encoding="utf-8"):
         """Put messages `msgs` into S3,  accepting several forms:
 
-        1. "simple-message"
-        2. ["simple-message1", "simple-message2", ...]
-        2. {"simple-message" : "message-payload", ...}
+        The forms called with the default payload="" put an encoded empty string:
 
-        The forms with no payloads specified put the empty string.
+        1. "simple-message", ""
+        2. ["simple-message1", "simple-message2", ...], ""
+
+        The forms called specifying a non-empty payload use it for every message
+        specifed as a string, tuple, list, or set:
+
+        3. "simple-message", payload
+        4. ["simple-message1", "simple-message2", ...], payload
+
+        The dictionary form of `msgs` can specify a unique payload for every message in
+        the dictionary.  Alternately if `payload` is specified it overrides any values
+        specified by the dictionary:
+
+        5. {"simple-message1" : "message-payload1", ...}, ""
+        6. {"simple-message1" : payload, ...}, ""
 
         The form with string payloads specified write out the bytes resulting from
         encoding the payload with `encoding`.  Simple text messages as well as YAML
         or JSON serializations should "just work".  Use encoding=None to write out
         byte strings directly.
         """
-        if isinstance(msgs, (list, tuple)):
-            msgs = zip(msgs, [""] * len(msgs))
-        elif isinstance(msgs, str):
-            msgs = [(msgs, "")]
+        if isinstance(msgs, str):
+            msgs = [(msgs, payload)]
+        elif isinstance(msgs, (list, tuple, set)):
+            msgs = {msg: payload for msg in msgs}
         elif isinstance(msgs, dict):
             msgs = msgs.items()
-        for msg, payload in msgs:
-            s3.put_object(payload, self.path(msg), encoding=encoding, client=self.client)
+        for msg, value in msgs:
+            s3.put_object(payload or value, self.path(msg), encoding=encoding, client=self.client)
 
     def delete(self, prefixes, check_exists=True):  # dangerous to support 'all' as default
         """Given typical *message* prefixes, locate and delete the corresponding objects,
@@ -232,20 +244,31 @@ class JsonIo(S3Io):
         else:
             return {prefix: self.get(prefix) for prefix in prefixes}
 
-    def put(self, prefix, obj=""):
-        """Put messages defined by message name `prefix` and  payload `obj`.
+    def put(self, prefix, payload="", encoding="utf-8"):
+        """Put messages defined by message name `prefix` and  payload `value`.
 
-        If `prefix` is a string, it is the message name and `obj` defines the payload.
-        If `prefix` is a list of strings, they are message names, and `obj` defines the common payload.
-        If `prefix` is a dict,  they keys are messages names,  the values are message payload objects.
+        >>>
 
-        Prior to putting,  any payloads are encoded in JSON using json.dumps().
+        1. If `prefix` is a string, it is the message name and `value` defines the payload.
+
+        2. If `prefix` is a list, tuple, or set of strings, they are complete message names,
+        and `value` defines the common payload.
+
+        3. If `prefix` is a dict, the keys are messages names,  the values are message
+        payload values.   If payload is specified as non-empty, it overrides the values
+        specified  in the dictionary.
+
+        Prior to putting,  any payloads passed to S3Io, including the empty string,
+        are encoded in JSON using json.dumps().
+
+        See S3Io for more information about putting JSON encoded payloads coming from
+        JsonIo
         """
         if isinstance(prefix, str):
-            prefix = [prefix]
-        if isinstance(prefix, (tuple, list, set)):
-            prefix = {pref: obj for pref in prefix}
-        super().put({pref: json.dumps(obj) for (pref, obj) in prefix.items()})
+            prefix = [(prefix, payload)]
+        elif isinstance(prefix, (tuple, list, set)):
+            prefix = {pref: payload for pref in prefix}
+        super().put({pref: json.dumps(payload or obj) for (pref, obj) in prefix.items()}, encoding=encoding)
 
 
 class MessageIo(JsonIo):
@@ -416,6 +439,12 @@ class MessageIo(JsonIo):
 
         >>> comm.messages.pop(msg)
         ['cancel-lcw303cjq', 'cancel-lcw304cjq', 'cancel-lcw305cjq']
+
+        When the payload of a broadcast message contains large numbers of messages,  the message list is
+        partitioned into two half-length lists and re-broadcast.
+
+        When the payload of a broadcast message is sufficiently small,  each message is sent serially and
+        requires ~50-200 msec each.   So e.g. 100 serial messages might take 5-20 seconds.
 
         >>> comm.messages.delete("all")
         """
