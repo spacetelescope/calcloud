@@ -90,7 +90,7 @@ def describe_job(job_id, client=None):
 
 
 def get_job_name(job_id, client=None):
-    """Return the name of job `job_id`."""
+    """Return the name of job `job_id` which ATM is nominally ipppssoot."""
     description = describe_job(job_id, client)
     if description:
         return description["jobName"]

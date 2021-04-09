@@ -40,7 +40,7 @@ def main(comm, ipppssoot, bucket_name):
         terminated = comm.messages.listl(f"terminated-{ipppssoot}")
         _main(comm, ipppssoot, bucket_name)
     except Exception as exc:
-        print("Exception in lambda_submit.main for", ipppssoot, "=", exc)
+        print(f"Exception in lambda_submit.main for {ipppssoot} = {exc}")
         if terminated:
             status = "terminated-" + ipppssoot
         else:
