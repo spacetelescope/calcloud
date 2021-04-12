@@ -91,6 +91,7 @@ def describe_job(job_id, client=None):
 
 def get_job_name(job_id, client=None):
     """Return the name of job `job_id` which ATM is nominally ipppssoot."""
+    job_id = job_id.replace("_", "-")  # messages use _
     description = describe_job(job_id, client)
     return description["jobName"]
 
@@ -136,7 +137,7 @@ def _get_outputter(output_format):
     return func
 
 
-def terminate_job(job_id, ipppssoot, reason=None, client=None):
+def terminate_job(job_id, reason=None, client=None):
     """Terminate Batch job `job_id` associated with `ipppsssoot` using Batch `client`.
 
     Return True IFF client.terminate_job() call terminates a job.
@@ -145,7 +146,7 @@ def terminate_job(job_id, ipppssoot, reason=None, client=None):
     job_id = job_id.replace("_", "-")  # undo hacking needed to make it a simple messsage id
     response = client.terminate_job(jobId=job_id, reason=reason)
     print(response)
-    print(f"terminate response: {response['ResponseMetadata']['HTTPStatusCode']}: {job_id} - {ipppssoot}")
+    print(f"terminate response: {response['ResponseMetadata']['HTTPStatusCode']}: {job_id}")
     return response["ResponseMetadata"]["HTTPStatusCode"] == 200
 
 
