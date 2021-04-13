@@ -2,6 +2,7 @@ coverage
 .coverage
 .pydevproject
 .project
+.vscode
 *.pyc
 *~
 *.egg-info/
