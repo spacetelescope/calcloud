@@ -41,9 +41,8 @@ module "calcloud_lambda_refresh_cache_logs" {
   # for now this role was created by hand in the console, it is not terraform managed
   lambda_role = data.aws_ssm_parameter.lambda_cloudwatch_role.value
 
-#   environment_variables = {
-#     JOBQUEUES=local.job_queues
-#   }
+  environment_variables = merge(local.common_env_vars, {
+  })
 
   tags = {
     Name = "calcloud-fileshare-refresh_cache_logs${local.environment}"
