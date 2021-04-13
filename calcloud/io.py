@@ -3,13 +3,14 @@ It hides the structure of the messaging system and provides a
 simple API for putting, getting, listing, and deleting messages.
 """
 import sys
+import os
 import doctest
 import json
 import uuid
-import contextlib
 
 from calcloud import s3
 from calcloud import hst
+from calcloud import log
 
 # -------------------------------------------------------------
 
@@ -43,15 +44,6 @@ MESSAGE_TYPES = [
 MAX_BROADCAST_MSGS = 10 ** 6  # safety
 
 # -------------------------------------------------------------
-
-
-@contextlib.contextmanager
-def ignore_exceptions():
-    """Trap and ignore exceptions in the nested with block."""
-    try:
-        yield
-    except Exception:
-        pass
 
 
 class S3Io:
@@ -143,28 +135,55 @@ class S3Io:
         else:
             return {prefix: self.get(prefix, encoding) for prefix in prefixes}
 
-    def put(self, msgs, encoding="utf-8"):
-        """Put messages `msgs` into S3,  accepting several forms:
+    def put(self, msgs, payload="", encoding="utf-8"):
+        """Put messages `msgs` into S3,  accepting several forms.
 
-        1. "simple-message"
-        2. ["simple-message1", "simple-message2", ...]
-        2. {"simple-message" : "message-payload", ...}
+        See normalize_put_parameters() for permissible values and handling of
+        `msgs` and `payload`.
 
-        The forms with no payloads specified put the empty string.
+        """
+        msgs = self.normalize_put_parameters(msgs, payload)
+        for msg, value in msgs.items():
+            s3.put_object(value, self.path(msg), encoding=encoding, client=self.client)
+
+    def normalize_put_parameters(self, msgs, payload):
+        """Consolidate put() parameters into normalized dictionary form where each item
+        specifies a fully specified message and corresponding payload.
+
+        Any payload must be specified as a string or bytes for
+
+        The forms called with the default payload="" put an encoded empty string:
+
+        1. "simple-message", ""
+        2. ["simple-message1", "simple-message2", ...], ""
+
+        The forms called specifying a non-empty payload use it for every message
+        specifed as a string, tuple, list, or set:
+
+        3. "simple-message", payload
+        4. ["simple-message1", "simple-message2", ...], payload
+
+        The dictionary form of `msgs` can specify a unique payload for every message in
+        the dictionary.  Alternately if `payload` is specified it overrides any values
+        specified by the dictionary:
+
+        5. {"simple-message1" : "message-payload1", ...}, ""
+        6. {"simple-message1" : payload, ...}, ""
 
         The form with string payloads specified write out the bytes resulting from
         encoding the payload with `encoding`.  Simple text messages as well as YAML
         or JSON serializations should "just work".  Use encoding=None to write out
         byte strings directly.
         """
-        if isinstance(msgs, (list, tuple)):
-            msgs = zip(msgs, [""] * len(msgs))
-        elif isinstance(msgs, str):
-            msgs = [(msgs, "")]
+        if isinstance(msgs, str):
+            msgs = {msgs: payload}
+        elif isinstance(msgs, (list, tuple, set)):
+            msgs = {msg: payload for msg in msgs}
         elif isinstance(msgs, dict):
-            msgs = msgs.items()
-        for msg, payload in msgs:
-            s3.put_object(payload, self.path(msg), encoding=encoding, client=self.client)
+            msgs = dict((msg, payload or value) for (msg, value) in msgs.items())
+        else:
+            raise ValueError("msgs parameter to put() must be str, list, tuple, set, or dict.")
+        return msgs
 
     def delete(self, prefixes, check_exists=True):  # dangerous to support 'all' as default
         """Given typical *message* prefixes, locate and delete the corresponding objects,
@@ -232,20 +251,20 @@ class JsonIo(S3Io):
         else:
             return {prefix: self.get(prefix) for prefix in prefixes}
 
-    def put(self, prefix, obj=""):
-        """Put messages defined by message name `prefix` and  payload `obj`.
+    def put(self, msgs, payload="", encoding="utf-8"):
+        """Put messages defined by message name `msgs` and payload `value`.
 
-        If `prefix` is a string, it is the message name and `obj` defines the payload.
-        If `prefix` is a list of strings, they are message names, and `obj` defines the common payload.
-        If `prefix` is a dict,  they keys are messages names,  the values are message payload objects.
+        See S3IO.normalize_put_parameters() for more information on permissible values
+        for `msgs` and `payload`.
 
-        Prior to putting,  any payloads are encoded in JSON using json.dumps().
+        Prior to putting, any payloads passed to S3Io, including the empty string,
+        are encoded in JSON using json.dumps().
+
+        See S3Io.put() for more information about putting JSON encoded payloads coming from
+        JsonIo,  including handling of `encoding`.
         """
-        if isinstance(prefix, str):
-            prefix = [prefix]
-        if isinstance(prefix, (tuple, list, set)):
-            prefix = {pref: obj for pref in prefix}
-        super().put({pref: json.dumps(obj) for (pref, obj) in prefix.items()})
+        msgs = self.normalize_put_parameters(msgs, payload)
+        super().put({msg: json.dumps(value) for (msg, value) in msgs.items()}, encoding=encoding)
 
 
 class MessageIo(JsonIo):
@@ -416,6 +435,12 @@ class MessageIo(JsonIo):
 
         >>> comm.messages.pop(msg)
         ['cancel-lcw303cjq', 'cancel-lcw304cjq', 'cancel-lcw305cjq']
+
+        When the payload of a broadcast message contains large numbers of messages,  the message list is
+        partitioned into two half-length lists and re-broadcast.
+
+        When the payload of a broadcast message is sufficiently small,  each message is sent serially and
+        requires ~50-200 msec each.   So e.g. 100 serial messages might take 5-20 seconds.
 
         >>> comm.messages.delete("all")
         """
@@ -597,14 +622,16 @@ class IoBundle:
 
     def reset(self, ids="all"):
         """Delete outputs, messages, and control files."""
+        if ids == "all":
+            ids = self.messages.ids()
         if isinstance(ids, str):
             ids = [ids]
         for tail in ids:
-            with ignore_exceptions():
+            with log.trap_exception():
                 self.outputs.delete(tail)
-            with ignore_exceptions():
+            with log.trap_exception():
                 self.messages.reset(tail)  # messages.delete() doesn't handle "ipppssoot", only "type-ipppssoot".
-            with ignore_exceptions():
+            with log.trap_exception():
                 self.xdata.delete(tail)  # IPPPSSOOT control metadata / retry status
 
     def clean(self, ids="all"):
@@ -618,11 +645,11 @@ class IoBundle:
         if isinstance(ids, str):
             ids = [ids]
         for id in ids:
-            with ignore_exceptions():
+            with log.trap_exception():
                 self.reset(ids)
-            with ignore_exceptions():
+            with log.trap_exception():
                 self.control.delete(ids)  # Memory model inputs
-            with ignore_exceptions():
+            with log.trap_exception():
                 self.inputs.delete(ids)  # Input tarballs
 
     def ids(self, prefixes="all"):
@@ -645,12 +672,32 @@ class IoBundle:
         items.extend(list(self.outputs.list_s3(prefixes)))
         return items
 
+    def send(self, msg_type, ipppssoots="all"):
+        """Send the message `msg_type` to every ipppssoot in `ipppssoots`.
+
+        If ipppssoots="all", define ipppssoots using self.messsages.ids()
+        """
+        if ipppssoots == "all":
+            ipppssoots = self.inputs.ids()
+        assert msg_type in MESSAGE_TYPES
+        self.messages.put([msg_type + "-" + ipppssoot for ipppssoot in ipppssoots])
+
 
 def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):
     """Return the IoBundle defined by root S3 `bucket` and accessed using
     S3 `client`.
     """
     return IoBundle(bucket, client)
+
+
+def reject_cross_env_bucket(bucket):
+    """Raise an exception if `bucket` does not match BUCKET in os.environ in order to
+    short circuit lambdas executing based on events from other environments.
+    """
+    bucket1, _null = s3.s3_split_path(bucket)
+    bucket2, _null = s3.s3_split_path(os.environ["BUCKET"])
+    if bucket1 != bucket2:
+        raise RuntimeError(f"Cross-environment bucket mismatch for normalized caller={bucket1} os.environ={bucket2}")
 
 
 # ------------------------------------------------------------

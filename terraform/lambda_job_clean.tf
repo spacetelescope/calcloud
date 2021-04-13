@@ -41,9 +41,8 @@ module "calcloud_lambda_cleanJob" {
   # for now this role was created by hand in the console, it is not terraform managed
   lambda_role = data.aws_ssm_parameter.lambda_cleanup_role.value
 
-  environment_variables = {
-    JOBQUEUES=local.job_queues,
-  }
+  environment_variables = merge(local.common_env_vars, {
+  })
 
   tags = {
     Name = "calcloud-job-clean${local.environment}"

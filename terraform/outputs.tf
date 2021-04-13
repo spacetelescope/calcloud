@@ -47,3 +47,7 @@ output s3_output_bucket {
 output crds_context {
   value = lookup(var.crds_context, local.environment, var.crds_context["-sb"])
 }
+
+output common_env_vars {
+  value = local.common_env_vars
+}
