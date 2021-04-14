@@ -6,8 +6,8 @@ def lambda_handler(event, context):
     gateway = boto3.client("storagegateway", config=common.retry_config)
     # we only get two concurrent refresh cache operations, but we'll use them both to get some parallelization
     # refresh every 5 minutes via EventBridge
-    refresh_1 = ["/messages/", "/inputs/", "/control/"]
-    refresh_2 = ["/outputs/", "/blackboard/", "/crds_env_vars/"]
+    refresh_1 = ["/messages/", "/inputs/", "/blackboard/"]
+    refresh_2 = ["/outputs/", "/control/", "/crds_env_vars/"]
 
     print(event)
 
