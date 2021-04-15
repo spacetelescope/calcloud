@@ -1,7 +1,5 @@
 #! /bin/bash -xu
 
-export AWS_DEFAULT_REGION=us-east-1
-
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
