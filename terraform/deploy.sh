@@ -1,9 +1,11 @@
 #! /bin/bash -xu
 
+export AWS_DEFAULT_REGION=us-east-1
+
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="0.4.4"
+CALCLOUD_VER="0.4.5"
 CALDP_VER="0.2.5"
 CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210323_CAL_final"
 CSYS_VER="CALDP_20210323"
