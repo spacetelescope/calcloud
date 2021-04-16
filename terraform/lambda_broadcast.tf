@@ -9,7 +9,7 @@ module "calcloud_lambda_broadcast" {
   runtime       = "python3.6"
   publish       = false
   timeout       = 300
-  cloudwatch_logs_retention_in_days = 30
+  cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
 
   source_path = [
     {

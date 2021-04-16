@@ -97,4 +97,8 @@ locals {
            FILESHARE=data.aws_ssm_parameter.file_share_arn.value,
            BUCKET=aws_s3_bucket.calcloud.id,
        }
+
+       lambda_log_retention_in_days = 365
+
+
 }

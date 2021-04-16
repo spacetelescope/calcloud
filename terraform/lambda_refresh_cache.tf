@@ -9,7 +9,7 @@ module "calcloud_lambda_refresh_cache_submit" {
   runtime       = "python3.6"
   publish       = false
   timeout       = 900
-  cloudwatch_logs_retention_in_days = 30
+  cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
 
   source_path = [
     {
