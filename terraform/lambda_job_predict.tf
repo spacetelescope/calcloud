@@ -35,7 +35,7 @@ module "lambda_function_container_image" {
 
   timeout       = 360
   memory_size   = 800
-  cloudwatch_logs_retention_in_days = 30
+  cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
 
   # ensures that terraform doesn't try to mess with IAM
   create_role = false
