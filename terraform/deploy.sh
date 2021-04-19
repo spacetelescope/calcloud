@@ -3,12 +3,18 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="0.4.6"
-CALDP_VER="0.2.5"
+CALCLOUD_VER="0.4.7"
+CALDP_VER="0.2.6"
 CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210323_CAL_final"
-CSYS_VER="CALDP_20210323"
+
 # this is the tag that the image will have in AWS ECR
 CALDP_IMAGE_TAG="latest"
+
+# turn CAL_BASE_IMAGE into CSYS_VER by splitting at the :, splitting again by underscore and keeping the
+# first two fields, and then converting to lowercase
+CSYS_VER=${CAL_BASE_IMAGE##*:}
+CSYS_VER=`echo $CSYS_VER | cut -f1,2 -d'_'` #split by underscores, keep the first two
+CSYS_VER=`echo $CSYS_VER | awk '{print tolower($0)}'`
 
 # variables that will be changed less-frequently
 TMP_INSTALL_DIR="/tmp/calcloud_install"
