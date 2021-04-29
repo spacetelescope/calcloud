@@ -106,11 +106,11 @@ class Preprocess:
         # apply power transformer normalization to continuous vars
         x = np.array([[n_files], [total_mb]]).reshape(1, -1)
         pt = PowerTransformer(standardize=False)
-        pt.lambdas_ = np.array([-0.42619869, -0.16236975])
+        pt.lambdas_ = np.array([-1.51, -0.12])
         xt = pt.transform(x)
         # normalization (zero mean, unit variance)
-        f_mean, f_sigma = 1.014731584219394, 0.3037877895551685
-        s_mean, s_sigma = 1.7582280004717683, 1.020462125330728
+        f_mean, f_sigma = 0.5682815234265285, 0.04222565843608133
+        s_mean, s_sigma = 1.6250374589283951, 1.0396138451086632
         x_files = np.round(((xt[0, 0] - f_mean) / f_sigma), 5)
         x_size = np.round(((xt[0, 1] - s_mean) / s_sigma), 5)
         X = np.array([x_files, x_size, X[2], X[3], X[4], X[5], X[6], X[7], X[8]]).reshape(1, -1)
@@ -137,9 +137,9 @@ def regressor(model, data):
 
 
 # load models
-clf = get_model("./models/mem_clf/2/")
-mem_reg = get_model("./models/mem_reg/2/")
-wall_reg = get_model("./models/wall_reg/3/")
+clf = get_model("./models/mem_clf/")
+mem_reg = get_model("./models/mem_reg/")
+wall_reg = get_model("./models/wall_reg/")
 
 
 def lambda_handler(event, context):
