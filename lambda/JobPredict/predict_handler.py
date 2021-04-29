@@ -137,9 +137,9 @@ def regressor(model, data):
 
 
 # load models
-clf = get_model("./models/mem_clf/2/")
-mem_reg = get_model("./models/mem_reg/2/")
-wall_reg = get_model("./models/wall_reg/3/")
+clf = get_model("./models/mem_clf/")
+mem_reg = get_model("./models/mem_reg/")
+wall_reg = get_model("./models/wall_reg/")
 
 
 def lambda_handler(event, context):
