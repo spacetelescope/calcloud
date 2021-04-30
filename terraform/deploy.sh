@@ -92,6 +92,8 @@ crds_response=`awsudo $ADMIN_ARN terraform output | grep "crds"`
 crds_context=${crds_response##*=}
 crds_context=`echo $crds_context | tr -d '"'`
 
+awsudo $ADMIN_ARN aws s3 rm s3://${bucket_url}/crds_env_vars/ --recursive
+
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key messages/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key inputs/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key outputs/
