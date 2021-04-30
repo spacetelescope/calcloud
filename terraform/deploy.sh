@@ -3,7 +3,7 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="0.4.9"
+CALCLOUD_VER="0.4.10"
 CALDP_VER="0.2.8"
 CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210415_CAL_final"
 
@@ -91,6 +91,8 @@ bucket_url=`echo $bucket_url | tr -d '"'`
 crds_response=`awsudo $ADMIN_ARN terraform output | grep "crds"`
 crds_context=${crds_response##*=}
 crds_context=`echo $crds_context | tr -d '"'`
+
+awsudo $ADMIN_ARN aws s3 rm s3://${bucket_url}/crds_env_vars/ --recursive
 
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key messages/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key inputs/
