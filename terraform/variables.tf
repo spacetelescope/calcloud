@@ -89,7 +89,7 @@ variable ce_max_vcpu {
     "-sb" = 64
     "-dev" = 128
     "-test" = 1024
-    "-ops" = 512
+    "-ops" = 2048
   }
 }
 
