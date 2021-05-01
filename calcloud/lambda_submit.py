@@ -85,7 +85,7 @@ def wait_for_inputs(comm, ipppssoot):
     Eventually after 15 min (default) the lambda will die if it's still waiting.  Instead,  if
     it's still running at 14 minutes an exception is raised to force cleanup and send and error message.
     """
-    poll_seconds, seconds_to_fail = 30, int(os.environ["SUBMIT_TIMEOUT"])
+    poll_seconds, seconds_to_fail = 30, int(os.environ.get(["SUBMIT_TIMEOUT"],14*60))
     input_tarball, memory_modeling = [], []
     while not input_tarball or not memory_modeling:
         input_tarball = comm.inputs.listl(f"{ipppssoot}.tar.gz")
