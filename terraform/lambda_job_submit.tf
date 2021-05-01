@@ -9,7 +9,7 @@ module "calcloud_lambda_submit" {
   handler       = "s3_trigger_handler.lambda_handler"
   runtime       = "python3.6"
   publish       = false
-  timeout       = 900
+  timeout       = 15*60   # see also SUBMIT_TIMEOUT below;  this is the AWS timeout, calcloud error handling may not occur
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
 
   source_path = [
@@ -44,7 +44,8 @@ module "calcloud_lambda_submit" {
 
   environment_variables = merge(local.common_env_vars, {
       JOBPREDICTLAMBDA = module.lambda_function_container_image.this_lambda_function_arn,
-  })
+      SUBMIT_TIMEOUT = 14*60,  # leave some room for polling jitter, 14 min vs  15 min above
+  })                           # this is our timeout so error handling / cleanup should occur
 
   tags = {
     Name = "calcloud-job-submit${local.environment}"
