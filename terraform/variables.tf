@@ -89,7 +89,7 @@ variable ce_max_vcpu {
     "-sb" = 64
     "-dev" = 128
     "-test" = 1024
-    "-ops" = 512
+    "-ops" = 2048
   }
 }
 
@@ -99,8 +99,8 @@ variable crds_context {
   default = {
     "-sb" = "hst_0866.pmap"
     "-dev" = "hst_0866.pmap"
-    "-test" = "hst_0869.pmap"
-    "-ops" = "hst_0869.pmap"
+    "-test" = "hst_0903.pmap"
+    "-ops" = "hst_0903.pmap"
   }
 }
 

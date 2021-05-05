@@ -13,6 +13,7 @@ handlers for more information on how jobs are initiated and
 retried.
 """
 import time
+import os
 
 from . import plan
 from . import submit
@@ -81,8 +82,10 @@ def wait_for_inputs(comm, ipppssoot):
     Each iteration,  check for the S3 message files which trigger submissions and abort if none
     are found.
 
-    Eventually after 15 min (default) the lambda will die if it's still waiting.
+    Eventually after 15 min (default) the lambda will die if it's still waiting.  Instead,  if
+    it's still running at 14 minutes an exception is raised to force cleanup and send and error message.
     """
+    poll_seconds, seconds_to_fail = 30, int(os.environ.get("SUBMIT_TIMEOUT", 14 * 60))
     input_tarball, memory_modeling = [], []
     while not input_tarball or not memory_modeling:
         input_tarball = comm.inputs.listl(f"{ipppssoot}.tar.gz")
@@ -93,7 +96,12 @@ def wait_for_inputs(comm, ipppssoot):
             )
         if not input_tarball or not memory_modeling:
             print(
-                f"Waiting for inputs for {ipppssoot}. input_tarball={input_tarball}  memory_modeling={memory_modeling}"
+                f"Waiting for inputs for {ipppssoot} time remaining={seconds_to_fail}. input_tarball={len(input_tarball)}  memory_modeling={len(memory_modeling)}"
             )
-            time.sleep(30)
+            time.sleep(poll_seconds)
+            seconds_to_fail -= poll_seconds
+            if seconds_to_fail <= 0:
+                raise CalcloudInputsFailure(
+                    f"Wait for inputs for {ipppssoot} timeout, aborting submission.  input_tarball={len(input_tarball)}  memory_modeling={len(memory_modeling)}"
+                )
     print(f"Inputs for {ipppssoot} found.")
