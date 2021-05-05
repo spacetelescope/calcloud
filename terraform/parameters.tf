@@ -62,9 +62,30 @@ data aws_ssm_parameter lambda_refreshCacheSubmit_role {
   name = "/iam/roles/calcloud_lambda_refreshCacheSubmit"
 }
 
-data aws_ssm_parameter file_share_arn {
-  name = "/gateway/fileshare"
+data aws_ssm_parameter fs_blackboard_arn {
+  name = "/gateway/fileshare/blackboard"
 }
+
+data aws_ssm_parameter fs_control_arn {
+  name = "/gateway/fileshare/control"
+}
+
+data aws_ssm_parameter fs_crds_arn {
+  name = "/gateway/fileshare/crds_env_vars"
+}
+
+data aws_ssm_parameter fs_inputs_arn {
+  name = "/gateway/fileshare/inputs"
+}
+
+data aws_ssm_parameter fs_messages_arn {
+  name = "/gateway/fileshare/messages"
+}
+
+data aws_ssm_parameter fs_outputs_arn {
+  name = "/gateway/fileshare/outputs"
+}
+
 
 data aws_ssm_parameter lambda_rescue_role {
   name = "/iam/roles/calcloud_lambda_rescue"
@@ -77,3 +98,5 @@ data aws_ssm_parameter crds_ops {
 data aws_ssm_parameter crds_test {
   name = "/s3/external/crds-test"
 }
+
+
