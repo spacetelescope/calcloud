@@ -94,7 +94,6 @@ locals {
            CALCLOUD_ENVIRONMENT = local.environment,
            JOBDEFINITIONS = local.job_definitions,
            JOBQUEUES = local.job_queues,
-           FILESHARE=data.aws_ssm_parameter.file_share_arn.value,
            BUCKET=aws_s3_bucket.calcloud.id,
        }
 
