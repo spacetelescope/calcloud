@@ -1,0 +1,5 @@
+tensorflow==2.4.1
+keras==2.4.3
+sklearn==0.0
+boto3==1.17.79
+pandas==1.2.4
