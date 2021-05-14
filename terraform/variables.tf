@@ -52,7 +52,7 @@ variable lt_ebs_type {
     "-sb" = "gp2"
     "-dev" = "gp2"
     "-test" = "gp3"
-    "-ops" = "gp2"
+    "-ops" = "gp3"
   }
 }
 
@@ -65,7 +65,7 @@ variable lt_ebs_iops {
     "-sb" = 0
     "-dev" = 0
     "-test" = 3000
-    "-ops" = 0
+    "-ops" = 3000
   }
 }
 
@@ -78,7 +78,7 @@ variable lt_ebs_throughput {
     "-sb" = null
     "-dev" = null
     "-test" = 250
-    "-ops" = null
+    "-ops" = 250
   }
 }
 
