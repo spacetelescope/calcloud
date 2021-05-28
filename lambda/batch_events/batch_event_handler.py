@@ -70,12 +70,19 @@ def lambda_handler(event, context):
         else:
             print("Automatic OutOfMemory retries for", ipppssoot, "exhausted at", metadata["memory_retries"])
     elif container_reason.startswith("CannotInspectContainer"):
-        if not metadata["terminated"] and metadata["retries"] < int(os.environ["MAX_INSPECT_RETRIES"]):
+        if not metadata["terminated"] and metadata["retries"] < int(os.environ["MAX_DOCKER_RETRIES"]):
             metadata["retries"] += 1
             continuation_msg = "rescue-" + ipppssoot
             print("Automatic CannotInspectContainer rescue for", ipppssoot, "with retry count", metadata["retries"])
         else:
             print("Automatic CannotInspectContainer retries for", ipppssoot, "exhausted at", metadata["retries"])
+    elif container_reason.startswith("DockerTimeoutError"):
+        if not metadata["terminated"] and metadata["retries"] < int(os.environ["MAX_DOCKER_RETRIES"]):
+            metadata["retries"] += 1
+            continuation_msg = "rescue-" + ipppssoot
+            print("Automatic DockerTimeoutError rescue for", ipppssoot, "with retry count", metadata["retries"])
+        else:
+            print("Automatic DockerTimeoutError retries for", ipppssoot, "exhausted at", metadata["retries"])
     elif status_reason.startswith("Operator cancelled"):
         print("Operator cancelled job", job_id, "for", ipppssoot, "no automatic retry.")
         continuation_msg = "terminated-" + ipppssoot
