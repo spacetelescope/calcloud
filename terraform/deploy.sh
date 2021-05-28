@@ -37,6 +37,10 @@ cd caldp && git fetch --all --tags && git checkout tags/v${CALDP_VER} && cd ..
 aws_env_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "environment" | grep "Value"`
 aws_env=${aws_env_response##*:}
 aws_env=`echo $aws_env | tr -d '",'`
+
+#uncomment this to deploy to a custom env name
+# aws_env="your-env-name-here"
+
 # the tf state bucket name
 aws_tfstate_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/s3/tfstate" | grep "Value"`
 aws_tfstate=${aws_tfstate_response##*:}
@@ -49,7 +53,7 @@ cd calcloud-${CALCLOUD_VER}/terraform
 # terraform init and s3 state backend config
 awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
 # deploy ecr
-awsudo $ADMIN_ARN terraform plan -out base.out -target aws_ecr_repository.caldp_ecr
+awsudo $ADMIN_ARN terraform plan -var "environment=${aws_env}" -out base.out -target aws_ecr_repository.caldp_ecr
 awsudo $ADMIN_ARN terraform apply -auto-approve "base.out"
 # get repository url from tf state for use in caldp docker install
 repo_url_response=`awsudo $ADMIN_ARN terraform state show aws_ecr_repository.caldp_ecr | grep "repository_url"`
@@ -78,7 +82,7 @@ awsudo $ADMIN_ARN terraform taint docker_registry_image.calcloud_predict_model
 awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
 
 # manual confirmation required
-awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}"
+awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}"
 
 # make sure needed prefixes exist in primary s3 bucket
 # pulls the bucket name in from a tag called Name
