@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = "~> 3.29.0"
+      version = "~> 3.42.0"
     }
     hashicorp-template = {
       source = "hashicorp/template"
@@ -214,6 +214,22 @@ resource "aws_batch_job_definition" "job_def" {
     "s3_output_path" = "s3://${aws_s3_bucket.calcloud.bucket}/outputs"
     "crds_config" = "caldp-config-offsite"
   }
+}
+
+# ---------------------------------------------------------------------------------------------
+
+resource "aws_cloudwatch_query_definition" "batch_logstream_by_ipst" {
+  name = "Batch-Logs-by-ipst${local.environment}"
+
+  log_group_names = [
+    "/aws/batch/job"
+  ]
+
+  query_string = <<EOF
+fields @message, @logStream
+| filter @message like /ipppssoot/
+| head 1
+EOF
 }
 
 # ---------------------------------------------------------------------------------------------
