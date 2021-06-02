@@ -37,10 +37,8 @@ module "calcloud_lambda_submit" {
   attach_network_policy = false
   attach_tracing_policy = false
   attach_async_event_policy = false
-  # existing role for the lambda
-  # will need to parametrize when ITSD takes over role creation.
-  # for now this role was created by hand in the console, it is not terraform managed
-  lambda_role = data.aws_ssm_parameter.lambda_submit_role.value
+
+  lambda_role = nonsensitive(data.aws_ssm_parameter.lambda_submit_role.value)
 
   environment_variables = merge(local.common_env_vars, {
       JOBPREDICTLAMBDA = module.lambda_function_container_image.this_lambda_function_arn,

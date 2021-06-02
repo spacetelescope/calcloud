@@ -52,7 +52,7 @@ resource "aws_launch_template" "hstdp" {
   name = "calcloud-hst-worker${local.environment}"
   description             = "Template for cluster worker nodes updated to limit stopped container lifespan"
   ebs_optimized           = "false"
-  image_id                = data.aws_ssm_parameter.batch_ami_id.value
+  image_id                = nonsensitive(data.aws_ssm_parameter.batch_ami_id.value)
   update_default_version = true
   tags                    = {
     "Name"         = "calcloud-hst-worker${local.environment}"
@@ -80,7 +80,7 @@ resource "aws_launch_template" "hstdp" {
             }
   }
   iam_instance_profile {
-    arn = data.aws_ssm_parameter.ecs_instance_role.value
+    arn = nonsensitive(data.aws_ssm_parameter.ecs_instance_role.value)
   }
   monitoring {
     enabled = true
@@ -115,11 +115,11 @@ resource "aws_batch_compute_environment" "compute_env" {
   count = 4
   compute_environment_name_prefix = "calcloud-hst-${local.ladder[count.index].name}${local.environment}"
   type = "MANAGED"
-  service_role = data.aws_ssm_parameter.batch_service_role.value
+  service_role = nonsensitive(data.aws_ssm_parameter.batch_service_role.value)
 
   compute_resources {
     allocation_strategy = "BEST_FIT"
-    instance_role = data.aws_ssm_parameter.ecs_instance_role.value
+    instance_role = nonsensitive(data.aws_ssm_parameter.ecs_instance_role.value)
     type = "EC2"
     bid_percentage = 0
     tags = {}
@@ -196,7 +196,7 @@ resource "aws_batch_job_definition" "job_def" {
       {"name": "CRDSBUCKET", "value": "${local.crds_bucket}"}
     ],
     "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
-    "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
+    "jobRoleArn": "${nonsensitive(data.aws_ssm_parameter.batch_job_role.value)}",
     "mountPoints": [],
     "resourceRequirements": [
         {"value" :  "${local.ladder[count.index].jd_memory}", "type" : "MEMORY"},

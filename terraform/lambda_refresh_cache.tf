@@ -36,18 +36,16 @@ module "calcloud_lambda_refresh_cache_submit" {
   attach_network_policy = false
   attach_tracing_policy = false
   attach_async_event_policy = false
-  # existing role for the lambda
-  # will need to parametrize when ITSD takes over role creation.
-  # for now this role was created by hand in the console, it is not terraform managed
-  lambda_role = data.aws_ssm_parameter.lambda_refreshCacheSubmit_role.value
+
+  lambda_role = nonsensitive(data.aws_ssm_parameter.lambda_refreshCacheSubmit_role.value)
 
   environment_variables = merge(local.common_env_vars, {
-    FS_BLACKBOARD = data.aws_ssm_parameter.fs_blackboard_arn.value,
-    FS_CONTROL = data.aws_ssm_parameter.fs_control_arn.value,
-    FS_CRDS = data.aws_ssm_parameter.fs_crds_arn.value,
-    FS_INPUTS = data.aws_ssm_parameter.fs_inputs_arn.value,
-    FS_MESSAGES = data.aws_ssm_parameter.fs_messages_arn.value,
-    FS_OUTPUTS = data.aws_ssm_parameter.fs_outputs_arn.value
+    FS_BLACKBOARD = nonsensitive(data.aws_ssm_parameter.fs_blackboard_arn.value),
+    FS_CONTROL = nonsensitive(data.aws_ssm_parameter.fs_control_arn.value),
+    FS_CRDS = nonsensitive(data.aws_ssm_parameter.fs_crds_arn.value),
+    FS_INPUTS = nonsensitive(data.aws_ssm_parameter.fs_inputs_arn.value),
+    FS_MESSAGES = nonsensitive(data.aws_ssm_parameter.fs_messages_arn.value),
+    FS_OUTPUTS = nonsensitive(data.aws_ssm_parameter.fs_outputs_arn.value)
   })
 
   tags = {
