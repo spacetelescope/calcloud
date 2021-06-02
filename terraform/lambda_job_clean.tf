@@ -36,10 +36,8 @@ module "calcloud_lambda_cleanJob" {
   attach_network_policy = false
   attach_tracing_policy = false
   attach_async_event_policy = false
-  # existing role for the lambda
-  # will need to parametrize when ITSD takes over role creation.
-  # for now this role was created by hand in the console, it is not terraform managed
-  lambda_role = data.aws_ssm_parameter.lambda_cleanup_role.value
+
+  lambda_role = nonsensitive(data.aws_ssm_parameter.lambda_cleanup_role.value)
 
   environment_variables = merge(local.common_env_vars, {
   })

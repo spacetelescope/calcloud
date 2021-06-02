@@ -1,5 +1,5 @@
 output batch_ami_id {
-  value       = data.aws_ssm_parameter.batch_ami_id.value
+  value       = nonsensitive(data.aws_ssm_parameter.batch_ami_id.value)
   description = "AMI ID ssm parameter, for ITSD's latest Batch worker AMI"
 }
 
@@ -9,15 +9,15 @@ output batch_subnet_ids {
 }
 
 output batch_job_role {
-  value = data.aws_ssm_parameter.batch_job_role.value
+  value = nonsensitive(data.aws_ssm_parameter.batch_job_role.value)
 }
 
 output batch_service_role {
-  value = data.aws_ssm_parameter.batch_service_role.value
+  value = nonsensitive(data.aws_ssm_parameter.batch_service_role.value)
 }
 
 output ecs_instance_role {
-  value = data.aws_ssm_parameter.ecs_instance_role.value
+  value = nonsensitive(data.aws_ssm_parameter.ecs_instance_role.value)
 }
 
 output batch_sgs {
@@ -33,7 +33,7 @@ output region {
 }
 
 output vpc {
-  value = data.aws_ssm_parameter.vpc.value
+  value = nonsensitive(data.aws_ssm_parameter.vpc.value)
 }
 
 output predict_lambda_function_arn {
