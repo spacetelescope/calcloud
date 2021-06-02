@@ -43,7 +43,7 @@ module "calcloud_lambda_batchEvents" {
 
   environment_variables = merge(local.common_env_vars, {
     MAX_MEMORY_RETRIES="4",
-    MAX_INSPECT_RETRIES="4"
+    MAX_DOCKER_RETRIES="4"
   })
 
   tags = {
