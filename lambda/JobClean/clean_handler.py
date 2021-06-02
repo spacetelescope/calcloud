@@ -15,11 +15,19 @@ def lambda_handler(event, context):
     comm = io.get_io_bundle(bucket_name)
 
     if ipst == "all":
-        print("Cleaning all;  removing all job resources (S3 files).")
+        print("Cleaning all datasets;  removing all job resources (S3 files).")
 
         comm.messages.delete_literal("clean-all")  # don't interpret all as existing ipppssoots
 
         cleanup_ids = comm.ids("all")
+
+        comm.messages.broadcast("clean", cleanup_ids)
+    elif ipst == "ingested":  # a variation of "all" restricted to datasets with an ingest message
+        print("Cleaning all ingested datasets;  removing all job resources (S3 files).")
+
+        comm.messages.delete_literal("clean-ingested")  # don't interpret "ingested"
+
+        cleanup_ids = comm.messages.ids("ingested")
 
         comm.messages.broadcast("clean", cleanup_ids)
     else:

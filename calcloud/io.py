@@ -284,6 +284,9 @@ class MessageIo(JsonIo):
     It can operate on all types of messages for all ipppssoots,
     e.g. 'all'.
 
+    A special case exists for 'clean-ingested' where 'ingested' corresponds to every
+    ipppssoot which already as an 'ingested-<ipppssoot>' message.
+
     >>> comm = get_io_bundle()
 
     put() enables sending a message or sequence of messages which should be fully specified
@@ -311,6 +314,16 @@ class MessageIo(JsonIo):
     ['cancel-lcw303cjq', 'error-lcw303cjq', 'processed-lcw303cjq']
 
     The "all" or "" messages expand to all existing messages:
+
+    >>> comm.messages.delete("all");
+
+    A special case exists for 'clean-ingested' where 'ingested' corresponds to every
+    ipppssoot which already as an 'ingested-<ipppssoot>' message.  This is a limited
+    special case which may not support all methods and use cases.
+
+    >>> comm.messages.put("clean-ingested")
+    >>> comm.messages.listl()
+    ['clean-ingested']
 
     >>> comm.messages.delete("all");
     >>> comm.messages.listl()
