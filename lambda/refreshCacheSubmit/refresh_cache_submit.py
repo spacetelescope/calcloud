@@ -56,7 +56,4 @@ def do_infrequent_refresh(timestamp, env):
     time_test = str(timestamp.minute)[0] in ("3")
     env_test = any([s in env for s in override_envs])
 
-    if time_test or env_test:
-        return True
-    else:
-        return False
+    return time_test or env_test
