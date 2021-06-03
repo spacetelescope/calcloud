@@ -38,7 +38,7 @@ def lambda_handler(event, context):
             print(str(exc))
 
     # may run twice but it's better than missing an entire hour
-    if str(dt.minute)[0] in ("3"):
+    if do_infrequent_refresh(dt, os.environ['CALCLOUD_ENVIRONMENT']):
         for fs_name in infrequent_fileshares.keys():
             print(f"{'*'*10} refreshing cache for {fs_name} {'*'*10}")
             try:
@@ -47,3 +47,15 @@ def lambda_handler(event, context):
             except Exception as exc:
                 print(f"refresh cache failed for {fs_name} with exception")
                 print(str(exc))
+
+def do_infrequent_refresh(timestamp, env):
+    # dev and test may require quick turnaround on runs and so are refreshed each time
+    override_envs = ['-dev', '-test']
+
+    time_test = str(timestamp.minute)[0] in ("3")
+    env_test = any([s in env for s in override_envs])
+
+    if time_test or env_test:
+        return True
+    else:
+        return False

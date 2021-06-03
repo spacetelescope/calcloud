@@ -3,8 +3,8 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="0.4.17"
-CALDP_VER="0.2.11"
+CALCLOUD_VER="0.4.16"
+CALDP_VER="0.2.10"
 CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210505_CAL_final"
 
 # this is the tag that the image will have in AWS ECR
@@ -39,7 +39,7 @@ aws_env=${aws_env_response##*:}
 aws_env=`echo $aws_env | tr -d '",'`
 
 #uncomment this to deploy to a custom env name
-# aws_env="your-env-name-here"
+aws_env="sb-bhayden"
 
 # the tf state bucket name
 aws_tfstate_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/s3/tfstate" | grep "Value"`
@@ -48,7 +48,8 @@ aws_tfstate=`echo $aws_tfstate | tr -d '",'`
 echo $aws_tfstate
 
 # initial terraform setup
-cd calcloud-${CALCLOUD_VER}/terraform
+# cd calcloud-${CALCLOUD_VER}/terraform
+cd ~/bhayden/calcloud/terraform
 
 # terraform init and s3 state backend config
 awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
@@ -62,8 +63,9 @@ repo_url=${repo_url_response##*=}
 repo_url=`echo $repo_url | tr -d '"'`
 
 # build and deploy caldp docker image
-cd ../../caldp
-# cd ~/bhayden/caldp
+# cd ../../caldp
+cd ~/bhayden/caldp
+
 CALDP_DOCKER_IMAGE="${repo_url}:${CALDP_IMAGE_TAG}"
 docker build -f Dockerfile -t ${CALDP_DOCKER_IMAGE} --build-arg CAL_BASE_IMAGE=${CAL_BASE_IMAGE}  .
 # need to "log in" to ecr to push the image
@@ -71,7 +73,8 @@ awsudo $ADMIN_ARN aws ecr get-login-password --region us-east-1 | docker login -
 docker push ${CALDP_DOCKER_IMAGE}
 
 # deploy rest of terraform
-cd ../calcloud-${CALCLOUD_VER}/terraform
+# cd ../calcloud-${CALCLOUD_VER}/terraform
+cd ~/bhayden/calcloud/terraform
 # must taint the compute env to be safe about launch template handling. see comments in batch.tf
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[0]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[1]
