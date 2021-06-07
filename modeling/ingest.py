@@ -8,6 +8,7 @@ import datetime as dt
 from datetime import timedelta
 import time
 from sklearn.preprocessing import PowerTransformer
+import multiprocessing
 from . import io
 
 # mitigation of potential API rate restrictions (esp for Batch API)
@@ -83,7 +84,8 @@ def scrape_jobs(bucket_proc, bucket_mod, prefix):
     if n_running > 0:
         print(f"Warning: {n_running} jobs are still processing.")
     jobs = list_jobs(messages)
-    keys = io.save_to_file(jobs)
+    job_dict = {"jobs": jobs}
+    keys = io.save_to_file(job_dict)
     io.s3_upload(keys, bucket_mod, prefix)
     end = time.time()
     duration = io.proc_time(start, end)
@@ -526,7 +528,7 @@ if __name__ == "__main__":
     scrapetime = os.environ.get("SCRAPETIME", "now")  # final log event time
     hr_delta = int(os.environ.get("HRDELTA", 1))  # how far back in time to start
     log_group = os.environ.get("LOGPRED", "/aws/lambda/calcloud-job-predict-sb")
-    mins = int(os.environ.get("MINS", 10))  # num minutes forward to scrape
+    mins = int(os.environ.get("MINS", 20))  # num minutes forward to scrape
     t0, data_path = io.get_paths(scrapetime, hr_delta)
     home = os.path.join(os.getcwd(), data_path)
     prefix = f"{data_path}/data"

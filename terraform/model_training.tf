@@ -31,7 +31,7 @@ resource "aws_batch_compute_environment" "model_compute_env" {
     subnets             = local.batch_subnet_ids
     security_group_ids  = local.batch_sgs
     instance_type = ["c5a.2xlarge"]
-    max_vcpus = 64
+    max_vcpus = 8
     min_vcpus = 0
     desired_vcpus = 0
   }
@@ -54,14 +54,15 @@ resource "aws_batch_job_definition" "model_job_def_main" {
       {"name": "LOGPRED", "value": "/aws/lambda/calcloud-job-predict${local.environment}"},
       {"name": "SCRAPETIME", "value": "now"},
       {"name": "HRDELTA", "value": "24"},
-      {"name": "MINS", "value": "1440"}
+      {"name": "MINS", "value": "1440"},
+      {"name": "VERBOSE", "value": "0"}
     ],
     "image": "${local.ecr_model_training_image}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
     "mountPoints": [],
     "resourceRequirements": [
         {"value" :  "2048", "type" : "MEMORY"},
-        {"value" : "1", "type": "VCPU"}
+        {"value" : "8", "type": "VCPU"}
     ],
     "ulimits": [],
     "volumes": []

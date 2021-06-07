@@ -9,22 +9,11 @@ import numpy as np
 from sklearn.preprocessing import PowerTransformer
 import tensorflow as tf
 from botocore.config import Config
-import zipfile
 
 # mitigation of potential API rate restrictions (esp for Batch API)
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
 s3 = boto3.resource("s3", config=retry_config)
 client = boto3.client("s3", config=retry_config)
-
-
-def download_models(env):
-    """import job metadata file from s3 bucket"""
-    bucket = s3.Bucket(f"calcloud-hst-modeling-{env}")
-    obj = bucket.Object("latest/models.zip")
-    with open("models.zip", "rb") as f:
-        client.download_fileobj(f, bucket, obj)
-    with zipfile.ZipFile("models.zip", "r") as z:
-        z.extractall()
 
 
 def get_model(model_path):
@@ -164,8 +153,6 @@ def lambda_handler(event, context):
     MEMORY REGRESSION: A third regression model is used to estimate the actual value of memory needed for the job. This is mainly for the purpose of logging/future analysis and is not currently being used for allocating memory in calcloud jobs.
     """
     bucket_name = event["Bucket"]
-    env = bucket_name.split("-")[-1]
-    download_models(env)
     # load models
     clf = get_model("./models/mem_clf/")
     mem_reg = get_model("./models/mem_reg/")

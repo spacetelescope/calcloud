@@ -43,9 +43,9 @@ def proc_time(start, end):
         return f"{duration} seconds."
 
 
-def save_to_file(jobs):
+def save_to_file(data_dict):
     keys = []
-    for filename, data in jobs.items():
+    for filename, data in data_dict.items():
         key = f"{filename}.txt"
         keys.append(key)
         with open(f"{key}", "w") as f:

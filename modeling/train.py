@@ -4,9 +4,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error as MSE
 from sklearn.metrics import confusion_matrix
 import tensorflow as tf
-from tensorflow import keras
-from keras import Sequential
-from keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
+from tensorflow.keras import Sequential, Model, Input
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.wrappers.scikit_learn import KerasClassifier, KerasRegressor
 from sklearn.model_selection import StratifiedKFold, KFold, cross_val_score
 import zipfile
 import os
@@ -142,11 +142,11 @@ def encode_target_data(y_train, y_test):
     encoder = LabelEncoder()
     encoder.fit(y_train)
     y_train_enc = encoder.transform(y_train)
-    y_train = keras.utils.to_categorical(y_train_enc)
+    y_train = tf.keras.utils.to_categorical(y_train_enc)
     # test set
     encoder.fit(y_test)
     y_test_enc = encoder.transform(y_test)
-    y_test = keras.utils.to_categorical(y_test_enc)
+    y_test = tf.keras.utils.to_categorical(y_test_enc)
     # ensure train/test targets have correct shape (4 bins)
     print(y_train.shape, y_test.shape)
     return y_train, y_test
@@ -195,7 +195,7 @@ def get_latest_models(bucket_mod):
     paths = ["mem_clf", "mem_reg", "wall_reg"]
     for path in paths:
         latest = tf.keras.models.load_model(f"latest/models/{path}")
-        model = tf.keras.Model(inputs=latest.inputs, outputs=latest.outputs)
+        model = Model(inputs=latest.inputs, outputs=latest.outputs)
         latest_models.append(model)
     clf = latest_models[0]
     clf.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
@@ -209,15 +209,15 @@ def get_latest_models(bucket_mod):
 def memory_classifier(input_shape=9, layers=[18, 32, 64, 32, 18, 9], input_name="hst_jobs", output_name="mem_clf"):
     model = Sequential()
     # visible layer
-    inputs = keras.Input(shape=(input_shape,), name=input_name)
+    inputs = Input(shape=(input_shape,), name=input_name)
     # hidden layers
-    x = keras.layers.Dense(layers[0], activation="relu", name=f"1_dense{layers[0]}")(inputs)
+    x = Dense(layers[0], activation="relu", name=f"1_dense{layers[0]}")(inputs)
     for i, layer in enumerate(layers[1:]):
         i += 1
-        x = keras.layers.Dense(layer, activation="relu", name=f"{i+1}_dense{layer}")(x)
+        x = Dense(layer, activation="relu", name=f"{i+1}_dense{layer}")(x)
     # output layer
-    outputs = keras.layers.Dense(4, activation="softmax", name=f"output_{output_name}")(x)
-    model = keras.Model(inputs=inputs, outputs=outputs, name="sequential_mlp")
+    outputs = Dense(4, activation="softmax", name=f"output_{output_name}")(x)
+    model = Model(inputs=inputs, outputs=outputs, name="sequential_mlp")
     model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
     return model
 
@@ -225,15 +225,15 @@ def memory_classifier(input_shape=9, layers=[18, 32, 64, 32, 18, 9], input_name=
 def memory_regressor(input_shape=9, layers=[18, 32, 64, 32, 18, 9], input_name="hst_jobs", output_name="memory_reg"):
     model = Sequential()
     # visible layer
-    inputs = keras.Input(shape=(input_shape,), name=input_name)
+    inputs = Input(shape=(input_shape,), name=input_name)
     # hidden layers
-    x = keras.layers.Dense(layers[0], activation="relu", name="dense_1")(inputs)
+    x = Dense(layers[0], activation="relu", name="dense_1")(inputs)
     for i, layer in enumerate(layers[1:]):
         i += 1
-        x = keras.layers.Dense(layer, activation="relu", name=f"dense_{i+1}")(x)
+        x = Dense(layer, activation="relu", name=f"dense_{i+1}")(x)
     # output layer
-    outputs = keras.layers.Dense(1, name=output_name)(x)
-    model = keras.Model(inputs=inputs, outputs=outputs, name="sequential_mlp")
+    outputs = Dense(1, name=output_name)(x)
+    model = Model(inputs=inputs, outputs=outputs, name="sequential_mlp")
     model.compile(loss="mean_squared_error", optimizer="adam", metrics=["accuracy"])
     return model
 
@@ -243,15 +243,15 @@ def wallclock_regressor(
 ):
     model = Sequential()
     # visible layer
-    inputs = keras.Input(shape=(input_shape,), name=input_name)
+    inputs = Input(shape=(input_shape,), name=input_name)
     # hidden layers
-    x = keras.layers.Dense(layers[0], activation="relu", name="dense_1")(inputs)
+    x = Dense(layers[0], activation="relu", name="dense_1")(inputs)
     for i, layer in enumerate(layers[1:]):
         i += 1
-        x = keras.layers.Dense(layer, activation="relu", name=f"dense_{i+1}")(x)
+        x = Dense(layer, activation="relu", name=f"dense_{i+1}")(x)
     # output layer
-    outputs = keras.layers.Dense(1, name=output_name)(x)
-    model = keras.Model(inputs=inputs, outputs=outputs, name="sequential_mlp")
+    outputs = Dense(1, name=output_name)(x)
+    model = Model(inputs=inputs, outputs=outputs, name="sequential_mlp")
     model.compile(loss="mean_squared_error", optimizer="adam", metrics=["accuracy"])
     return model
 
@@ -538,7 +538,7 @@ def train_models(df, bucket_mod, data_path, opt, mod, verbose):
     pipeline = {
         "mem_bin": train_memory_classifier(df, clf, bucket_mod, data_path, verbose),
         "memory": train_memory_regressor(df, mem_reg, bucket_mod, data_path, verbose),
-        "wallclock": train_wallclock_regressor(df, wall_reg, bucket_mod, data_path, verbose),
+        "wallclock": train_wallclock_regressor(df, wall_reg, bucket_mod, data_path, verbose)
     }
     for m in models:
         pipeline[m]
@@ -554,11 +554,14 @@ if __name__ == "__main__":
         opt, mod = args[1], "all"
     else:
         opt, mod = "build", "all"
-    if opt not in options or mod not in models:
-        print(f"Invalid args: {opt} {mod}")
-        print(f"Options: {options} \n Mods: {models}")
-        opt, mod = "build", "all"
-        print("Using defaults...")
+    if opt not in options:
+        print(f"Invalid option arg: {opt}")
+        print(f"Options: {options}")
+        opt = "build"
+    if mod not in models:
+        print(f"Invalid model arg: {mod}")
+        print(f"Mods: {models}")
+        mod = "all"
     print("flags:", [opt, mod])
     bucket_mod = os.environ.get("S3MOD", "calcloud-modeling-sb")
     scrapetime = os.environ.get("SCRAPETIME", "now")  # final log event time

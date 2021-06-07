@@ -7,8 +7,8 @@ if __name__ == "__main__":
     log_group = os.environ.get("LOGPRED", "/aws/lambda/calcloud-job-predict-sb")
     scrapetime = os.environ.get("SCRAPETIME", "now")  # final log event time
     hr_delta = int(os.environ.get("HRDELTA", 1))  # how far back in time to start
-    mins = int(os.environ.get("MINS", 10))  # num minutes forward to scrape
-    verbose = os.environ.get("VERBOSE", 0)
+    mins = int(os.environ.get("MINS", 60))  # num minutes forward to scrape
+    verbose = int(os.environ.get("VERBOSE", 1))
     print("URIs: ", bucket_mod, bucket_proc, log_group)
     print("OPTIONS: ", scrapetime, hr_delta, mins)
     t0, data_path = io.get_paths(scrapetime, hr_delta)
