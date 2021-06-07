@@ -8,7 +8,6 @@ import datetime as dt
 from datetime import timedelta
 import time
 from sklearn.preprocessing import PowerTransformer
-import multiprocessing
 from . import io
 
 # mitigation of potential API rate restrictions (esp for Batch API)

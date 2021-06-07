@@ -538,7 +538,7 @@ def train_models(df, bucket_mod, data_path, opt, mod, verbose):
     pipeline = {
         "mem_bin": train_memory_classifier(df, clf, bucket_mod, data_path, verbose),
         "memory": train_memory_regressor(df, mem_reg, bucket_mod, data_path, verbose),
-        "wallclock": train_wallclock_regressor(df, wall_reg, bucket_mod, data_path, verbose)
+        "wallclock": train_wallclock_regressor(df, wall_reg, bucket_mod, data_path, verbose),
     }
     for m in models:
         pipeline[m]
