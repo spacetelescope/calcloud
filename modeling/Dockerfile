@@ -13,7 +13,3 @@ COPY requirements.txt ./
 RUN python -m pip install --upgrade pip && python -m pip install -r requirements.txt && mkdir -p /home/developer/modeling
 ADD main.py io.py ingest.py train.py ./modeling/
 CMD ["python", "-m", "modeling.main"]
-
-# RUN DEBIAN_FRONTEND=noninteractive && apt update && apt install -y tzdata apt-utils curl unzip software-properties-common && add-apt-repository ppa:deadsnakes/ppa -y && apt install -y python3.9 python3.9-distutils && update-alternatives --install /usr/bin/python python /usr/bin/python3.9 10 && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3.9 get-pip.py && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
-
-# RUN apt update && apt install -y python3-dev python3-pip curl unzip && update-alternatives --install /usr/bin/python python /usr/bin/python3 10 && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
