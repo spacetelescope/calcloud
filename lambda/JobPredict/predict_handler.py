@@ -13,6 +13,26 @@ from botocore.config import Config
 # mitigation of potential API rate restrictions (esp for Batch API)
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
 s3 = boto3.resource("s3", config=retry_config)
+client = boto3.client("s3", config=retry_config)
+
+
+def get_model(model_path):
+    """Loads pretrained Keras functional model"""
+    model = tf.keras.models.load_model(model_path)
+    return model
+
+
+def classifier(model, data):
+    """Returns class prediction"""
+    pred_proba = model.predict(data)
+    pred = int(np.argmax(pred_proba, axis=-1))
+    return pred, pred_proba
+
+
+def regressor(model, data):
+    """Returns Regression model prediction"""
+    pred = model.predict(data)
+    return pred
 
 
 class Preprocess:
@@ -117,31 +137,6 @@ class Preprocess:
         return X
 
 
-def get_model(model_path):
-    """Loads pretrained Keras functional model"""
-    model = tf.keras.models.load_model(model_path)
-    return model
-
-
-def classifier(model, data):
-    """Returns class prediction"""
-    pred_proba = model.predict(data)
-    pred = int(np.argmax(pred_proba, axis=-1))
-    return pred, pred_proba
-
-
-def regressor(model, data):
-    """Returns Regression model prediction"""
-    pred = model.predict(data)
-    return pred
-
-
-# load models
-clf = get_model("./models/mem_clf/")
-mem_reg = get_model("./models/mem_reg/")
-wall_reg = get_model("./models/wall_reg/")
-
-
 def lambda_handler(event, context):
     """Predict Resource Allocation requirements for memory (GB) and max execution `kill time` / `wallclock` (seconds) using three pre-trained neural networks. This lambda is invoked from the Job Submit lambda which json.dumps the s3 bucket and key to the file containing job input parameters. The path to the text file in s3 assumes the following format: `control/ipppssoot/ipppssoot_MemModelFeatures.txt`.
 
@@ -158,6 +153,10 @@ def lambda_handler(event, context):
     MEMORY REGRESSION: A third regression model is used to estimate the actual value of memory needed for the job. This is mainly for the purpose of logging/future analysis and is not currently being used for allocating memory in calcloud jobs.
     """
     bucket_name = event["Bucket"]
+    # load models
+    clf = get_model("./models/mem_clf/")
+    mem_reg = get_model("./models/mem_reg/")
+    wall_reg = get_model("./models/wall_reg/")
     key = event["Key"]
     ipppssoot = event["Ipppssoot"]
     prep = Preprocess(ipppssoot, bucket_name, key)

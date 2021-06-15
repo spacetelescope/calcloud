@@ -86,7 +86,6 @@ data aws_ssm_parameter fs_outputs_arn {
   name = "/gateway/fileshare/outputs"
 }
 
-
 data aws_ssm_parameter lambda_rescue_role {
   name = "/iam/roles/calcloud_lambda_rescue"
 }
@@ -99,4 +98,6 @@ data aws_ssm_parameter crds_test {
   name = "/s3/external/crds-test"
 }
 
-
+data aws_ssm_parameter model_bucket {
+  name = "/s3/modeling"
+}

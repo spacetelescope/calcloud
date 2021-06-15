@@ -78,6 +78,7 @@ locals {
 
        ecr_address = format("%v.dkr.ecr.%v.amazonaws.com", data.aws_caller_identity.this.account_id, data.aws_region.current.name)
        ecr_predict_lambda_image   = format("%v/%v:model", local.ecr_address, aws_ecr_repository.caldp_ecr.name)
+       ecr_model_training_image = format("%v/%v:training", local.ecr_address, aws_ecr_repository.caldp_ecr.name)
 
        # because we cannot reference ssm params in variables, we have to set the crds bucket here by looking up the desired bucket through a string
        # set in var.crds_bucket. We then use this map to convert that string to the correct ssm param here
