@@ -12,7 +12,7 @@ CALDP_IMAGE_TAG="latest"
 
 # these variables are overrides for developers that allow the deploy script to build from local calcloud/caldp source
 # i.e. CALCLOUD_BUILD_DIR="$HOME/deployer/calcloud"
-CALCLOUD_BUILD_DIR=""
+CALCLOUD_BUILD_DIR="$HOME/bhayden/calcloud"
 CALDP_BUILD_DIR=""
 
 #uncomment this to deploy to a custom env name
@@ -89,16 +89,19 @@ awsudo $ADMIN_ARN aws ecr get-login-password --region us-east-1 | docker login -
 
 # naming is confusing here but "modeling" directory plus "training" image is correct
 cd ${CALCLOUD_BUILD_DIR}/modeling
-set -eo pipefail docker build -f Dockerfile -t ${TRAINING_DOCKER_IMAGE} .
+set -o pipefail && docker build -f Dockerfile -t ${TRAINING_DOCKER_IMAGE} .
 training_docker_build_status=$?
 if [[ $training_docker_build_status -ne 0 ]]; then
     echo "training job docker build failed; exiting"
     exit 1
 fi
 
+echo $training_docker_build_status
+exit 1
+
 # jobPredict lambda env
 cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
-docker build -f Dockerfile -t ${MODEL_DOCKER_IMAGE} .
+set -o pipefail && docker build -f Dockerfile -t ${MODEL_DOCKER_IMAGE} .
 model_docker_build_status=$?
 if [[ $model_docker_build_status -ne 0 ]]; then
     echo "predict lambda env docker build failed; exiting"
@@ -107,7 +110,7 @@ fi
 
 # caldp image
 cd ${CALDP_BUILD_DIR}
-docker build -f Dockerfile -t ${CALDP_DOCKER_IMAGE} --build-arg CAL_BASE_IMAGE=${CAL_BASE_IMAGE}  .
+set -o pipefail && docker build -f Dockerfile -t ${CALDP_DOCKER_IMAGE} --build-arg CAL_BASE_IMAGE=${CAL_BASE_IMAGE}  .
 caldp_docker_build_status=$?
 if [[ $caldp_docker_build_status -ne 0 ]]; then
     echo "caldp docker build failed; exiting"
