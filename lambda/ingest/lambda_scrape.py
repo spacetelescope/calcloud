@@ -261,48 +261,86 @@ def scrape_targets(ipst, bucket_proc):
 
 # ******** DYNAMODB
 
-def create_DDB_table():
-    #TODO: if table DNE, create one
-    pass
+def get_ddb_table(table_name):
+    existing_tables = dynamodb.list_tables()['TableNames']
+    if table_name in existing_tables:
+        table = dynamodb.Table(table_name)
+    else:
+        table = dynamodb.create_table(
+            TableName=table_name,
+            KeySchema=[
+                {
+                    'AttributeName': 'ipst',
+                    'KeyType': 'HASH'  # Partition key
+                },
+                {
+                    'AttributeName': 'timestamp',
+                    'KeyType': 'RANGE'  # Sort key
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'ipst',
+                    'AttributeType': 'S'
+                },
+                {
+                    'AttributeName': 'timestamp',
+                    'AttributeType': 'N'
+                },
 
-class PythonObjectEncoder(JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, (list, dict, str, int, float, bool)):
-            return JSONEncoder.default(self, obj)
-        return {'_python_object': pickle.dumps(obj)}
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 10,
+                'WriteCapacityUnits': 10
+            }
+        )
+    print("Table status:", table.table_status)
+    return table
+
+
+# class PythonObjectEncoder(JSONEncoder):
+#     def default(self, obj):
+#         if isinstance(obj, (list, dict, str, int, float, bool)):
+#             return JSONEncoder.default(self, obj)
+#         return {'_python_object': pickle.dumps(obj)}
     
-def as_python_object(dct):
-    if '_python_object' in dct:
-        return pickle.loads(str(dct['_python_object']))
-    return dct
+# def as_python_object(dct):
+#     if '_python_object' in dct:
+#         return pickle.loads(str(dct['_python_object']))
+#     return dct
 
 def create_payload(ipst, features, targets, timestamp):
-    ddb_payload = {
-        'ipst': ipst,
+    data = {
+        'ipst': str(ipst),
         'timestamp': timestamp,
-        'x_files': str(features['x_files']),
-        'x_size': str(features['x_size']),
-        'total_mb': str(features['total_mb']),
-        'drizcorr': str(features['drizcorr']),
-        'pctecorr': str(features['drizcorr']),
-        'crsplit': str(features['pctecorr']),
-        'subarray': str(features['subarray']),
-        'detector': str(features['detector']),
-        'dtype': str(features['dtype']),
-        'instr': str(features['instr']),
-        'memory': str(targets['memory']),
-        'wallclock': str(targets['wallclock']),
-        'mem_bin': str(targets['mem_bin'])
+        'x_files': features['x_files'],
+        'x_size': features['x_size'],
+        'total_mb': features['total_mb'],
+        'drizcorr': features['drizcorr'],
+        'pctecorr': features['drizcorr'],
+        'crsplit': features['pctecorr'],
+        'subarray': features['subarray'],
+        'detector': features['detector'],
+        'dtype': features['dtype'],
+        'instr': features['instr'],
+        'memory': targets['memory'],
+        'wallclock': targets['wallclock'],
+        'mem_bin': targets['mem_bin']
         }
+
+    for k, v in data.items():
+        if v.isinstance('int', 'int64'):
+            data[k] = JSONEncoder(allow_nan=True).encode(v)
+        
     #encoded_data = JSONEncoder().encode(data)
     #encoded_data = json.dumps(data, cls=PythonObjectEncoder)
     #ddb_payload = json.loads(encoded_data, parse_int=float, parse_float=Decimal)
-    #ddb_payload = json.loads(json.dumps(encoded_data), parse_float=Decimal)
+    ddb_payload = json.loads(json.dumps(data), parse_int=Decimal, parse_float=Decimal)
     return ddb_payload
     
 
-def put_job_data(ddb_payload):
-    table = dynamodb.Table('HST_data')
+def put_job_data(ddb_payload, table_name):
+    table = get_ddb_table(table_name)
     response = table.put_item(
        Item=ddb_payload
     )
@@ -317,10 +355,11 @@ def lambda_handler(event, context=None):
     env = event["Environment"] # "-sb"
     bucket_name = event["Bucket"] + env # "calcloud-processing" + "-sb"
     timestamp = event["Timestamp"]
+    table_name = event["Table"]
     features = scrape_features(ipst, bucket_name)
     targets = scrape_targets(ipst, bucket_name)
     ddb_payload = create_payload(ipst, features, targets, timestamp)
-    job_resp = put_job_data(ddb_payload)
+    job_resp = put_job_data(ddb_payload, table_name)
     print("Put job data succeeded:")
     pprint(job_resp, sort_dicts=False)
     end = time.time()
