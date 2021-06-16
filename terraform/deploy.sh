@@ -12,7 +12,7 @@ CALDP_IMAGE_TAG="latest"
 
 # these variables are overrides for developers that allow the deploy script to build from local calcloud/caldp source
 # i.e. CALCLOUD_BUILD_DIR="$HOME/deployer/calcloud"
-CALCLOUD_BUILD_DIR="$HOME/bhayden/calcloud"
+CALCLOUD_BUILD_DIR=""
 CALDP_BUILD_DIR=""
 
 #uncomment this to deploy to a custom env name
