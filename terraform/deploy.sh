@@ -96,9 +96,6 @@ if [[ $training_docker_build_status -ne 0 ]]; then
     exit 1
 fi
 
-echo $training_docker_build_status
-exit 1
-
 # jobPredict lambda env
 cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
 set -o pipefail && docker build -f Dockerfile -t ${MODEL_DOCKER_IMAGE} .
