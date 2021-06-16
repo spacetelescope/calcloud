@@ -1,11 +1,12 @@
 import boto3
 from botocore.config import Config
 import numpy as np
-import pandas as pd
 import datetime as dt
-from datetime import timedelta
 import time
+import pickle
 import json
+from json import JSONEncoder
+from decimal import Decimal
 from pprint import pprint
 from sklearn.preprocessing import PowerTransformer
 
@@ -170,6 +171,7 @@ def scrape_features(ipst, bucket_name):
         features = transformer(inputs)
     else:
         features = None
+    print("Features:\n ", features)
     end = time.time()
     duration = proc_time(start, end)
     print_timestamp(end, "features", 1)
@@ -186,15 +188,15 @@ def get_target_data(ipst, bucket_name):
     {'j6d508o6q': {'wallclock': 44.0, 'memory': 0.481348}}
     """
     bucket = s3.Bucket(bucket_name)
-    log_files = [f"outputs/{ipst}/preview_metrics.txt", f"outputs/{ipst}/process_metrics.txt"]
+    log_files = [f"outputs/{ipst}/process_metrics.txt", f"outputs/{ipst}/preview_metrics.txt"]
     target_data = {"wallclock": [], "memory": []}
     log_error = 0
+    body = None
     for key in log_files:
         obj = bucket.Object(key)
         try:
             body = obj.get()["Body"].read().splitlines()
         except Exception as e:
-            body = None
             log_error = 1
             print(e)
         if body is not None:
@@ -259,26 +261,50 @@ def scrape_targets(ipst, bucket_proc):
 
 # ******** DYNAMODB
 
-def put_job_data(ipst, features, targets, timestamp):
+def create_DDB_table():
+    #TODO: if table DNE, create one
+    pass
+
+class PythonObjectEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (list, dict, str, int, float, bool)):
+            return JSONEncoder.default(self, obj)
+        return {'_python_object': pickle.dumps(obj)}
+    
+def as_python_object(dct):
+    if '_python_object' in dct:
+        return pickle.loads(str(dct['_python_object']))
+    return dct
+
+def create_payload(ipst, features, targets, timestamp):
+    ddb_payload = {
+        'ipst': ipst,
+        'timestamp': timestamp,
+        'x_files': str(features['x_files']),
+        'x_size': str(features['x_size']),
+        'total_mb': str(features['total_mb']),
+        'drizcorr': str(features['drizcorr']),
+        'pctecorr': str(features['drizcorr']),
+        'crsplit': str(features['pctecorr']),
+        'subarray': str(features['subarray']),
+        'detector': str(features['detector']),
+        'dtype': str(features['dtype']),
+        'instr': str(features['instr']),
+        'memory': str(targets['memory']),
+        'wallclock': str(targets['wallclock']),
+        'mem_bin': str(targets['mem_bin'])
+        }
+    #encoded_data = JSONEncoder().encode(data)
+    #encoded_data = json.dumps(data, cls=PythonObjectEncoder)
+    #ddb_payload = json.loads(encoded_data, parse_int=float, parse_float=Decimal)
+    #ddb_payload = json.loads(json.dumps(encoded_data), parse_float=Decimal)
+    return ddb_payload
+    
+
+def put_job_data(ddb_payload):
     table = dynamodb.Table('HST_data')
     response = table.put_item(
-       Item={
-           'ipst': ipst,
-           'timestamp': timestamp,
-           'x_files': features['x_files'],
-           'x_size': features['x_size'],
-           'total_mb': features['total_mb'],
-           'drizcorr': features['drizcorr'],
-           'pctecorr': features['drizcorr'],
-           'crsplit': features['pctecorr'],
-           'subarray': features['subarray'],
-           'detector': features['detector'],
-           'dtype': features['dtype'],
-           'instr': features['instr'],
-           'memory': targets['memory'],
-           'wallclock': targets['wallclock'],
-           'mem_bin': targets['mem_bin']
-           }
+       Item=ddb_payload
     )
     return response
 
@@ -293,7 +319,8 @@ def lambda_handler(event, context=None):
     timestamp = event["Timestamp"]
     features = scrape_features(ipst, bucket_name)
     targets = scrape_targets(ipst, bucket_name)
-    job_resp = put_job_data(ipst, features, targets, timestamp)
+    ddb_payload = create_payload(ipst, features, targets, timestamp)
+    job_resp = put_job_data(ddb_payload)
     print("Put job data succeeded:")
     pprint(job_resp, sort_dicts=False)
     end = time.time()
