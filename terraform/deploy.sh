@@ -33,7 +33,7 @@ cd $TMP_INSTALL_DIR
 # equivalent to "if len($var) == 0"
 if [ -z "$CALCLOUD_BUILD_DIR" ]
 then
-    CALCLOUD_BUILD_DIR="${TMP_INSTALL_DIR}/v$CALCLOUD_VER"
+    CALCLOUD_BUILD_DIR="${TMP_INSTALL_DIR}/calcloud-$CALCLOUD_VER"
     # calcloud source download/unpack
     cd $TMP_INSTALL_DIR
     wget "https://github.com/spacetelescope/calcloud/archive/v$CALCLOUD_VER.tar.gz"
@@ -46,7 +46,7 @@ fi
 if [ -z "$CALDP_BUILD_DIR"]
 then
     CALDP_BUILD_DIR="${TMP_INSTALL_DIR}/caldp"
-    cd $CALDP_BUILD_DIR
+    cd $TMP_INSTALL_DIR
     # caldp source download/unpack
     # github's tarballs don't work with pip install, so we have to clone and checkout the tag
     git clone https://github.com/spacetelescope/caldp.git
@@ -89,15 +89,33 @@ awsudo $ADMIN_ARN aws ecr get-login-password --region us-east-1 | docker login -
 
 # naming is confusing here but "modeling" directory plus "training" image is correct
 cd ${CALCLOUD_BUILD_DIR}/modeling
-docker build -f Dockerfile -t ${TRAINING_DOCKER_IMAGE} .
-docker push ${TRAINING_DOCKER_IMAGE}
+set -eo pipefail docker build -f Dockerfile -t ${TRAINING_DOCKER_IMAGE} .
+training_docker_build_status=$?
+if [[ $training_docker_build_status -ne 0 ]]; then
+    echo "training job docker build failed; exiting"
+    exit 1
+fi
+
 # jobPredict lambda env
 cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
 docker build -f Dockerfile -t ${MODEL_DOCKER_IMAGE} .
-docker push ${MODEL_DOCKER_IMAGE}
+model_docker_build_status=$?
+if [[ $model_docker_build_status -ne 0 ]]; then
+    echo "predict lambda env docker build failed; exiting"
+    exit 1
+fi
+
 # caldp image
 cd ${CALDP_BUILD_DIR}
 docker build -f Dockerfile -t ${CALDP_DOCKER_IMAGE} --build-arg CAL_BASE_IMAGE=${CAL_BASE_IMAGE}  .
+caldp_docker_build_status=$?
+if [[ $caldp_docker_build_status -ne 0 ]]; then
+    echo "caldp docker build failed; exiting"
+    exit 1
+fi
+
+docker push ${TRAINING_DOCKER_IMAGE}
+docker push ${MODEL_DOCKER_IMAGE}
 docker push ${CALDP_DOCKER_IMAGE}
 
 #### PRIMARY TERRAFORM BUILD #####
