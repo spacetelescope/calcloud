@@ -1,3 +1,7 @@
+data "aws_caller_identity" "this" {}
+data "aws_region" "current" {}
+data "aws_ecr_authorization_token" "token" {}
+
 locals {
        batch_subnet_ids = split(",", nonsensitive(data.aws_ssm_parameter.batch_subnet_ids.value))
 
