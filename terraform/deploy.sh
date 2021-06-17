@@ -3,7 +3,7 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="0.4.20"
+CALCLOUD_VER="0.4.21"
 CALDP_VER="0.2.11"
 CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210505_CAL_final"
 
@@ -16,9 +16,7 @@ CALDP_IMAGE_TAG="latest"
 # (and avoid accidentally committing a custom path to the repo...)
 CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-""} 
 CALDP_BUILD_DIR=${CALDP_BUILD_DIR:-""}
-
-#uncomment this to deploy to a custom env name
-# aws_env="your-env-name-here"
+aws_env=${aws_env:-""}
 
 # turn CAL_BASE_IMAGE into CSYS_VER by splitting at the :, splitting again by underscore and keeping the
 # first two fields, and then converting to lowercase
@@ -57,9 +55,12 @@ fi
 
 # get a couple of things from AWS ssm
 # the env, i.e. sb,dev,test,prod
-aws_env_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "environment" | grep "Value"`
-aws_env=${aws_env_response##*:}
-aws_env=`echo $aws_env | tr -d '",'`
+if [ -z "${aws_env}" ]
+then
+    aws_env_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "environment" | grep "Value"`
+    aws_env=${aws_env_response##*:}
+    aws_env=`echo $aws_env | tr -d '",'`
+fi
 
 # the tf state bucket name
 aws_tfstate_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/s3/tfstate" | grep "Value"`
