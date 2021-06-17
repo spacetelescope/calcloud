@@ -26,13 +26,12 @@ CSYS_VER=`echo $CSYS_VER | awk '{print tolower($0)}'`
 
 # variables that will be changed less-frequently
 TMP_INSTALL_DIR="/tmp/calcloud_install"
-mkdir $TMP_INSTALL_DIR
-cd $TMP_INSTALL_DIR
 
 # setting up the calcloud source dir if it needs downloaded
 # equivalent to "if len($var) == 0"
 if [ -z "$CALCLOUD_BUILD_DIR" ]
 then
+    mkdir -p $TMP_INSTALL_DIR
     CALCLOUD_BUILD_DIR="${TMP_INSTALL_DIR}/calcloud-$CALCLOUD_VER"
     # calcloud source download/unpack
     cd $TMP_INSTALL_DIR
@@ -45,6 +44,7 @@ fi
 # equivalent to "if len($var) == 0"
 if [ -z "$CALDP_BUILD_DIR"]
 then
+    mkdir -p $TMP_INSTALL_DIR
     CALDP_BUILD_DIR="${TMP_INSTALL_DIR}/caldp"
     cd $TMP_INSTALL_DIR
     # caldp source download/unpack
