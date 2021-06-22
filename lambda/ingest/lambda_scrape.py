@@ -328,14 +328,7 @@ def create_payload(ipst, features, targets, timestamp):
         'mem_bin': targets['mem_bin']
         }
 
-    for k, v in data.items():
-        if v.isinstance('int', 'int64'):
-            data[k] = JSONEncoder(allow_nan=True).encode(v)
-        
-    #encoded_data = JSONEncoder().encode(data)
-    #encoded_data = json.dumps(data, cls=PythonObjectEncoder)
-    #ddb_payload = json.loads(encoded_data, parse_int=float, parse_float=Decimal)
-    ddb_payload = json.loads(json.dumps(data), parse_int=Decimal, parse_float=Decimal)
+    ddb_payload = json.loads(json.dumps(data, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
     return ddb_payload
     
 
