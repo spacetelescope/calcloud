@@ -315,7 +315,7 @@ def create_payload(ipst, features, targets, timestamp):
         'timestamp': str(timestamp),
         'x_files': float(features['x_files']),
         'x_size': float(features['x_size']),
-        'total_mb': float(['total_mb']),
+        'total_mb': float(features['total_mb']),
         'drizcorr': int(features['drizcorr']),
         'pctecorr': int(features['drizcorr']),
         'crsplit': int(features['pctecorr']),
