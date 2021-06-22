@@ -312,20 +312,20 @@ def get_ddb_table(table_name):
 def create_payload(ipst, features, targets, timestamp):
     data = {
         'ipst': str(ipst),
-        'timestamp': timestamp,
-        'x_files': features['x_files'],
-        'x_size': features['x_size'],
-        'total_mb': features['total_mb'],
-        'drizcorr': features['drizcorr'],
-        'pctecorr': features['drizcorr'],
-        'crsplit': features['pctecorr'],
-        'subarray': features['subarray'],
-        'detector': features['detector'],
-        'dtype': features['dtype'],
-        'instr': features['instr'],
-        'memory': targets['memory'],
-        'wallclock': targets['wallclock'],
-        'mem_bin': targets['mem_bin']
+        'timestamp': str(timestamp),
+        'x_files': float(features['x_files']),
+        'x_size': float(features['x_size']),
+        'total_mb': float(['total_mb']),
+        'drizcorr': int(features['drizcorr']),
+        'pctecorr': int(features['drizcorr']),
+        'crsplit': int(features['pctecorr']),
+        'subarray': int(features['subarray']),
+        'detector': int(features['detector']),
+        'dtype': int(features['dtype']),
+        'instr': int(features['instr']),
+        'memory': float(targets['memory']),
+        'wallclock': float(targets['wallclock']),
+        'mem_bin': int(targets['mem_bin'])
         }
 
     ddb_payload = json.loads(json.dumps(data, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
