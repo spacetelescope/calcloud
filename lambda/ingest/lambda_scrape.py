@@ -280,11 +280,11 @@ def get_ddb_table(table_name):
             AttributeDefinitions=[
                 {
                     'AttributeName': 'ipst',
-                    'AttributeType': 'S'
+                    'AttributeType': 'N'
                 },
                 {
                     'AttributeName': 'timestamp',
-                    'AttributeType': 'S'
+                    'AttributeType': 'N'
                 },
 
             ],
@@ -299,7 +299,7 @@ def get_ddb_table(table_name):
 def create_payload(ipst, features, targets, timestamp):
     data = {
         'ipst': str(ipst),
-        'timestamp': str(timestamp),
+        'timestamp': int(timestamp),
         'x_files': float(features['x_files']),
         'x_size': float(features['x_size']),
         'total_mb': float(features['total_mb']),
@@ -334,7 +334,7 @@ def lambda_handler(event, context=None):
     ipst = event["Ipppssoot"] 
     env = event["Environment"] # "-sb"
     bucket_name = event["Bucket"] + env # "calcloud-processing" + "-sb"
-    timestamp = event["Timestamp"]
+    timestamp = dt.datetime.fromisoformat(event["Timestamp"]).timestamp()
     table_name = event["Table"]
     features = scrape_features(ipst, bucket_name)
     targets = scrape_targets(ipst, bucket_name)
