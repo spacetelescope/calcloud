@@ -12,7 +12,8 @@ from sklearn.preprocessing import PowerTransformer
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
 s3 = boto3.resource("s3", config=retry_config)
 client = boto3.client("s3", config=retry_config)
-dynamodb = boto3.client('dynamodb', config=retry_config, region_name='us-east-1')
+ddb = boto3.client('dynamodb', region_name='us-east-1')
+dynamodb = boto3.resource('dynamodb', config=retry_config, region_name='us-east-1')
 
 
 def proc_time(start, end):
@@ -260,9 +261,9 @@ def scrape_targets(ipst, bucket_proc):
 # ******** DYNAMODB
 
 def get_ddb_table(table_name):
-    existing_tables = dynamodb.list_tables()['TableNames']
+    existing_tables = ddb.list_tables()['TableNames']
     if table_name in existing_tables:
-        table = dynamodb.table(table_name)
+        table = dynamodb.Table(table_name)
     else:
         table = dynamodb.create_table(
             TableName=table_name,
