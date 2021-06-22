@@ -262,7 +262,7 @@ def scrape_targets(ipst, bucket_proc):
 def get_ddb_table(table_name):
     existing_tables = dynamodb.list_tables()['TableNames']
     if table_name in existing_tables:
-        table = dynamodb.Table(table_name)
+        table = dynamodb.table(table_name)
     else:
         table = dynamodb.create_table(
             TableName=table_name,
