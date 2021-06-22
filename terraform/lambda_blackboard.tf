@@ -48,10 +48,12 @@ module "calcloud_lambda_blackboard" {
 }
 
 # for cron-like schedule of blackboard lambda
+# note: in the future don't hardcode frequencies into the resource name...
+# it can be a pain to deal with renaming resources in the tf state
 resource "aws_cloudwatch_event_rule" "every_five_minutes" {
-  name                = "every-five-minutes${local.environment}"
-  description         = "Fires every five minutes"
-  schedule_expression = "rate(5 minutes)"
+  name                = "every-seven-minutes${local.environment}"
+  description         = "Fires every seven minutes"
+  schedule_expression = "rate(7 minutes)"
 }
 
 resource "aws_cloudwatch_event_target" "every_five_minutes" {

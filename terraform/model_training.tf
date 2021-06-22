@@ -1,13 +1,3 @@
-resource "docker_registry_image" "calcloud_model_training" {
-  name = local.ecr_model_training_image
-
-  build {
-    context = "../modeling"
-    no_cache=true
-    remove=true
-  }
-}
-
 resource "aws_batch_job_queue" "model_queue" {
   name = "calcloud-model-training-queue${local.environment}"
   count = 1

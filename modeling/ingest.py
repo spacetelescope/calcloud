@@ -46,7 +46,7 @@ def list_jobs(messages):
     n_errors = 0
     n_ingested = 0
     n_processed = 0
-
+    n_running = 0
     for m in messages:
         msg = m.split("-")[0]
         ipst = m.split("-")[-1]
@@ -60,20 +60,22 @@ def list_jobs(messages):
             ipst = ipst.split(".")[0]
             succeeded.append(ipst)
             n_processed += 1
-        elif msg == "processing":
-            processing.append(ipst)
         else:
-            continue
-
+            processing.append(ipst)
+            n_running += 1
+    msg_count = n_errors + n_ingested + n_processed + n_running
+    print(f"Found {msg_count} completed job messages.")
     print(f"Found {n_errors} error messages.")
     print(f"Found {n_ingested} ingested jobs.")
     print(f"Found {n_processed} processed jobs.")
-    print(f"Jobs still running: {len(processing)}")
+    print(f"Jobs still running: {n_running}")
     print(f"Total # successful jobs: {len(succeeded)}")
-
-    job_dict = {"succeeded": succeeded, "processing": processing, "errors": errors}
-
-    return job_dict
+    if len(succeeded) < 1:
+        print("No data found for ingest - exiting program.")
+        sys.exit()
+    else:
+        job_dict = {"succeeded": succeeded, "processing": processing, "errors": errors}
+        return job_dict
 
 
 def scrape_jobs(bucket_proc, bucket_mod, prefix):

@@ -1,36 +1,11 @@
-data "aws_caller_identity" "this" {}
-data "aws_region" "current" {}
-data "aws_ecr_authorization_token" "token" {}
-
-provider "docker" {
-  registry_auth {
-    address  = local.ecr_address
-    username = data.aws_ecr_authorization_token.token.user_name
-    password = data.aws_ecr_authorization_token.token.password
-  }
-  ca_material = pathexpand("../lambda/JobPredict/certs/tls-cs-bundle.pem")
-}
-
-resource "docker_registry_image" "calcloud_predict_model" {
-  name = local.ecr_predict_lambda_image
-
-  build {
-    context = "../lambda/JobPredict"
-    no_cache=true
-    remove=true
-  }
-}
-
 module "lambda_function_container_image" {
   source = "terraform-aws-modules/lambda/aws"
   version = "~> 1.43.0"
   function_name = "calcloud-job-predict${local.environment}"
   description   = "pretrained neural networks for predicting job resource requirements (memory bin and max execution time)"
 
-  depends_on = [docker_registry_image.calcloud_predict_model]
-
   create_package = false
-  image_uri = docker_registry_image.calcloud_predict_model.name
+  image_uri = local.ecr_predict_lambda_image
   package_type = "Image"
 
   timeout       = 360
