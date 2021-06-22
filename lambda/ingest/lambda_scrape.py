@@ -3,9 +3,7 @@ from botocore.config import Config
 import numpy as np
 import datetime as dt
 import time
-import pickle
 import json
-from json import JSONEncoder
 from decimal import Decimal
 from pprint import pprint
 from sklearn.preprocessing import PowerTransformer
@@ -14,7 +12,7 @@ from sklearn.preprocessing import PowerTransformer
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
 s3 = boto3.resource("s3", config=retry_config)
 client = boto3.client("s3", config=retry_config)
-dynamodb = boto3.resource('dynamodb')
+dynamodb = boto3.client('dynamodb', config=retry_config, region='us-east-1')
 
 
 def proc_time(start, end):
