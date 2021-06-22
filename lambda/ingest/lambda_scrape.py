@@ -12,7 +12,7 @@ from sklearn.preprocessing import PowerTransformer
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
 s3 = boto3.resource("s3", config=retry_config)
 client = boto3.client("s3", config=retry_config)
-dynamodb = boto3.client('dynamodb', config=retry_config, region='us-east-1')
+dynamodb = boto3.client('dynamodb', config=retry_config, region_name='us-east-1')
 
 
 def proc_time(start, end):
