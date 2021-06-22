@@ -284,7 +284,7 @@ def get_ddb_table(table_name):
                 },
                 {
                     'AttributeName': 'timestamp',
-                    'AttributeType': 'N'
+                    'AttributeType': 'S'
                 },
 
             ],
