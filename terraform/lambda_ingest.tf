@@ -19,10 +19,15 @@ module "calcloud_lambda_ingest" {
   attach_tracing_policy = false
   attach_async_event_policy = false
 
-  environment_variables = {BUCKET = "calcloud-processing${local.environment}"}
+  allowed_triggers = {
+    S3TriggerMessage = {
+      principal = "s3.amazonaws.com"
+      source_arn = "arn:aws:s3:${data.aws_region.current.name}:${data.aws_caller_identity.this.account_id}"
+    }
+  }
 
   tags = {
-    Name = "calcloud-lambda-scrape${local.environment}"
+    Name = "calcloud-lambda-ingest${local.environment}"
   }
 }
 
