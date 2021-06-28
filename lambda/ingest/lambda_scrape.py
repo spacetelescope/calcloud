@@ -1,5 +1,6 @@
 import boto3
 from botocore.config import Config
+import os
 import numpy as np
 import datetime as dt
 import time
@@ -269,7 +270,7 @@ def get_ddb_table(table_name):
             TableName=table_name,
             KeySchema=[
                 {
-                    'AttributeName': 'ipst',
+                    'AttributeName': 'ipppssoot',
                     'KeyType': 'HASH'  # Partition key
                 },
                 {
@@ -279,8 +280,8 @@ def get_ddb_table(table_name):
             ],
             AttributeDefinitions=[
                 {
-                    'AttributeName': 'ipst',
-                    'AttributeType': 'N'
+                    'AttributeName': 'ipppssoot',
+                    'AttributeType': 'S'
                 },
                 {
                     'AttributeName': 'timestamp',
@@ -298,11 +299,12 @@ def get_ddb_table(table_name):
 
 def create_payload(ipst, features, targets, timestamp):
     data = {
-        'ipst': str(ipst),
+        'ipppssoot': str(ipst),
         'timestamp': int(timestamp),
         'x_files': float(features['x_files']),
         'x_size': float(features['x_size']),
         'total_mb': float(features['total_mb']),
+        'n_files': int(features['n_files']),
         'drizcorr': int(features['drizcorr']),
         'pctecorr': int(features['drizcorr']),
         'crsplit': int(features['pctecorr']),
@@ -332,8 +334,8 @@ def lambda_handler(event, context=None):
     print_timestamp(start, "all", 0)
     print("Received event: " + json.dumps(event, indent=2))
     ipst = event["Ipppssoot"] 
-    env = event["Environment"] # "-sb"
-    bucket_name = event["Bucket"] + env # "calcloud-processing" + "-sb"
+    #env = os.environ.get("CALCLOUD_ENVIRONMENT", "-sb") # "-sb"
+    bucket_name = os.environ.get("BUCKET", "calcloud-processing-sb")
     timestamp = dt.datetime.fromisoformat(event["Timestamp"]).timestamp()
     table_name = event["Table"]
     features = scrape_features(ipst, bucket_name)
