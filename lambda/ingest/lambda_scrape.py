@@ -328,10 +328,12 @@ def lambda_handler(event, context=None):
     start = time.time()
     print_timestamp(start, "all", 0)
     print("Received event: " + json.dumps(event, indent=2))
-    ipst = event["Ipppssoot"]  # iaao11ofq
-    bucket_name = os.environ.get("BUCKET", "calcloud-processing-sb")
-    timestamp = dt.datetime.fromisoformat(event["Timestamp"]).timestamp()
-    table_name = event["Table"]
+    event_time = event["Records"][0]["eventTime"]
+    message = event["Records"][0]["object"]["key"] # messages/processed-iaao11ofq.trigger
+    ipst = message.split('-')[-1].split('.')[0]
+    bucket_name = event["Records"][0]["bucket"]["name"]
+    timestamp = dt.datetime.fromisoformat(event_time).timestamp()
+    table_name = "HST_data"
     features = scrape_features(ipst, bucket_name)
     targets = scrape_targets(ipst, bucket_name)
     ddb_payload = create_payload(ipst, features, targets, timestamp)
