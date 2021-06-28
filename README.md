@@ -135,7 +135,7 @@ subdirectories:
            display job and processing information.
 
 A periodic lambda is used to force improve synchronization of the Storage
-Gateway between AWS and on permise NFS by flushing the cache.  Flush rates
+Gateway between AWS and on premise NFS by flushing the cache.  Flush rates
 depend on the subdirectory being flushed.
 
 Message Passing
@@ -171,6 +171,8 @@ Other messages are used to request action:
                      previously failed due to memory, use a higher memory rung.
 
 - clean-ipppssoot : delete all inputs, control, outputs, and messages for ipppssoot
+
+- clean-ingested :  clean all ipppssoots in state ingested-ipppssoot, i.e. fully completed
 
 - cancel-all, rescue-all, clean-all : shorthand for performing cancel, rescue,
                           or clean on every ipppssoot which currently has any
@@ -246,8 +248,10 @@ These are distinguished as either "retryable" or "not retryable".
 
 1. CannotInspectContainer  - this can result when AWS Batch does not inspect an
                              exited/stopped container before it is deleted automatically,
+                             and is a transient error related to EBS throughput and IOPS provisioning.
 
-2. DockerError             -
+2. DockerTimeoutError       - Not clear what caused this,  AWS Batch error msg was:
+                              *DockerTimeoutError: Could not transition to created; timed out after waiting 4m0s*
 
 3. Job Cancelled           - An operator cancelled the job so it should not be retried.
 
