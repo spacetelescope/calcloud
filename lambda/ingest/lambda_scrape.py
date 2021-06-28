@@ -14,8 +14,8 @@ from sklearn.preprocessing import PowerTransformer
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
 s3 = boto3.resource("s3", config=retry_config)
 client = boto3.client("s3", config=retry_config)
-ddb = boto3.client('dynamodb', region_name='us-east-1')
-dynamodb = boto3.resource('dynamodb', config=retry_config, region_name='us-east-1')
+ddb = boto3.client("dynamodb", region_name="us-east-1")
+dynamodb = boto3.resource("dynamodb", config=retry_config, region_name="us-east-1")
 
 
 def proc_time(start, end):
@@ -36,7 +36,7 @@ def print_timestamp(ts, name, value):
         info = "FINISHED"
     else:
         info = ""
-    timestring = dt.datetime.fromtimestamp(ts).strftime('%m/%d/%Y - %H:%M:%S')
+    timestring = dt.datetime.fromtimestamp(ts).strftime("%m/%d/%Y - %H:%M:%S")
     print(f"{info} [{name}]: {timestring}")
 
 
@@ -55,14 +55,16 @@ def download_inputs(ipst, bucket_name):
         body = obj.get()["Body"].read().splitlines()
     except Exception as e:
         body = None
+        print(e)
     if body is not None:
         for line in body:
             k, v = str(line).strip("b'").split("=")
             input_data[k] = v
         print(f"{ipst}: {input_data}")
+        return input_data
     else:
-        print(e)
-    return input_data
+        print("Unable to download inputs")
+        sys.exit(3)
 
 
 def scrub_keys(ipst, input_data):
@@ -216,8 +218,7 @@ def get_target_data(ipst, bucket_name):
 
 
 def calculate_bin(memory):
-    """Calculates the memory bin (EC2 Instance type) according to the amount of memory in gigabytes needed to process the job.
-    """
+    """Calculates the memory bin (EC2 Instance type) according to the amount of memory in gigabytes needed to process the job."""
     if memory < 1.792:
         mem_bin = 0
     elif memory < 7.168:
@@ -269,40 +270,24 @@ def scrape_targets(ipst, bucket_proc):
 
 # ******** DYNAMODB
 
+
 def get_ddb_table(table_name):
-    """Looks for existing DynamoDB table otherwise it creates a new one. Creation of a table should only occur once for each AWS env, after that only the existing table is updated.  
-    """
-    existing_tables = ddb.list_tables()['TableNames']
+    """Looks for existing DynamoDB table otherwise it creates a new one. Creation of a table should only occur once for each AWS env, after that only the existing table is updated."""
+    existing_tables = ddb.list_tables()["TableNames"]
     if table_name in existing_tables:
         table = dynamodb.Table(table_name)
     else:
         table = dynamodb.create_table(
             TableName=table_name,
             KeySchema=[
-                {
-                    'AttributeName': 'ipppssoot',
-                    'KeyType': 'HASH'  # Partition key
-                },
-                {
-                    'AttributeName': 'timestamp',
-                    'KeyType': 'RANGE'  # Sort key
-                }
+                {"AttributeName": "ipppssoot", "KeyType": "HASH"},  # Partition key
+                {"AttributeName": "timestamp", "KeyType": "RANGE"},  # Sort key
             ],
             AttributeDefinitions=[
-                {
-                    'AttributeName': 'ipppssoot',
-                    'AttributeType': 'S'
-                },
-                {
-                    'AttributeName': 'timestamp',
-                    'AttributeType': 'N'
-                },
-
+                {"AttributeName": "ipppssoot", "AttributeType": "S"},
+                {"AttributeName": "timestamp", "AttributeType": "N"},
             ],
-            ProvisionedThroughput={
-                'ReadCapacityUnits': 10,
-                'WriteCapacityUnits': 10
-            }
+            ProvisionedThroughput={"ReadCapacityUnits": 10, "WriteCapacityUnits": 10},
         )
     return table
 
@@ -310,35 +295,32 @@ def get_ddb_table(table_name):
 def create_payload(ipst, features, targets, timestamp):
     """Converts numpy values into JSON-friendly formatting."""
     data = {
-        'ipppssoot': str(ipst),
-        'timestamp': int(timestamp),
-        'x_files': float(features['x_files']),
-        'x_size': float(features['x_size']),
-        'total_mb': float(features['total_mb']),
-        'n_files': int(features['n_files']),
-        'drizcorr': int(features['drizcorr']),
-        'pctecorr': int(features['drizcorr']),
-        'crsplit': int(features['pctecorr']),
-        'subarray': int(features['subarray']),
-        'detector': int(features['detector']),
-        'dtype': int(features['dtype']),
-        'instr': int(features['instr']),
-        'memory': float(targets['memory']),
-        'wallclock': float(targets['wallclock']),
-        'mem_bin': int(targets['mem_bin'])
-        }
+        "ipppssoot": str(ipst),
+        "timestamp": int(timestamp),
+        "x_files": float(features["x_files"]),
+        "x_size": float(features["x_size"]),
+        "total_mb": float(features["total_mb"]),
+        "n_files": int(features["n_files"]),
+        "drizcorr": int(features["drizcorr"]),
+        "pctecorr": int(features["drizcorr"]),
+        "crsplit": int(features["pctecorr"]),
+        "subarray": int(features["subarray"]),
+        "detector": int(features["detector"]),
+        "dtype": int(features["dtype"]),
+        "instr": int(features["instr"]),
+        "memory": float(targets["memory"]),
+        "wallclock": float(targets["wallclock"]),
+        "mem_bin": int(targets["mem_bin"]),
+    }
 
     ddb_payload = json.loads(json.dumps(data, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
     return ddb_payload
-    
+
 
 def put_job_data(ddb_payload, table_name):
-    """Gets (or creates) DynamoDB table and puts JSON-formatted job data into the database. 
-    """
+    """Gets (or creates) DynamoDB table and puts JSON-formatted job data into the database."""
     table = get_ddb_table(table_name)
-    response = table.put_item(
-       Item=ddb_payload
-    )
+    response = table.put_item(Item=ddb_payload)
     return response
 
 
@@ -346,7 +328,7 @@ def lambda_handler(event, context=None):
     start = time.time()
     print_timestamp(start, "all", 0)
     print("Received event: " + json.dumps(event, indent=2))
-    ipst = event["Ipppssoot"] # iaao11ofq
+    ipst = event["Ipppssoot"]  # iaao11ofq
     bucket_name = os.environ.get("BUCKET", "calcloud-processing-sb")
     timestamp = dt.datetime.fromisoformat(event["Timestamp"]).timestamp()
     table_name = event["Table"]

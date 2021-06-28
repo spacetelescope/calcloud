@@ -76,12 +76,13 @@ echo $python_version
 python -m virtualenv lambda-env
 source lambda-env/bin/activate
 pip install numpy sklearn
+deactivate
 cd lambda-env/lib/${python_version}/site-packages
 zip -x "*.pyc" -r ../../../../calcloud-ingest.zip .
 cd ../../../../
 zip -g calcloud-ingest.zip lambda_scrape.py
 awsudo $ADMIN_ARN aws s3api put-object --bucket calcloud-modeling-${aws_env} --key lambda/calcloud-ingest.zip --body calcloud-ingest.zip
-deactivate
+
 rm -rf lambda-env
 
 # initial terraform setup
