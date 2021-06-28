@@ -22,7 +22,7 @@ module "calcloud_lambda_ingest" {
   allowed_triggers = {
     S3TriggerMessage = {
       principal = "s3.amazonaws.com"
-      source_arn = "arn:aws:s3:${data.aws_region.current.name}:${data.aws_caller_identity.this.account_id}"
+      source_arn = "arn:aws:s3:${data.aws_region.current.name}:${data.aws_caller_identity.this.account_id}:${aws_s3_bucket.calcloud.id}"
     }
   }
 
@@ -32,10 +32,10 @@ module "calcloud_lambda_ingest" {
 }
 
 resource "aws_s3_bucket_notification" "trigger_ingest" {
-    bucket = aws_s3_bucket.calcloud.id
+    bucket = "calcloud-processing${local.environment}"
 
     lambda_function {
-        lambda_function_arn = module.calcloud_lambda_ingest.aws_lambda_function.arn
+        lambda_function_arn = module.calcloud_lambda_ingest.this_lambda_function_arn
         events              = ["s3:ObjectCreated:*"]
         filter_prefix       = "messages/processed-"
         filter_suffix       = ".trigger"

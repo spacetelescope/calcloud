@@ -9,6 +9,7 @@ import json
 from decimal import Decimal
 from pprint import pprint
 from sklearn.preprocessing import PowerTransformer
+import urllib.parse
 
 # mitigation of potential API rate restrictions (esp for Batch API)
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
@@ -328,10 +329,10 @@ def lambda_handler(event, context=None):
     start = time.time()
     print_timestamp(start, "all", 0)
     print("Received event: " + json.dumps(event, indent=2))
-    event_time = event["Records"][0]["eventTime"]
-    message = event["Records"][0]["object"]["key"] # messages/processed-iaao11ofq.trigger
-    ipst = message.split('-')[-1].split('.')[0]
-    bucket_name = event["Records"][0]["bucket"]["name"]
+    event_time = event['Records'][0]['eventTime']
+    bucket_name = event['Records'][0]['s3']['bucket']['name']
+    key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8') # messages/processed-iaao11ofq.trigger
+    ipst = key.split('-')[-1].split('.')[0]
     timestamp = dt.datetime.fromisoformat(event_time).timestamp()
     table_name = "HST_data"
     features = scrape_features(ipst, bucket_name)
