@@ -1,6 +1,7 @@
 import boto3
 from botocore.config import Config
 import os
+import sys
 import numpy as np
 import datetime as dt
 import time
@@ -183,39 +184,40 @@ def scrape_features(ipst, bucket_name):
 
 
 def get_target_data(ipst, bucket_name):
-    """scrapes actual wallclock (sec) and memory (kb) from log files in s3 outputs bucket.
-    Returns dict of actual wallclock time (seconds) and memory usage (GB) for a given job (ipst).
-    {'j6d508o6q': {'wallclock': 44.0, 'memory': 0.481348}}
+    """scrapes actual wallclock (sec) and memory (kb) from log files in s3 outputs bucket. Returns string-formatted list of scraped data.
+    {'wallclock': ['1:32.79', '0:30.26'], 'memory': ['423876', '236576']}
     """
     bucket = s3.Bucket(bucket_name)
     log_files = [f"outputs/{ipst}/process_metrics.txt", f"outputs/{ipst}/preview_metrics.txt"]
     target_data = {"wallclock": [], "memory": []}
     log_error = 0
-    body = None
     for key in log_files:
+        body = None
         obj = bucket.Object(key)
         try:
             body = obj.get()["Body"].read().splitlines()
+            if body is not None:
+                status = str(body[-1]).split(":")[-1]
+                if "0" in status:
+                    clockstring = str(body[4]).strip("b'\\t")
+                    wallclock = str(clockstring).replace("Elapsed (wall clock) time (h:mm:ss or m:ss): ", "")
+                    target_data["wallclock"].append(wallclock)
+                    kbstring = str(body[9]).strip("b'\\t")
+                    kb = str(kbstring).replace("Maximum resident set size (kbytes): ", "")
+                    target_data["memory"].append(kb)
+                else:
+                    print(f"log status has non-zero value: {status}")
+                    log_error += 1
         except Exception as e:
-            log_error = 1
+            log_error = -1
             print(e)
-        if body is not None:
-            status = str(body[-1]).split(":")[-1]
-            if "0" in status:
-                clockstring = str(body[4]).strip("b'\\t")
-                wallclock = str(clockstring).replace("Elapsed (wall clock) time (h:mm:ss or m:ss): ", "")
-                target_data["wallclock"].append(wallclock)
-                kbstring = str(body[9]).strip("b'\\t")
-                kb = str(kbstring).replace("Maximum resident set size (kbytes): ", "")
-                target_data["memory"].append(kb)
-            else:
-                print(f"log error - proc status non-zero value: {status}")
-                log_error = 2
         print(f"{ipst}: {target_data}")
         return target_data, log_error
 
 
 def calculate_bin(memory):
+    """Calculates the memory bin (EC2 Instance type) according to the amount of memory in gigabytes needed to process the job.
+    """
     if memory < 1.792:
         mem_bin = 0
     elif memory < 7.168:
@@ -225,11 +227,14 @@ def calculate_bin(memory):
     elif memory >= 14.336:
         mem_bin = 3
     else:
-        mem_bin = "NaN"
+        mem_bin = "nan"
     return mem_bin
 
 
 def convert_target_data(target_data):
+    """Converts string-formatted lists into numeric values for each target.
+    Returns dict of actual wallclock time (seconds) and memory usage (GB) for a given job (ipst).
+    """
     targets = {"wallclock": 0, "memory": 0.0, "mem_bin": None}
     clock, kb = 0, 0
     for timestr in target_data["wallclock"]:
@@ -247,9 +252,12 @@ def scrape_targets(ipst, bucket_proc):
     start = time.time()
     print_timestamp(start, "targets", 0)
     target_data, log_error = get_target_data(ipst, bucket_proc)
-    if log_error > 0:
-        print("Non-zero status or missing logs: cannot save target data.")
-        targets = None
+    if log_error < 0:
+        print("Missing logs: cannot save target data.")
+        sys.exit(-1)
+    elif log_error > 0:
+        print("Logs have Non-zero status: cannot save target data.")
+        sys.exit(log_error)
     else:
         targets = convert_target_data(target_data)
     end = time.time()
@@ -262,6 +270,8 @@ def scrape_targets(ipst, bucket_proc):
 # ******** DYNAMODB
 
 def get_ddb_table(table_name):
+    """Looks for existing DynamoDB table otherwise it creates a new one. Creation of a table should only occur once for each AWS env, after that only the existing table is updated.  
+    """
     existing_tables = ddb.list_tables()['TableNames']
     if table_name in existing_tables:
         table = dynamodb.Table(table_name)
@@ -298,6 +308,7 @@ def get_ddb_table(table_name):
 
 
 def create_payload(ipst, features, targets, timestamp):
+    """Converts numpy values into JSON-friendly formatting."""
     data = {
         'ipppssoot': str(ipst),
         'timestamp': int(timestamp),
@@ -322,6 +333,8 @@ def create_payload(ipst, features, targets, timestamp):
     
 
 def put_job_data(ddb_payload, table_name):
+    """Gets (or creates) DynamoDB table and puts JSON-formatted job data into the database. 
+    """
     table = get_ddb_table(table_name)
     response = table.put_item(
        Item=ddb_payload
@@ -333,8 +346,7 @@ def lambda_handler(event, context=None):
     start = time.time()
     print_timestamp(start, "all", 0)
     print("Received event: " + json.dumps(event, indent=2))
-    ipst = event["Ipppssoot"] 
-    #env = os.environ.get("CALCLOUD_ENVIRONMENT", "-sb") # "-sb"
+    ipst = event["Ipppssoot"] # iaao11ofq
     bucket_name = os.environ.get("BUCKET", "calcloud-processing-sb")
     timestamp = dt.datetime.fromisoformat(event["Timestamp"]).timestamp()
     table_name = event["Table"]
