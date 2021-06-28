@@ -329,7 +329,7 @@ def lambda_handler(event, context=None):
     start = time.time()
     print_timestamp(start, "all", 0)
     print("Received event: " + json.dumps(event, indent=2))
-    event_time = event['Records'][0]['eventTime']
+    event_time = event['Records'][0]['eventTime'].split('.')[0]
     bucket_name = event['Records'][0]['s3']['bucket']['name']
     key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8') # messages/processed-iaao11ofq.trigger
     ipst = key.split('-')[-1].split('.')[0]
