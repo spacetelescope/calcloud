@@ -282,18 +282,22 @@ def get_ddb_table(table_name):
     if table_name in existing_tables:
         table = dynamodb.Table(table_name)
     else:
-        table = dynamodb.create_table(
-            TableName=table_name,
-            KeySchema=[
-                {"AttributeName": "ipppssoot", "KeyType": "HASH"},  # Partition key
-                #{"AttributeName": "timestamp", "KeyType": "RANGE"},  # Sort key
-            ],
-            AttributeDefinitions=[
-                {"AttributeName": "ipppssoot", "AttributeType": "S"},
-                #{"AttributeName": "timestamp", "AttributeType": "N"},
-            ],
-            ProvisionedThroughput={"ReadCapacityUnits": 10, "WriteCapacityUnits": 10},
-        )
+        try:
+            table = dynamodb.create_table(
+                TableName=table_name,
+                KeySchema=[
+                    {"AttributeName": "ipppssoot", "KeyType": "HASH"},  # Partition key
+                    #{"AttributeName": "timestamp", "KeyType": "RANGE"},  # Sort key
+                ],
+                AttributeDefinitions=[
+                    {"AttributeName": "ipppssoot", "AttributeType": "S"},
+                    #{"AttributeName": "timestamp", "AttributeType": "N"},
+                ],
+                ProvisionedThroughput={"ReadCapacityUnits": 10, "WriteCapacityUnits": 10},
+            )
+        except Exception as e:
+            print(e)
+            table = dynamodb.Table(table_name)
     return table
 
 
@@ -323,15 +327,15 @@ def create_payload(ipst, features, targets, timestamp):
     return ddb_payload
 
 
-def put_job_data(ddb_payload, table_name):
+def put_job_data(ddb_payload, table):
     """Gets (or creates) DynamoDB table and puts JSON-formatted job data into the database."""
-    table = get_ddb_table(table_name)
     response = table.put_item(Item=ddb_payload)
     return response
 
 
 def lambda_handler(event, context=None):
     start = time.time()
+    table = get_ddb_table("calcloud-hst-data")
     print_timestamp(start, "all", 0)
     #print("Received event: " + json.dumps(event, indent=2))
     event_time = event['Records'][0]['eventTime'].split('.')[0]
@@ -339,11 +343,10 @@ def lambda_handler(event, context=None):
     key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8') # messages/processed-iaao11ofq.trigger
     ipst = key.split('-')[-1].split('.')[0]
     timestamp = dt.datetime.fromisoformat(event_time).timestamp()
-    table_name = "calcloud-hst-data"
     features = scrape_features(ipst, bucket_name)
     targets = scrape_targets(ipst, bucket_name)
     ddb_payload = create_payload(ipst, features, targets, timestamp)
-    job_resp = put_job_data(ddb_payload, table_name)
+    job_resp = put_job_data(ddb_payload, table)
     print("Put job data succeeded:")
     pprint(job_resp, sort_dicts=False)
     end = time.time()

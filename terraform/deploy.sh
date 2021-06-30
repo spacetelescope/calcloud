@@ -148,6 +148,7 @@ awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[1]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[2]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[3]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
+awsudo $ADMIN_ARN terraform taint module.calcloud_lambda_ingest.aws_lambda_function.this[0]
 
 # manual confirmation required
 awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}"
