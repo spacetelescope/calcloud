@@ -18,25 +18,16 @@ module "calcloud_lambda_ingest" {
   attach_cloudwatch_logs_policy = false
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
 
-  # allowed_triggers = {
-  #   S3TriggerMessage = {
-  #     principal = "s3.amazonaws.com"
-  #     source_arn = "arn:aws:s3:${data.aws_region.current.name}:${data.aws_caller_identity.this.account_id}:${aws_s3_bucket.calcloud.id}/messages/processed-*.trigger"
-  #   }
-  #}
-
   tags = {
     Name = "calcloud-lambda-ingest${local.environment}"
   }
 }
 
-resource "aws_s3_bucket_notification" "trigger_ingest" {
-    bucket = "calcloud-processing${local.environment}"
-
-    lambda_function {
-        lambda_function_arn = module.calcloud_lambda_ingest.this_lambda_function_arn
-        events              = ["s3:ObjectCreated:*"]
-        filter_prefix       = "messages/processed-"
-        filter_suffix       = ".trigger"
-    }
+resource "aws_lambda_permission" "allow_bucket_ingestLambda" {
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = module.calcloud_lambda_ingest.this_lambda_function_arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.calcloud.arn
 }
+
