@@ -195,27 +195,31 @@ def get_target_data(ipst, bucket_name):
     target_data = {"wallclock": [], "memory": []}
     log_error = 0
     for key in log_files:
-        body = None
         obj = bucket.Object(key)
         try:
             body = obj.get()["Body"].read().splitlines()
-            if body is not None:
-                status = str(body[-1]).split(":")[-1]
-                if "0" in status:
-                    clockstring = str(body[4]).strip("b'\\t")
-                    wallclock = str(clockstring).replace("Elapsed (wall clock) time (h:mm:ss or m:ss): ", "")
-                    target_data["wallclock"].append(wallclock)
-                    kbstring = str(body[9]).strip("b'\\t")
-                    kb = str(kbstring).replace("Maximum resident set size (kbytes): ", "")
-                    target_data["memory"].append(kb)
-                else:
-                    print(f"log status has non-zero value: {status}")
-                    log_error += 1
         except Exception as e:
-            log_error = -1
+            body = None
             print(e)
-        print(f"{ipst}: {target_data}")
-        return target_data, log_error
+        if body is not None:
+            status = str(body[-1]).split(":")[-1]
+            if "0" in status:
+                # get wallclock time duration strings
+                clockstring = str(body[4]).strip("b'\\t")
+                wallclock = str(clockstring).replace("Elapsed (wall clock) time (h:mm:ss or m:ss): ", "")
+                target_data["wallclock"].append(wallclock)
+                # get memory usage strings
+                kbstring = str(body[9]).strip("b'\\t")
+                kb = str(kbstring).replace("Maximum resident set size (kbytes): ", "")
+                target_data["memory"].append(kb)
+            else:
+                print(f"log status has non-zero value: {status}")
+                log_error += 1 # processing error status (bad data) 
+        else:
+            log_error = -1 # log file missing or inaccessible
+         
+    print(f"{ipst}: {target_data}")
+    return target_data, log_error
 
 
 def calculate_bin(memory):
@@ -282,11 +286,11 @@ def get_ddb_table(table_name):
             TableName=table_name,
             KeySchema=[
                 {"AttributeName": "ipppssoot", "KeyType": "HASH"},  # Partition key
-                {"AttributeName": "timestamp", "KeyType": "RANGE"},  # Sort key
+                #{"AttributeName": "timestamp", "KeyType": "RANGE"},  # Sort key
             ],
             AttributeDefinitions=[
                 {"AttributeName": "ipppssoot", "AttributeType": "S"},
-                {"AttributeName": "timestamp", "AttributeType": "N"},
+                #{"AttributeName": "timestamp", "AttributeType": "N"},
             ],
             ProvisionedThroughput={"ReadCapacityUnits": 10, "WriteCapacityUnits": 10},
         )
@@ -315,6 +319,7 @@ def create_payload(ipst, features, targets, timestamp):
     }
 
     ddb_payload = json.loads(json.dumps(data, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
+    pprint(ddb_payload, sort_dicts=False, indent=2)
     return ddb_payload
 
 
@@ -328,13 +333,13 @@ def put_job_data(ddb_payload, table_name):
 def lambda_handler(event, context=None):
     start = time.time()
     print_timestamp(start, "all", 0)
-    print("Received event: " + json.dumps(event, indent=2))
+    #print("Received event: " + json.dumps(event, indent=2))
     event_time = event['Records'][0]['eventTime'].split('.')[0]
     bucket_name = event['Records'][0]['s3']['bucket']['name']
     key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8') # messages/processed-iaao11ofq.trigger
     ipst = key.split('-')[-1].split('.')[0]
     timestamp = dt.datetime.fromisoformat(event_time).timestamp()
-    table_name = "HST_data"
+    table_name = "calcloud-hst-data"
     features = scrape_features(ipst, bucket_name)
     targets = scrape_targets(ipst, bucket_name)
     ddb_payload = create_payload(ipst, features, targets, timestamp)
