@@ -56,4 +56,5 @@ resource "aws_lambda_permission" "allow_bucket_rescueLambda" {
   function_name = module.calcloud_lambda_rescueJob.this_lambda_function_arn
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.calcloud.arn
+  source_account = data.aws_caller_identity.this.account_id
 }
