@@ -21,13 +21,19 @@ from . import io
 """ ----- PREPROCESSING ----- """
 
 
-def combine_datasets(F, T, P, dropnans=1, load_from_csv=False):
-    """Pass in dataframes directly or csv file paths to features, targets and predictions"""
-    if load_from_csv is True:
-        # load files from csv
-        F = pd.read_csv(F, index_col="ipst")
-        T = pd.read_csv(T, index_col="ipst")
-        P = pd.read_csv(P, index_col="ipst")
+def combine_s3_datasets(keys, dropnans=1):
+    """Pass in a list of dataframes or local csv filepaths for features, targets and predictions (must be in that order).
+    args:
+    `keys` (list): [features_df, targets_df, preds_df] or ['features.csv', 'targets.csv', 'preds.csv']
+    `dropnans` (default=1)
+    0: leave data as is (do not remove NaNs)
+    1: drop NaNs from features+targets
+    2: drop NaNs from features+targets+preds
+    """
+    # load files from csv
+    F = pd.read_csv(keys[0], index_col="ipst")
+    T = pd.read_csv(keys[1], index_col="ipst")
+    P = pd.read_csv(keys[2], index_col="ipst")
     # print data summaries
     print("Features: ", len(F))
     print("Targets: ", len(T))
@@ -102,32 +108,35 @@ def update_power_transform(df):
     return df, pt_transform
 
 
-def preprocess(F, T, P, bucket_mod, prefix, download=False):
-    # STEP 5: MAKE TRAINING SET - single df for ingested data
-    if download is True:
-        keys = [F, T, P]
+def preprocess(bucket_mod, prefix, src, table_name, filter):
+    # MAKE TRAINING SET - single df for ingested data
+    master_data = None  # for now only affects s3 data source
+    if src == "ddb":  # dynamodb 'calcloud-hst-data'
+        ddb_data = io.ddb_download(table_name, filter)
+        # write to csv
+        io.write_to_csv(ddb_data, "batch.csv")
+    elif src == "s3":
+        keys = ["features.csv", "targets.csv", "preds.csv"]
         io.s3_download(keys, bucket_mod, prefix)
-        load_from_csv = True
-    else:
-        load_from_csv = False
-    df = combine_datasets(F, T, P, dropnans=1, load_from_csv=load_from_csv)
-    io.s3_upload(["batch.csv"], bucket_mod, prefix)
-    # get previous training data from s3
-    master_data = None
-    try:
-        io.s3_download(["master.csv"], bucket_mod, "latest")
-        master_data = pd.read_csv("master.csv", index_col="ipst")
-    except Exception as e:
-        print("Master dataset not found in s3.")
-        print(e)
-    # combine previous with new data
+        df = combine_s3_datasets(keys, dropnans=1)
+        io.s3_upload(["batch.csv"], bucket_mod, prefix)
+        # get previous training data from s3
+        try:
+            io.s3_download(["master.csv"], bucket_mod, "latest")
+            master_data = pd.read_csv("master.csv", index_col="ipst")
+        except Exception as e:
+            print("Master dataset not found in s3.")
+            print(e)
+        # combine previous with new data
     df = combine_training_sets(df, master_data)
     # update power transform
     df, pt_transform = update_power_transform(df)
     io.save_dataframe(df, "latest.csv")
-    keys = io.save_dict({"pt_transform": pt_transform}, "latest.csv")
-    # save csv / upload to s3
-    io.s3_upload(keys, bucket_mod, prefix)  # bucket/time/data/latest.csv
+    if src == "s3":  # save pt metadata and updated dataframe
+        keys = io.save_dict({"pt_transform": pt_transform}, "latest.csv")
+    else:  # (DDB) save just pt metadata
+        keys = io.save_dict({"pt_transform": pt_transform})
+    io.s3_upload(keys, bucket_mod, prefix)
     return df
 
 
@@ -540,8 +549,9 @@ def train_models(df, bucket_mod, data_path, opt, mod, verbose):
         "memory": train_memory_regressor(df, mem_reg, bucket_mod, data_path, verbose),
         "wallclock": train_wallclock_regressor(df, wall_reg, bucket_mod, data_path, verbose),
     }
-    for m in models:
-        pipeline[m]
+    for target in pipeline.keys():
+        if target in models:
+            pipeline[target]
 
 
 if __name__ == "__main__":
@@ -567,12 +577,15 @@ if __name__ == "__main__":
     scrapetime = os.environ.get("SCRAPETIME", "now")  # final log event time
     hr_delta = int(os.environ.get("HRDELTA", 1))  # how far back in time to start
     verbose = os.environ.get("VERBOSE", 0)
+    src = os.environ.get("DATASOURCE", "ddb")
+    table_name = os.environ.get("DDBTABLE", "calcloud-hst-data")
+    filter = os.environ.get("DDBFILTER", None)
     t0, data_path = io.get_paths(scrapetime, hr_delta)
     home = os.path.join(os.getcwd(), data_path)
     prefix = f"{data_path}/data"
     os.makedirs(prefix, exist_ok=True)
     os.chdir(prefix)
-    df = preprocess("features.csv", "targets.csv", "preds.csv", bucket_mod, prefix, download=True)
+    df = preprocess(bucket_mod, prefix, src, table_name, filter)
     os.chdir(home)
     train_models(df, bucket_mod, data_path, opt, mod, verbose)
     io.zip_models("./models", zipname="models.zip")
