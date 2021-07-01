@@ -4,13 +4,14 @@ from botocore.config import Config
 import datetime as dt
 from datetime import timedelta
 import json
+import csv
 import numpy as np
 import zipfile
 
 # mitigation of potential API rate restrictions (esp for Batch API)
-retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
+retry_config = Config(retries={"max_attempts": 5})
 client = boto3.client("s3", config=retry_config)
-
+dynamodb = boto3.resource("dynamodb", config=retry_config, region_name="us-east-1")
 
 """ ----- FILE I/O OPS ----- """
 
@@ -41,6 +42,50 @@ def proc_time(start, end):
         return f"{proc_time} minutes."
     else:
         return f"{duration} seconds."
+
+
+def get_keys(items):
+    keys = set([])
+    for item in items:
+        keys = keys.union(set(item.keys())) 
+    return keys
+
+
+def ddb_download(table_name):
+    """retrieves data from dynamodb
+    Default subset is None: download all data
+    To filter the query, pass a timestamp (int) to subset arg
+    """
+    table = dynamodb.Table(table_name)
+    key_set = ['ipst']
+    raw_data = table.scan()
+    if raw_data is None:
+        return None
+    items = raw_data['Items']
+    fieldnames = set([]).union(get_keys(items))
+    
+    while raw_data.get('LastEvaluatedKey'):
+        print('Downloading ', end='')
+        raw_data = table.scan(ExclusiveStartKey=raw_data['LastEvaluatedKey'])
+        items.extend(raw_data['Items'])
+        fieldnames - fieldnames.union(get_keys(items))
+ 
+    print("\nTotal downloaded records: {}".format(len(items)))
+    for f in fieldnames:
+        if f not in key_set:
+            key_set.append(f)
+    ddb_data = {'items': items, 'keys': key_set}
+    return ddb_data
+
+
+def write_to_csv(ddb_data, filename=None):
+    if filename is None:
+        filename = 'batch.csv'
+    with open(filename, 'w') as csvfile:
+        writer = csv.DictWriter(csvfile, delimiter=',', fieldnames=ddb_data['keys'], quotechar='"')
+        writer.writeheader()
+        writer.writerows(ddb_data['items'])
+    print(f"DDB data saved to: {filename}")
 
 
 def save_to_file(data_dict):

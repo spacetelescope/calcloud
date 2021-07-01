@@ -141,6 +141,7 @@ def transformer(inputs):
     # apply power transformer normalization to continuous vars
     x = np.array([[n_files], [total_mb]]).reshape(1, -1)
     pt = PowerTransformer(standardize=False)
+    # TODO: get pt.lambdas vals from s3 calcloud-modeling/latest
     pt.lambdas_ = np.array([-1.51, -0.12])
     xt = pt.transform(x)
     # normalization (zero mean, unit variance)
@@ -287,11 +288,9 @@ def get_ddb_table(table_name):
                 TableName=table_name,
                 KeySchema=[
                     {"AttributeName": "ipppssoot", "KeyType": "HASH"},  # Partition key
-                    #{"AttributeName": "timestamp", "KeyType": "RANGE"},  # Sort key
                 ],
                 AttributeDefinitions=[
                     {"AttributeName": "ipppssoot", "AttributeType": "S"},
-                    #{"AttributeName": "timestamp", "AttributeType": "N"},
                 ],
                 ProvisionedThroughput={"ReadCapacityUnits": 10, "WriteCapacityUnits": 10},
             )
