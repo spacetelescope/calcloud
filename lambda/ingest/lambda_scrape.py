@@ -286,10 +286,10 @@ def get_ddb_table(table_name):
             table = dynamodb.create_table(
                 TableName=table_name,
                 KeySchema=[
-                    {"AttributeName": "ipppssoot", "KeyType": "HASH"},  # Partition key
+                    {"AttributeName": "ipst", "KeyType": "HASH"},  # Partition key
                 ],
                 AttributeDefinitions=[
-                    {"AttributeName": "ipppssoot", "AttributeType": "S"},
+                    {"AttributeName": "ipst", "AttributeType": "S"},
                 ],
                 ProvisionedThroughput={"ReadCapacityUnits": 10, "WriteCapacityUnits": 10},
             )
@@ -302,7 +302,7 @@ def get_ddb_table(table_name):
 def create_payload(ipst, features, targets, timestamp):
     """Converts numpy values into JSON-friendly formatting."""
     data = {
-        "ipppssoot": str(ipst),
+        "ipst": str(ipst),
         "timestamp": int(timestamp),
         "x_files": float(features["x_files"]),
         "x_size": float(features["x_size"]),
