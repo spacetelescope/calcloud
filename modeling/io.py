@@ -47,7 +47,7 @@ def proc_time(start, end):
 def get_keys(items):
     keys = set([])
     for item in items:
-        keys = keys.union(set(item.keys())) 
+        keys = keys.union(set(item.keys()))
     return keys
 
 
@@ -57,34 +57,34 @@ def ddb_download(table_name):
     To filter the query, pass a timestamp (int) to subset arg
     """
     table = dynamodb.Table(table_name)
-    key_set = ['ipst']
+    key_set = ["ipst"]
     raw_data = table.scan()
     if raw_data is None:
         return None
-    items = raw_data['Items']
+    items = raw_data["Items"]
     fieldnames = set([]).union(get_keys(items))
-    
-    while raw_data.get('LastEvaluatedKey'):
-        print('Downloading ', end='')
-        raw_data = table.scan(ExclusiveStartKey=raw_data['LastEvaluatedKey'])
-        items.extend(raw_data['Items'])
+
+    while raw_data.get("LastEvaluatedKey"):
+        print("Downloading ", end="")
+        raw_data = table.scan(ExclusiveStartKey=raw_data["LastEvaluatedKey"])
+        items.extend(raw_data["Items"])
         fieldnames - fieldnames.union(get_keys(items))
- 
+
     print("\nTotal downloaded records: {}".format(len(items)))
     for f in fieldnames:
         if f not in key_set:
             key_set.append(f)
-    ddb_data = {'items': items, 'keys': key_set}
+    ddb_data = {"items": items, "keys": key_set}
     return ddb_data
 
 
 def write_to_csv(ddb_data, filename=None):
     if filename is None:
-        filename = 'batch.csv'
-    with open(filename, 'w') as csvfile:
-        writer = csv.DictWriter(csvfile, delimiter=',', fieldnames=ddb_data['keys'], quotechar='"')
+        filename = "batch.csv"
+    with open(filename, "w") as csvfile:
+        writer = csv.DictWriter(csvfile, delimiter=",", fieldnames=ddb_data["keys"], quotechar='"')
         writer.writeheader()
-        writer.writerows(ddb_data['items'])
+        writer.writerows(ddb_data["items"])
     print(f"DDB data saved to: {filename}")
 
 

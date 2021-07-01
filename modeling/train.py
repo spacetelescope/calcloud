@@ -28,7 +28,7 @@ def combine_s3_datasets(keys, dropnans=1):
     `dropnans` (default=1)
     0: leave data as is (do not remove NaNs)
     1: drop NaNs from features+targets
-    2: drop NaNs from features+targets+preds 
+    2: drop NaNs from features+targets+preds
     """
     # load files from csv
     F = pd.read_csv(keys[0], index_col="ipst")
@@ -110,13 +110,13 @@ def update_power_transform(df):
 
 def preprocess(bucket_mod, prefix, src, table_name, filter):
     # MAKE TRAINING SET - single df for ingested data
-    master_data = None # for now only affects s3 data source
-    if src == 'ddb': #dynamodb 'calcloud-hst-data'
+    master_data = None  # for now only affects s3 data source
+    if src == "ddb":  # dynamodb 'calcloud-hst-data'
         ddb_data = io.ddb_download(table_name, filter)
         # write to csv
-        io.write_to_csv(ddb_data, 'batch.csv')
-    elif src == 's3':
-        keys = ['features.csv', 'targets.csv', 'preds.csv']
+        io.write_to_csv(ddb_data, "batch.csv")
+    elif src == "s3":
+        keys = ["features.csv", "targets.csv", "preds.csv"]
         io.s3_download(keys, bucket_mod, prefix)
         df = combine_s3_datasets(keys, dropnans=1)
         io.s3_upload(["batch.csv"], bucket_mod, prefix)
@@ -132,9 +132,9 @@ def preprocess(bucket_mod, prefix, src, table_name, filter):
     # update power transform
     df, pt_transform = update_power_transform(df)
     io.save_dataframe(df, "latest.csv")
-    if src == 's3': # save pt metadata and updated dataframe
+    if src == "s3":  # save pt metadata and updated dataframe
         keys = io.save_dict({"pt_transform": pt_transform}, "latest.csv")
-    else: # (DDB) save just pt metadata
+    else:  # (DDB) save just pt metadata
         keys = io.save_dict({"pt_transform": pt_transform})
     io.s3_upload(keys, bucket_mod, prefix)
     return df

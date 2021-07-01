@@ -1,6 +1,5 @@
 import boto3
 from botocore.config import Config
-import os
 import sys
 import numpy as np
 import datetime as dt
@@ -215,10 +214,10 @@ def get_target_data(ipst, bucket_name):
                 target_data["memory"].append(kb)
             else:
                 print(f"log status has non-zero value: {status}")
-                log_error += 1 # processing error status (bad data) 
+                log_error += 1  # processing error status (bad data)
         else:
-            log_error = -1 # log file missing or inaccessible
-         
+            log_error = -1  # log file missing or inaccessible
+
     print(f"{ipst}: {target_data}")
     return target_data, log_error
 
@@ -336,11 +335,13 @@ def lambda_handler(event, context=None):
     start = time.time()
     table = get_ddb_table("calcloud-hst-data")
     print_timestamp(start, "all", 0)
-    #print("Received event: " + json.dumps(event, indent=2))
-    event_time = event['Records'][0]['eventTime'].split('.')[0]
-    bucket_name = event['Records'][0]['s3']['bucket']['name']
-    key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'], encoding='utf-8') # messages/processed-iaao11ofq.trigger
-    ipst = key.split('-')[-1].split('.')[0]
+    # print("Received event: " + json.dumps(event, indent=2))
+    event_time = event["Records"][0]["eventTime"].split(".")[0]
+    bucket_name = event["Records"][0]["s3"]["bucket"]["name"]
+    key = urllib.parse.unquote_plus(
+        event["Records"][0]["s3"]["object"]["key"], encoding="utf-8"
+    )  # messages/processed-iaao11ofq.trigger
+    ipst = key.split("-")[-1].split(".")[0]
     timestamp = dt.datetime.fromisoformat(event_time).timestamp()
     features = scrape_features(ipst, bucket_name)
     targets = scrape_targets(ipst, bucket_name)
