@@ -262,6 +262,12 @@ Blackboard
 ==========
 The data processing operations team at STSci maintains a database of metadata for every processing job of every dataset. In order to communicate that information from AWS to the on-premise system, a lambda function is run on a schedule (triggered by a cloudwatch event) to scrape the AWS Batch console with boto3 API calls. An ascii table is then uploaded to S3, which is copied on-premise by the storage gateway. A poller on-premise ingests the file into the database. 
 
+This metadata is used in GUI applications for science operations staff to monitor job status. In AWS Batch, jobs are only guaranteed to persist in the AWS Batch console for 24 hours. If 20k jobs run over the weekend, monitoring that many jobs can become difficult without persisting this information. It also provides staff with an historical record of the number of jobs that are run in a typical timeframe, and the amount of CPU hours required. 
+
+In our current implementation, the blackboard lambda runs on a 7 minute schedule. 7 minutes was chosen so as not to overlap with the storage gateway cache refresh operations, which are scheduled for submission every 5 minutes; we have observed the blackboard ascii file becoming corrupted in the on-premise NFS mount when the schedules line up at 5 minutes. The on-premise poller again runs on a schedule of a ~few minutes, so ultimately the on-premise database can be up to ~15 minutes behind the true AWS Batch Job status.
+
+To speed up this sync, we could capture Batch state change events in CloudWatch and send them to lambda for ingestion into a dynamodb, which could then be either hooked up directly to the GUIs, or replicated in a more efficient fashion to the on-prem databases. 
+
 
 Job Memory Model
 ================
