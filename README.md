@@ -260,6 +260,7 @@ These are distinguished as either "retryable" or "not retryable".
 
 Blackboard
 ==========
+The data processing operations team at STSci maintains a database of metadata for every processing job of every dataset. In order to communicate that information from AWS to the on-premise system, a lambda function is run on a schedule (triggered by a cloudwatch event) to scrape the AWS Batch console with boto3 API calls. An ascii table is then uploaded to S3, which is copied on-premise by the storage gateway. A poller on-premise ingests the file into the database. 
 
 
 Job Memory Model
