@@ -20,7 +20,7 @@ resource "aws_batch_compute_environment" "model_compute_env" {
     tags = {}
     subnets             = local.batch_subnet_ids
     security_group_ids  = local.batch_sgs
-    instance_ttrain= ["c5a.2xlarge"]
+    instance_type = ["c5a.2xlarge"]
     max_vcpus = 8
     min_vcpus = 0
     desired_vcpus = 0
@@ -43,7 +43,7 @@ resource "aws_batch_job_definition" "model_job_def_main" {
       {"name": "TIMESTAMP", "value": "now"},
       {"name": "VERBOSE", "value": "0"},
       {"name": "DATASOURCE", "value": "ddb"},
-      {"name": "DDBTABLE", "value": "calcloud-hst-db"},
+      {"name": "DDBTABLE", "value": "calcloud-hst-db"}
     ],
     "image": "${local.ecr_model_training_image}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
