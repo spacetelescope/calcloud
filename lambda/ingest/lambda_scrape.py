@@ -1,6 +1,7 @@
 import boto3
 from botocore.config import Config
 import sys
+import os
 import numpy as np
 import datetime as dt
 import time
@@ -14,7 +15,6 @@ import urllib.parse
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
 s3 = boto3.resource("s3", config=retry_config)
 client = boto3.client("s3", config=retry_config)
-ddb = boto3.client("dynamodb", region_name="us-east-1")
 dynamodb = boto3.resource("dynamodb", config=retry_config, region_name="us-east-1")
 
 
@@ -276,29 +276,6 @@ def scrape_targets(ipst, bucket_proc):
 # ******** DYNAMODB
 
 
-def get_ddb_table(table_name):
-    """Looks for existing DynamoDB table otherwise it creates a new one. Creation of a table should only occur once for each AWS env, after that only the existing table is updated."""
-    existing_tables = ddb.list_tables()["TableNames"]
-    if table_name in existing_tables:
-        table = dynamodb.Table(table_name)
-    else:
-        try:
-            table = dynamodb.create_table(
-                TableName=table_name,
-                KeySchema=[
-                    {"AttributeName": "ipst", "KeyType": "HASH"},  # Partition key
-                ],
-                AttributeDefinitions=[
-                    {"AttributeName": "ipst", "AttributeType": "S"},
-                ],
-                ProvisionedThroughput={"ReadCapacityUnits": 10, "WriteCapacityUnits": 10},
-            )
-        except Exception as e:
-            print(e)
-            table = dynamodb.Table(table_name)
-    return table
-
-
 def create_payload(ipst, features, targets, timestamp):
     """Converts numpy values into JSON-friendly formatting."""
     data = {
@@ -325,15 +302,17 @@ def create_payload(ipst, features, targets, timestamp):
     return ddb_payload
 
 
-def put_job_data(ddb_payload, table):
+def put_job_data(ddb_payload, table_name):
     """Gets (or creates) DynamoDB table and puts JSON-formatted job data into the database."""
+    table = dynamodb.Table(table_name)
     response = table.put_item(Item=ddb_payload)
     return response
 
 
 def lambda_handler(event, context=None):
     start = time.time()
-    table = get_ddb_table("calcloud-hst-data")
+    table_name = os.environ.get("DDBTABLE", "calcloud-hst-db")
+    #table = get_ddb_table("calcloud-hst-data")
     print_timestamp(start, "all", 0)
     # print("Received event: " + json.dumps(event, indent=2))
     event_time = event["Records"][0]["eventTime"].split(".")[0]
@@ -346,7 +325,7 @@ def lambda_handler(event, context=None):
     features = scrape_features(ipst, bucket_name)
     targets = scrape_targets(ipst, bucket_name)
     ddb_payload = create_payload(ipst, features, targets, timestamp)
-    job_resp = put_job_data(ddb_payload, table)
+    job_resp = put_job_data(ddb_payload, table_name)
     print("Put job data succeeded:")
     pprint(job_resp, sort_dicts=False)
     end = time.time()

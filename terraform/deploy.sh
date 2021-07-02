@@ -86,8 +86,7 @@ awsudo $ADMIN_ARN aws s3api put-object --bucket calcloud-modeling-${aws_env} --k
 rm -rf lambda-env
 
 # initial terraform setup
-cd ../../terraform
-#cd ${CALCLOUD_BUILD_DIR}/terraform
+cd ${CALCLOUD_BUILD_DIR}/terraform
 
 # terraform init and s3 state backend config
 awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
