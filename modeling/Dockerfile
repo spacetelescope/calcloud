@@ -40,5 +40,5 @@ RUN DEBIAN_FRONTEND=noninteractive \
 WORKDIR /home/developer
 COPY requirements.txt ./
 RUN python -m pip install --upgrade pip && python -m pip install -r requirements.txt && mkdir -p /home/developer/modeling
-ADD main.py io.py ingest.py train.py ./modeling/
-CMD ["python", "-m", "modeling.main"]
+ADD io.py train.py ./modeling/
+CMD ["python", "-m", "modeling.train"]

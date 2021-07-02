@@ -108,12 +108,11 @@ def update_power_transform(df):
     return df, pt_transform
 
 
-def preprocess(bucket_mod, prefix, src, table_name, filter):
+def preprocess(bucket_mod, prefix, src, table_name):
     # MAKE TRAINING SET - single df for ingested data
     master_data = None  # for now only affects s3 data source
     if src == "ddb":  # dynamodb 'calcloud-hst-data'
-        ddb_data = io.ddb_download(table_name, filter)
-        # write to csv
+        ddb_data = io.ddb_download(table_name)
         io.write_to_csv(ddb_data, "batch.csv")
     elif src == "s3":
         keys = ["features.csv", "targets.csv", "preds.csv"]
@@ -574,18 +573,16 @@ if __name__ == "__main__":
         mod = "all"
     print("flags:", [opt, mod])
     bucket_mod = os.environ.get("S3MOD", "calcloud-modeling-sb")
-    scrapetime = os.environ.get("SCRAPETIME", "now")  # final log event time
-    hr_delta = int(os.environ.get("HRDELTA", 1))  # how far back in time to start
+    timestamp = os.environ.get("TIMESTAMP", "now")  # final log event time
     verbose = os.environ.get("VERBOSE", 0)
     src = os.environ.get("DATASOURCE", "ddb")
-    table_name = os.environ.get("DDBTABLE", "calcloud-hst-data")
-    filter = os.environ.get("DDBFILTER", None)
-    t0, data_path = io.get_paths(scrapetime, hr_delta)
+    table_name = os.environ.get("DDBTABLE", "calcloud-hst-db")
+    data_path = io.get_paths(timestamp)
     home = os.path.join(os.getcwd(), data_path)
     prefix = f"{data_path}/data"
     os.makedirs(prefix, exist_ok=True)
     os.chdir(prefix)
-    df = preprocess(bucket_mod, prefix, src, table_name, filter)
+    df = preprocess(bucket_mod, prefix, src, table_name)
     os.chdir(home)
     train_models(df, bucket_mod, data_path, opt, mod, verbose)
     io.zip_models("./models", zipname="models.zip")
