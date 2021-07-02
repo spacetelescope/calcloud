@@ -2,11 +2,11 @@ import os
 import boto3
 from botocore.config import Config
 import datetime as dt
-from datetime import timedelta
 import json
 import csv
 import numpy as np
 import zipfile
+from boto3.dynamodb.conditions import Attr
 
 # mitigation of potential API rate restrictions (esp for Batch API)
 retry_config = Config(retries={"max_attempts": 5})
@@ -16,21 +16,21 @@ dynamodb = boto3.resource("dynamodb", config=retry_config, region_name="us-east-
 """ ----- FILE I/O OPS ----- """
 
 
-def get_paths(scrapetime, hr_delta):
-    if scrapetime == "now":
-        end_time = dt.datetime.now()
-    elif isinstance(scrapetime, str):
-        end_time = dt.datetime.fromisoformat(scrapetime)
-    elif isinstance(int) or isinstance(float):
-        end_time = dt.datetime.fromtimestamp(scrapetime)
+def get_paths(timestamp):
+    if timestamp == "now":
+        train_time = dt.datetime.now()
+    elif isinstance(timestamp, str):
+        train_time = dt.datetime.fromisoformat(timestamp)
+    elif isinstance(timestamp, int) or isinstance(timestamp, float):
+        train_time = dt.datetime.fromtimestamp(timestamp)
     else:
         print(
-            f"scrapetime type must be a string (datetime, isoformat) or int/float (timestamp). You passed {type(scrapetime)}."
+            f"Timestamp type must be a string (datetime, isoformat) or int/float (timestamp). You passed {type(timestamp)}."
         )
         raise ValueError
-    t0 = (end_time - timedelta(hours=hr_delta)).timestamp()
+    t0 = train_time.timestamp()
     data_path = f"{dt.date.fromtimestamp(t0).isoformat()}-{str(int(t0))}"
-    return t0, data_path
+    return data_path
 
 
 def proc_time(start, end):
@@ -54,7 +54,8 @@ def get_keys(items):
 def ddb_download(table_name):
     """retrieves data from dynamodb
     Default subset is None: download all data
-    To filter the query, pass a timestamp (int) to subset arg
+    To query a subset, pass filter expression values (dict)
+    Ex: filter = {'attribute': 'timestamp', ''}
     """
     table = dynamodb.Table(table_name)
     key_set = ["ipst"]

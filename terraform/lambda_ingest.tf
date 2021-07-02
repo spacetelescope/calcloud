@@ -10,11 +10,6 @@ resource "aws_dynamodb_table" "calcloud_hst_db" {
     type = "S"
   }
 
-  ttl {
-    attribute_name = "TimeToExist"
-    enabled        = false
-  }
-
   tags = {
     Name        = "calcloud-hst-db"
     Environment = "${local.environment}"
@@ -56,4 +51,5 @@ resource "aws_lambda_permission" "allow_bucket_ingestLambda" {
   function_name = module.calcloud_lambda_ingest.this_lambda_function_arn
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.calcloud.arn
+  source_account = data.aws_caller_identity.this.account_id
 }

@@ -312,7 +312,7 @@ def put_job_data(ddb_payload, table_name):
 def lambda_handler(event, context=None):
     start = time.time()
     table_name = os.environ.get("DDBTABLE", "calcloud-hst-db")
-    #table = get_ddb_table("calcloud-hst-data")
+    # table = get_ddb_table("calcloud-hst-data")
     print_timestamp(start, "all", 0)
     # print("Received event: " + json.dumps(event, indent=2))
     event_time = event["Records"][0]["eventTime"].split(".")[0]
