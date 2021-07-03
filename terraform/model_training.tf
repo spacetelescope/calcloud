@@ -37,15 +37,13 @@ resource "aws_batch_job_definition" "model_job_def_main" {
   type                 = "container"
   container_properties = <<CONTAINER_PROPERTIES
   {
-    "command": ["python", "-m", "modeling.main"],
+    "command": ["python", "-m", "modeling.train"],
     "environment": [
       {"name": "S3MOD", "value": "calcloud-modeling${local.environment}"},
-      {"name": "S3PROC", "value": "${aws_s3_bucket.calcloud.bucket}"},
-      {"name": "LOGPRED", "value": "/aws/lambda/calcloud-job-predict${local.environment}"},
-      {"name": "SCRAPETIME", "value": "now"},
-      {"name": "HRDELTA", "value": "24"},
-      {"name": "MINS", "value": "1440"},
-      {"name": "VERBOSE", "value": "0"}
+      {"name": "TIMESTAMP", "value": "now"},
+      {"name": "VERBOSE", "value": "0"},
+      {"name": "DATASOURCE", "value": "ddb"},
+      {"name": "DDBTABLE", "value": "calcloud-hst-db"}
     ],
     "image": "${local.ecr_model_training_image}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
