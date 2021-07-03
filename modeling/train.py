@@ -114,12 +114,13 @@ def preprocess(bucket_mod, prefix, src, table_name):
     if src == "ddb":  # dynamodb 'calcloud-hst-data'
         ddb_data = io.ddb_download(table_name)
         io.write_to_csv(ddb_data, "batch.csv")
+        df = pd.read_csv("batch.csv", index_col="ipst")
     elif src == "s3":
         keys = ["features.csv", "targets.csv", "preds.csv"]
         io.s3_download(keys, bucket_mod, prefix)
         df = combine_s3_datasets(keys, dropnans=1)
         io.s3_upload(["batch.csv"], bucket_mod, prefix)
-        # get previous training data from s3
+        master_data = None
         try:
             io.s3_download(["master.csv"], bucket_mod, "latest")
             master_data = pd.read_csv("master.csv", index_col="ipst")
