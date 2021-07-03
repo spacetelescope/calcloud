@@ -68,26 +68,8 @@ aws_tfstate=${aws_tfstate_response##*:}
 aws_tfstate=`echo $aws_tfstate | tr -d '",'`
 echo $aws_tfstate
 
-# create zip archive for data ingestion lambda environment
-cd ${CALCLOUD_BUILD_DIR}/lambda/ingest
-pip install virtualenv
-python_version="python`python --version | tr -d 'Python ' | cut -c1-3`"
-echo $python_version
-python -m virtualenv lambda-env
-source lambda-env/bin/activate
-pip install numpy sklearn
-deactivate
-cd lambda-env/lib/${python_version}/site-packages
-zip -x "*.pyc" -r ../../../../calcloud-ingest.zip .
-cd ../../../../
-zip -g calcloud-ingest.zip lambda_scrape.py
-awsudo $ADMIN_ARN aws s3api put-object --bucket calcloud-modeling-${aws_env} --key lambda/calcloud-ingest.zip --body calcloud-ingest.zip
-
-rm -rf lambda-env
-
 # initial terraform setup
-cd ../../terraform
-#cd ${CALCLOUD_BUILD_DIR}/terraform
+cd ${CALCLOUD_BUILD_DIR}/terraform
 
 # terraform init and s3 state backend config
 awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
@@ -148,7 +130,6 @@ awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[1]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[2]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[3]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
-awsudo $ADMIN_ARN terraform taint module.calcloud_lambda_ingest.aws_lambda_function.this[0]
 
 # manual confirmation required
 awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}"
