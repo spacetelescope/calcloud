@@ -45,6 +45,59 @@ completed jobs.
 6. Delivering key CalCloud / AWS Batch status via a blackboard file to the on
 premise OWL GUI where it is displayed for operators.
 
+Development cycle and CI
+==========================
+
+Gitflow
+-------
+
+This repository is organized under the [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow)
+model. Feature branches can be PR'ed into `develop` from forks. To the extent that 
+is reasonable, developers should follow these tenets of the Gitflow model:
+
+- feature branches should be started off of `develop`, and PR'ed back into `develop`
+- release candidates should branch off of `develop`, be PR'ed into `main`, and
+  merged back into `develop` during final release.
+- hotfixes should branch off of `main`, be PR'ed back to `main`, and be merged back 
+  to `develop` after release.
+
+While developers are free to work on features in their forks, it is preferred for releases
+and hotfixes to be prepared via branches on the primary repository.
+
+Our github action workflow `merge-main-to-develop` runs after any push to `main`, 
+(which automatically includes merged PR's). In practice this is a slight deviation 
+from Gitflow, which would merge the release or hotfix branch into `develop`. However, 
+due to the nature of github action permissions, the github action triggered by a PR from 
+a fork does not have sufficient scope to perform that secondary merge directly from the 
+PR commit. This security limitation would require a personal access token of an admin to 
+be added to the account to allow github actions to merge. By merging from `main` right 
+after push, the github action has sufficient privilege to push to `develop`. The 
+implication being that the security of code added via PR from a fork falls on the 
+administrators of this project, and is not inadvertently circumvented via github action 
+elevated privileges.
+
+Github Actions
+--------------
+The calcloud repo is set up for GitHub Actions with the following workflows:
+
+- code checks:  flake8, black, and bandit checks
+
+Whenever you do a PR or merge to spacetelescope/calcloud, GitHub will
+automatically run CI tests for calcloud.
+
+Additionally, there are several workflows that aid in managing the 
+[Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow)
+workflow.
+
+- tag-latest: automatically tags the latest commit to `develop` as `latest`
+- tag-stable: automatically tags the latest commit to `main` as `stable`
+- merge-main-to-develop: merges `main` back down to `develop` after any push to `main`
+- check-merge-main2develop: checks for merge failures with `develop`, for any PR to `main`. 
+  For information only; indicates that manual merge conflict resolution may be required 
+  to merge this PR back into `develop`. Not intended to block PR resolution, and no attempt 
+  to resolve the conflict is needed prior to merging `main`.
+
+
 Architecture
 ============
 
