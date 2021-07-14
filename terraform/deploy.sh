@@ -3,9 +3,9 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="0.4.23"
-CALDP_VER="0.2.12"
-CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210505_CAL_final"
+CALCLOUD_VER="0.4.23-rc1"
+CALDP_VER="0.2.13-rc1"
+CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_acsflash_dark_wfc3ir_CAL_rc1"
 
 # this is the tag that the image will have in AWS ECR
 CALDP_IMAGE_TAG="latest"
@@ -32,12 +32,11 @@ TMP_INSTALL_DIR="/tmp/calcloud_install"
 if [ -z "${CALCLOUD_BUILD_DIR}" ]
 then
     mkdir -p $TMP_INSTALL_DIR
-    CALCLOUD_BUILD_DIR="${TMP_INSTALL_DIR}/calcloud-$CALCLOUD_VER"
+    CALCLOUD_BUILD_DIR="${TMP_INSTALL_DIR}/calcloud"
     # calcloud source download/unpack
     cd $TMP_INSTALL_DIR
-    wget "https://github.com/spacetelescope/calcloud/archive/v$CALCLOUD_VER.tar.gz"
-    tar -xvzf "v$CALCLOUD_VER.tar.gz"
-    rm "v$CALCLOUD_VER.tar.gz"  
+    git clone https://github.com/spacetelescope/calcloud.git
+    cd calcloud && git fetch --all --tags && git checkout tags/v${CALCLOUD_VER} && cd ..
 fi
 
 # setting up the caldp source dir if it needs downloaded
