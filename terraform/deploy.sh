@@ -84,7 +84,7 @@ repo_url=`echo $repo_url | tr -d '"'`
 
 ##### DOCKER IMAGE BUILDING #########
 CALDP_DOCKER_IMAGE="${repo_url}:${CALDP_IMAGE_TAG}"
-MODEL_DOCKER_IMAGE="${repo_url}:model"
+PREDICT_DOCKER_IMAGE="${repo_url}:predict"
 TRAINING_DOCKER_IMAGE="${repo_url}:training"
 
 # need to "log in" to ecr to push or pull the images
@@ -101,7 +101,7 @@ fi
 
 # jobPredict lambda env
 cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
-set -o pipefail && docker build -f Dockerfile -t "${MODEL_DOCKER_IMAGE}" .
+set -o pipefail && docker build -f Dockerfile -t "${PREDICT_DOCKER_IMAGE}" .
 model_docker_build_status=$?
 if [[ $model_docker_build_status -ne 0 ]]; then
     echo "predict lambda env docker build failed; exiting"
@@ -118,7 +118,7 @@ if [[ $caldp_docker_build_status -ne 0 ]]; then
 fi
 
 docker push ${TRAINING_DOCKER_IMAGE}
-docker push ${MODEL_DOCKER_IMAGE}
+docker push ${PREDICT_DOCKER_IMAGE}
 docker push ${CALDP_DOCKER_IMAGE}
 
 #### PRIMARY TERRAFORM BUILD #####

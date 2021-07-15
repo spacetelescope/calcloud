@@ -62,6 +62,10 @@ data aws_ssm_parameter lambda_refreshCacheSubmit_role {
   name = "/iam/roles/calcloud_lambda_refreshCacheSubmit"
 }
 
+data aws_ssm_parameter model_ingest_role {
+  name = "/iam/roles/calcloud_model_ingest"
+}
+
 data aws_ssm_parameter fs_blackboard_arn {
   name = "/gateway/fileshare/blackboard"
 }

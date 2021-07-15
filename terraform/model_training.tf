@@ -37,13 +37,15 @@ resource "aws_batch_job_definition" "model_job_def_main" {
   type                 = "container"
   container_properties = <<CONTAINER_PROPERTIES
   {
-    "command": ["python", "-m", "modeling.train"],
+    "command": ["python", "-m", "modeling.main"],
     "environment": [
       {"name": "S3MOD", "value": "calcloud-modeling${local.environment}"},
       {"name": "TIMESTAMP", "value": "now"},
       {"name": "VERBOSE", "value": "0"},
       {"name": "DATASOURCE", "value": "ddb"},
-      {"name": "DDBTABLE", "value": "calcloud-hst-db"}
+      {"name": "DDBTABLE", "value": "calcloud-model${local.environment}"},
+      {"name": "KFOLD", "value": "None"},
+      {"name": "ATTR", "value": "None"}
     ],
     "image": "${local.ecr_model_training_image}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",

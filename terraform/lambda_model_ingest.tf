@@ -21,11 +21,9 @@ module "lambda_model_ingest" {
   version = "~> 1.43.0"
 
   function_name = "calcloud-model-ingest${local.environment}"
-
-  #### NEW ROLE NEEDED HERE
+  # ***TEMP*** waiting for new role from ITSD
   lambda_role = nonsensitive(data.aws_ssm_parameter.lambda_predict_role.value)
-  ####
-
+  #lambda_role = nonsensitive(data.aws_ssm_parameter.model_ingest_role.value)
   description   = "looks for processed-ipppssoot.trigger messages, scrapes and uploads completed job data to DynamoDB"
   handler       = "lambda_scrape.lambda_handler"
   runtime       = "python3.8"
