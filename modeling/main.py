@@ -5,7 +5,7 @@ def get_training_config(args):
     valid_opts = ["build", "update"]
     valid_mods = ["all", "mem_bin", "memory", "wallclock"]
     if len(args) > 2:
-        opt, mod = args[1], list(args[2:])
+        opt, mod = args[1], args[2:]
     elif len(args) == 2:
         opt, mod = args[1], ["all"]
     else: # use defaults
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     cross_val = os.environ.get("KFOLD", None) # 'only', 'skip', None or "None"
     src = os.environ.get("DATASOURCE", "ddb") # s3:latest
     table_name = os.environ.get("DDBTABLE", "calcloud-model-sb")
-    attr = os.environ.get("ATTR", None) # retrieve subset from dynamodb
+    attr = os.environ.get("ATTR", "None") # retrieve subset from dynamodb
     # load training date
     data_path = io.get_paths(timestamp)
     home = os.path.join(os.getcwd(), data_path)

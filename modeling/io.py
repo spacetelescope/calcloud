@@ -95,7 +95,7 @@ def ddb_download(table_name, attr=None):
     """
     table = dynamodb.Table(table_name)
     key_set = ["ipst"] # primary key
-    if attr is None or "None":
+    if attr is "None":
         raw_data = table.scan()
     else:
         scan_kwargs = make_fxp(attr)
