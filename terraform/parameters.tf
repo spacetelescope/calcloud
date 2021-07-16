@@ -101,3 +101,7 @@ data aws_ssm_parameter crds_test {
 data aws_ssm_parameter model_bucket {
   name = "/s3/modeling"
 }
+
+data aws_ssm_parameter batch_exec {
+  name = "/iam/roles/batch_exec"
+}
