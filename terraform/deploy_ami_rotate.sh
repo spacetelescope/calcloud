@@ -82,6 +82,7 @@ awsudo $ADMIN_ARN terraform plan -var "environment=${aws_env}" -out ami_rotate.o
     -target aws_batch_compute_environment.compute_env \
     -target aws_batch_job_queue.batch_queue \
     -target aws_batch_job_queue.model_queue \
-    -target aws_launch_template.hstdp
+    -target aws_launch_template.hstdp \
+    -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}"
 
-awsudo $ADMIN_ARN terraform apply -auto-approve "ami_rotate.out"
+awsudo $ADMIN_ARN terraform apply "ami_rotate.out"
