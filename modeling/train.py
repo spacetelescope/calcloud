@@ -68,7 +68,8 @@ def memory_regressor(input_shape=9, layers=[18, 32, 64, 32, 18, 9], input_name="
 
 
 def wallclock_regressor(
-    input_shape=9, layers=[18, 32, 64, 128, 256, 128, 64, 32, 18, 9], input_name="hst_jobs", output_name="wallclock_reg"):
+    input_shape=9, layers=[18, 32, 64, 128, 256, 128, 64, 32, 18, 9], input_name="hst_jobs", output_name="wallclock_reg"
+):
     model = Sequential()
     # visible layer
     inputs = Input(shape=(input_shape,), name=input_name)
@@ -90,7 +91,7 @@ def fit(model, X_train, y_train, X_test, y_test, verbose=1, epochs=60, batch_siz
     validation_data = (X_test, y_test)
     t_start = time.time()
     start = dt.datetime.fromtimestamp(t_start).strftime("%m/%d/%Y - %I:%M:%S %p")
-    model_name = str(model.name_scope().rstrip('/').upper())
+    model_name = str(model.name_scope().rstrip("/").upper())
     print(f"\nTRAINING STARTED: {start} ***{model_name}***")
     history = model.fit(
         X_train,
@@ -99,7 +100,7 @@ def fit(model, X_train, y_train, X_test, y_test, verbose=1, epochs=60, batch_siz
         validation_data=validation_data,
         verbose=verbose,
         epochs=epochs,
-        callbacks=callbacks
+        callbacks=callbacks,
     )
     t_end = time.time()
     end = dt.datetime.fromtimestamp(t_end).strftime("%m/%d/%Y - %I:%M:%S %p")
@@ -212,7 +213,7 @@ def get_resid(preds):
         print("Cost (L2 Norm): ", L2)
     except Exception as e:
         print(e)
-    
+
     res_dict = {"res": res, "zero": res_zero, "over": res_over, "under": res_under, "L2": L2}
 
     print("\n# Exact: ", len(res_zero))
@@ -225,7 +226,9 @@ def get_resid(preds):
 
 
 def evaluate_classifier(model, target_col, X_train, y_train, X_test, y_test, verbose):
-    history, duration = fit(model, X_train, y_train, X_test, y_test, verbose=verbose, epochs=60, batch_size=32, callbacks=None)
+    history, duration = fit(
+        model, X_train, y_train, X_test, y_test, verbose=verbose, epochs=60, batch_size=32, callbacks=None
+    )
     scores = get_scores(model, X_train, y_train, X_test, y_test)
     y_true, y_pred = get_preds(X_test, y_test, model, verbose=verbose)
     matrix = confusion_matrix(y_true, y_pred)
@@ -239,7 +242,7 @@ def evaluate_classifier(model, target_col, X_train, y_train, X_test, y_test, ver
         "y_pred": y_pred,
         "matrix": matrix,
         "history": history.history,
-        "duration": duration
+        "duration": duration,
     }
     keys = io.save_to_pickle(training_results, target_col=target_col)
     return keys
@@ -251,7 +254,7 @@ def evaluate_regressor(model, target_col, X_train, y_train, X_test, y_test, verb
             model, X_train, y_train, X_test, y_test, verbose=verbose, epochs=60, batch_size=32, callbacks=None
         )
     elif target_col == "wallclock":
-        history, duration= fit(
+        history, duration = fit(
             model, X_train, y_train, X_test, y_test, verbose=verbose, epochs=300, batch_size=64, callbacks=None
         )
     scores = get_scores(model, X_train, y_train, X_test, y_test)
@@ -263,7 +266,7 @@ def evaluate_regressor(model, target_col, X_train, y_train, X_test, y_test, verb
         "predictions": preds,
         "residuals": res,
         "history": history.history,
-        "duration": duration
+        "duration": duration,
     }
     keys = io.save_to_pickle(training_results, target_col=target_col)
     return keys
@@ -316,8 +319,8 @@ def train_models(df, bucket_mod, data_path, opt, models, verbose):
     pipeline = {
         "mem_bin": {"model": clf, "function": train_memory_classifier},
         "memory": {"model": mem_reg, "function": train_memory_regressor},
-        "wallclock": {"model": wall_reg, "function": train_wallclock_regressor}
+        "wallclock": {"model": wall_reg, "function": train_wallclock_regressor},
     }
     for target in models:
-        M = pipeline[target]['model']
-        pipeline[target]['function'].__call__(df, M, bucket_mod, data_path, verbose)
+        M = pipeline[target]["model"]
+        pipeline[target]["function"].__call__(df, M, bucket_mod, data_path, verbose)

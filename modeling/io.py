@@ -62,34 +62,39 @@ def make_fxp(attr):
     `name` : one of db column names ('timestamp', 'mem_bin', etc.)
     `method`: begins_with, between, eq, gt, gte, lt, lte
     `value`: str, int, float or low/high list of values if using 'between' method
-    Ex: to retrieve a subset of data with 'timestamp' col greater than 1620740441: 
+    Ex: to retrieve a subset of data with 'timestamp' col greater than 1620740441:
     setting attr={'name':'timestamp', 'method': 'gt', 'value': 1620740441}
     returns dict: {'FilterExpression': Attr('timestamp').gt(0)}
     """
     # table.scan(FilterExpression=Attr('mem_bin').gt(2))
-    if attr["type"] == 'int':
-        v = int(attr['value'])
-    elif attr["type"] == 'float':
-        v = float(attr['value'])
-    n = attr['name']
-    m = attr['method']
-    if m == 'eq':
-        fxp = Attr(n).eq(v)
-    elif m == 'gt':
-        fxp = Attr(n).gt(v)
-    elif m == 'gte':
-        fxp = Attr(n).gte(v)
-    elif m == 'lt':
-        fxp = Attr(n).lt(v)
-    elif m == 'lte':
-        fxp = Attr(n).lte(v)
-    elif m == 'begins_with':
-        fxp = Attr(n).begins_with(v)
-    elif m == 'between':
-        if isinstance(v, 'list'):
-            fxp = Attr(n).between(v.min(), v.max())
-    print(f"DDB Subset: {fxp}")
-    return {'FilterExpression': fxp}
+    n = attr["name"]
+    m = attr["method"]
+
+    if attr["type"] == "int":
+        v = [int(a.strip()) for a in attr["value"].split(",")]
+    elif attr["type"] == "float":
+        v = [float(a.strip()) for a in attr["value"].split(",")]
+    else:
+        v = [str(a.strip()) for a in attr["value"].split(",")]
+
+    print(f"DDB Subset: {n} - {m} - {v}")
+
+    if m == "eq":
+        fxp = Attr(n).eq(v[0])
+    elif m == "gt":
+        fxp = Attr(n).gt(v[0])
+    elif m == "gte":
+        fxp = Attr(n).gte(v[0])
+    elif m == "lt":
+        fxp = Attr(n).lt(v[0])
+    elif m == "lte":
+        fxp = Attr(n).lte(v[0])
+    elif m == "begins_with":
+        fxp = Attr(n).begins_with(v[0])
+    elif m == "between":
+        fxp = Attr(n).between(np.min(v), np.max(v))
+
+    return {"FilterExpression": fxp}
 
 
 def ddb_download(table_name, attr=None):
@@ -101,7 +106,7 @@ def ddb_download(table_name, attr=None):
     If attr is none, returns all items in database.
     """
     table = dynamodb.Table(table_name)
-    key_set = ["ipst"] # primary key     
+    key_set = ["ipst"]  # primary key
     if attr:
         scan_kwargs = make_fxp(attr)
         raw_data = table.scan(**scan_kwargs)
@@ -114,7 +119,10 @@ def ddb_download(table_name, attr=None):
 
     while raw_data.get("LastEvaluatedKey"):
         print("Downloading ", end="")
-        raw_data = table.scan(ExclusiveStartKey=raw_data["LastEvaluatedKey"])
+        if attr:
+            raw_data = table.scan(ExclusiveStartKey=raw_data["LastEvaluatedKey"], **scan_kwargs)
+        else:
+            raw_data = table.scan(ExclusiveStartKey=raw_data["LastEvaluatedKey"])
         items.extend(raw_data["Items"])
         fieldnames - fieldnames.union(get_keys(items))
 
@@ -176,7 +184,7 @@ def save_to_pickle(data_dict, target_col=None, df_key=None):
     keys = []
     for k, v in data_dict.items():
         if target_col is not None:
-            os.makedirs(f'{target_col}', exist_ok=True)
+            os.makedirs(f"{target_col}", exist_ok=True)
             key = f"{target_col}/{k}"
         else:
             key = k

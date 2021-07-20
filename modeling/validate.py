@@ -5,6 +5,7 @@ from sklearn.model_selection import StratifiedKFold, KFold, cross_val_score
 from sklearn.preprocessing import LabelEncoder
 from . import prep, io, train
 
+
 def kfold_cross_val(df, target_col, bucket_mod, data_path, verbose):
     # evaluate using 10-fold cross validation
     X, y = prep.split_Xy(df, target_col)
@@ -34,7 +35,7 @@ def kfold_cross_val(df, target_col, bucket_mod, data_path, verbose):
     print(f"\nKFOLD scores: {results}\n")
     print(f"\nMean Score: {score}\n")
     print("\nProcess took ", duration)
-    kfold_dict = {f"kfold": {"results": list(results), "score": score, "time": duration}}
+    kfold_dict = {"kfold": {"results": list(results), "score": score, "time": duration}}
     keys = io.save_to_pickle(kfold_dict, target_col=target_col)
     io.s3_upload(keys, bucket_mod, f"{data_path}/results")
 

@@ -9,6 +9,7 @@ from . import io
 
 """ ----- PREPROCESSING ----- """
 
+
 # No longer using this because of lambda ingest into DDB
 def combine_s3_datasets(keys, dropnans=1):
     """Pass in a list of dataframes or local csv filepaths for features, targets and predictions (must be in that order).
@@ -51,8 +52,8 @@ def combine_s3_datasets(keys, dropnans=1):
 
 def combine_from_s3(keys, bucket_mod, prefix):
     master_data = None
-    io.s3_download(keys, bucket_mod, prefix) # s3://bucket_mod/prefix/keys
-    if "features.csv" in keys: # join along columns (features + targets)
+    io.s3_download(keys, bucket_mod, prefix)  # s3://bucket_mod/prefix/keys
+    if "features.csv" in keys:  # join along columns (features + targets)
         df = combine_s3_datasets(keys, dropnans=1)
         io.s3_upload(["batch.csv"], bucket_mod, prefix)
         try:
@@ -76,7 +77,7 @@ def combine_from_s3(keys, bucket_mod, prefix):
 # DynamoDB removes need for this (keeping bc it's useful for combining DFs)
 def combine_training_sets(df_list):
     """Takes a list of dataframes and combines them into one
-    Removes duplicates and keeps most recent 
+    Removes duplicates and keeps most recent
     ***NOTE*** assumes list ordered NEWEST to oldest)
     """
     if len(df_list) == 1:
@@ -137,7 +138,7 @@ def preprocess(bucket_mod, prefix, src, table_name, attr):
     # elif src.startswith("file"): # file:latest.csv
     #     filename = src.split(':')[-1]
     #     if filename == "latest.csv":
-    #         df = pd.read_csv(filename, index_col="ipst")            
+    #         df = pd.read_csv(filename, index_col="ipst")
     #         return df
     #     else:
     #         files = filename.lstrip("'[").rstrip("]'").split(', ')

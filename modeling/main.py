@@ -1,5 +1,10 @@
-import sys, os
-from . import io, prep, train, validate
+import sys
+import os
+from . import io
+from . import prep
+from . import train
+from . import validate
+
 
 def get_training_config(args):
     valid_opts = ["build", "update"]
@@ -8,7 +13,7 @@ def get_training_config(args):
         opt, mod = args[1], args[2:]
     elif len(args) == 2:
         opt, mod = args[1], ["all"]
-    else: # use defaults
+    else:  # use defaults
         opt, mod = "build", ["all"]
     # validate training option
     if opt not in valid_opts:
@@ -30,17 +35,18 @@ def get_training_config(args):
     print(f"{opt} models: {models}")
     return opt, models
 
+
 if __name__ == "__main__":
     # python -m modeling.main [build, update] [all, mem_bin, memory, wallclock]
     # default args: [build] [all] # builds and trains all models using all data
     args = sys.argv
     opt, models = get_training_config(args)
     # set default Env vars
-    bucket_mod = os.environ.get("S3MOD", "calcloud-modeling-sb") # where to pull and store metadata
+    bucket_mod = os.environ.get("S3MOD", "calcloud-modeling-sb")  # where to pull and store metadata
     timestamp = os.environ.get("TIMESTAMP", "now")  # results saved to timestamped directory (s3)
-    verbose = os.environ.get("VERBOSE", 0) # print everything to stdout (set=1 for debug)
-    cross_val = os.environ.get("KFOLD", None) # 'only', 'skip', None or "None"
-    src = os.environ.get("DATASOURCE", "ddb") # s3:latest
+    verbose = os.environ.get("VERBOSE", 0)  # print everything to stdout (set=1 for debug)
+    cross_val = os.environ.get("KFOLD", None)  # 'only', 'skip', None or "None"
+    src = os.environ.get("DATASOURCE", "ddb")  # s3:latest
     table_name = os.environ.get("DDBTABLE", "calcloud-model-sb")
     attr_name = os.environ["ATTRNAME"]
     attr_method = os.environ["ATTRMETHOD"]
