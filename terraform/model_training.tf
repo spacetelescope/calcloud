@@ -47,7 +47,8 @@ resource "aws_batch_job_definition" "model_job_def_main" {
       {"name": "KFOLD", "value": "None"},
       {"name": "ATTRNAME", "value": "None"},
       {"name": "ATTRMETHOD", "value": "None"},
-      {"name": "ATTRVALUE", "value": "None"}
+      {"name": "ATTRVALUE", "value": "None"},
+      {"name": "ATTRTYPE", "value": "None"}
     ],
     "image": "${local.ecr_model_training_image}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",

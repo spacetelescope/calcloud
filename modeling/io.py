@@ -64,9 +64,13 @@ def make_fxp(attr):
     returns dict: {'FilterExpression': Attr('timestamp').gt(0)}
     """
     # table.scan(FilterExpression=Attr('mem_bin').gt(2))
+    t = attr["type"]
+    if t == 'int':
+        v = int(attr['value'])
+    elif t == 'float':
+        v = float(attr['value'])
     n = attr['name']
     m = attr['method']
-    v = attr['value']
     if m == 'eq':
         fxp = Attr(n).eq(v)
     elif m == 'gt':
