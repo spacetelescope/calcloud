@@ -21,7 +21,10 @@ def get_paths(timestamp):
     if timestamp == "now":
         train_time = dt.datetime.now()
     elif isinstance(timestamp, str):
-        train_time = dt.datetime.fromisoformat(timestamp)
+        if len(timestamp) <= 14:
+            train_time = dt.datetime.fromtimestamp(int(timestamp))
+        else:
+            train_time = dt.datetime.fromisoformat(timestamp)
     elif isinstance(timestamp, int) or isinstance(timestamp, float):
         train_time = dt.datetime.fromtimestamp(timestamp)
     else:

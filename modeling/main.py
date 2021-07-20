@@ -46,12 +46,12 @@ if __name__ == "__main__":
     attr_method = os.environ["ATTRMETHOD"]
     attr_type = os.environ["ATTRTYPE"]
     attr_val = os.environ["ATTRVALUE"]
+    # get subset from dynamodb
     if attr_name != "None":
-        # get subset from dynamodb
         attr = {"name": attr_name, "method": attr_method, "value": attr_val, "type": attr_type}
     else:
         attr = None
-    # load training date
+    # load training data
     data_path = io.get_paths(timestamp)
     home = os.path.join(os.getcwd(), data_path)
     prefix = f"{data_path}/data"
