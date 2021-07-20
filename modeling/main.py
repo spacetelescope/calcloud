@@ -42,10 +42,10 @@ if __name__ == "__main__":
     cross_val = os.environ.get("KFOLD", None) # 'only', 'skip', None or "None"
     src = os.environ.get("DATASOURCE", "ddb") # s3:latest
     table_name = os.environ.get("DDBTABLE", "calcloud-model-sb")
-    attr_name = os.environ.get("ATTRNAME", "None")
-    attr_method = os.environ.get("ATTRMETHOD", "None")
-    attr_val = os.environ.get("ATTRVAL", "None")
-    attr_type = os.environ.get("ATTRTYPE", "None")
+    attr_name = os.environ["ATTRNAME"]
+    attr_method = os.environ["ATTRMETHOD"]
+    attr_type = os.environ["ATTRTYPE"]
+    attr_val = os.environ["ATTRVAL"]
     if attr_name != "None":
         # get subset from dynamodb
         attr = {"name": attr_name, "method": attr_method, "value": attr_val, "type": attr_type}
