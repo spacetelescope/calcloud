@@ -45,7 +45,9 @@ resource "aws_batch_job_definition" "model_job_def_main" {
       {"name": "DATASOURCE", "value": "ddb"},
       {"name": "DDBTABLE", "value": "calcloud-model${local.environment}"},
       {"name": "KFOLD", "value": "None"},
-      {"name": "ATTR", "value": "None"}
+      {"name": "ATTRNAME", "value": "None"},
+      {"name": "ATTRMETHOD", "value": "None"},
+      {"name": "ATTRVALUE", "value": "None"}
     ],
     "image": "${local.ecr_model_training_image}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",

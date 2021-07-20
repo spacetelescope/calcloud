@@ -94,12 +94,12 @@ def ddb_download(table_name, attr=None):
     If attr is none, returns all items in database.
     """
     table = dynamodb.Table(table_name)
-    key_set = ["ipst"] # primary key
-    if attr is "None":
-        raw_data = table.scan()
-    else:
+    key_set = ["ipst"] # primary key     
+    if attr:
         scan_kwargs = make_fxp(attr)
         raw_data = table.scan(**scan_kwargs)
+    else:
+        raw_data = table.scan()
     if raw_data is None:
         return None
     items = raw_data["Items"]

@@ -42,7 +42,14 @@ if __name__ == "__main__":
     cross_val = os.environ.get("KFOLD", None) # 'only', 'skip', None or "None"
     src = os.environ.get("DATASOURCE", "ddb") # s3:latest
     table_name = os.environ.get("DDBTABLE", "calcloud-model-sb")
-    attr = os.environ.get("ATTR", "None") # retrieve subset from dynamodb
+    attr_name = os.environ.get("ATTRNAME", "None")
+    attr_method = os.environ.get("ATTRMETHOD", "None")
+    attr_val = os.environ.get("ATTRVAL", "None")
+    if attr_name != "None":
+        # get subset from dynamodb
+        attr = {"name": attr_name, "method": attr_method, "value": attr_val}
+    else:
+        attr = None
     # load training date
     data_path = io.get_paths(timestamp)
     home = os.path.join(os.getcwd(), data_path)
