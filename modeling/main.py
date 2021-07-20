@@ -48,7 +48,7 @@ if __name__ == "__main__":
     attr_type = os.environ.get("ATTRTYPE", "None")
     if attr_name != "None":
         # get subset from dynamodb
-        attr = {"name": attr_name, "method": attr_method, "value": attr_val}
+        attr = {"name": attr_name, "method": attr_method, "value": attr_val, "type": attr_type}
     else:
         attr = None
     # load training date
