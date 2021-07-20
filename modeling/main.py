@@ -45,7 +45,7 @@ if __name__ == "__main__":
     attr_name = os.environ["ATTRNAME"]
     attr_method = os.environ["ATTRMETHOD"]
     attr_type = os.environ["ATTRTYPE"]
-    attr_val = os.environ["ATTRVAL"]
+    attr_val = os.environ["ATTRVALUE"]
     if attr_name != "None":
         # get subset from dynamodb
         attr = {"name": attr_name, "method": attr_method, "value": attr_val, "type": attr_type}
