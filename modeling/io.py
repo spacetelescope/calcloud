@@ -85,6 +85,7 @@ def make_fxp(attr):
     elif m == 'between':
         if isinstance(v, 'list'):
             fxp = Attr(n).between(v.min(), v.max())
+    print(f"DDB Subset: {fxp}")
     return {'FilterExpression': fxp}
 
 
