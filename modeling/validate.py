@@ -24,7 +24,7 @@ def kfold_cross_val(df, target_col, bucket_mod, data_path, verbose):
         kfold = KFold(n_splits=10, shuffle=True)
     print("\nStarting KFOLD Cross-Validation...")
     start = time.time()
-    results = cross_val_score(estimator, X, y, cv=kfold, n_jobs=-1)
+    results = cross_val_score(estimator, X, y, cv=kfold, n_jobs=-2)
     end = time.time()
     duration = io.proc_time(start, end)
     if target_col == "mem_bin":
