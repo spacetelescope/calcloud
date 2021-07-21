@@ -6,7 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 from . import prep, io, train
 
 
-def kfold_cross_val(df, target_col, bucket_mod, data_path, verbose):
+def kfold_cross_val(df, target_col, bucket_mod, data_path, verbose, n_jobs):
     # evaluate using 10-fold cross validation
     X, y = prep.split_Xy(df, target_col)
     # run estimator
@@ -25,7 +25,7 @@ def kfold_cross_val(df, target_col, bucket_mod, data_path, verbose):
         kfold = KFold(n_splits=10, shuffle=True)
     print("\nStarting KFOLD Cross-Validation...")
     start = time.time()
-    results = cross_val_score(estimator, X, y, cv=kfold, n_jobs=-2)
+    results = cross_val_score(estimator, X, y, cv=kfold, n_jobs=n_jobs)
     end = time.time()
     duration = io.proc_time(start, end)
     if target_col == "mem_bin":
@@ -40,6 +40,6 @@ def kfold_cross_val(df, target_col, bucket_mod, data_path, verbose):
     io.s3_upload(keys, bucket_mod, f"{data_path}/results")
 
 
-def run_kfold(df, bucket_mod, data_path, models, verbose):
+def run_kfold(df, bucket_mod, data_path, models, verbose, n_jobs):
     for target in models:
-        kfold_cross_val(df, target, bucket_mod, data_path, verbose)
+        kfold_cross_val(df, target, bucket_mod, data_path, verbose, n_jobs)

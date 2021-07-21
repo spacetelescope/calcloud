@@ -48,7 +48,8 @@ resource "aws_batch_job_definition" "model_job_def_main" {
       {"name": "ATTRNAME", "value": "None"},
       {"name": "ATTRMETHOD", "value": "None"},
       {"name": "ATTRVALUE", "value": "None"},
-      {"name": "ATTRTYPE", "value": "None"}
+      {"name": "ATTRTYPE", "value": "None"},
+      {"name": "NJOBS", "value": "-2"}
     ],
     "image": "${local.ecr_model_training_image}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",

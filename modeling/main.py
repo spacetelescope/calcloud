@@ -48,10 +48,12 @@ if __name__ == "__main__":
     cross_val = os.environ.get("KFOLD", None)  # 'only', 'skip', None or "None"
     src = os.environ.get("DATASOURCE", "ddb")  # s3:latest
     table_name = os.environ.get("DDBTABLE", "calcloud-model-sb")
-    attr_name = os.environ["ATTRNAME"]
-    attr_method = os.environ["ATTRMETHOD"]
-    attr_type = os.environ["ATTRTYPE"]
-    attr_val = os.environ["ATTRVALUE"]
+    attr_name = os.environ.get("ATTRNAME", "None")
+    attr_method = os.environ.get("ATTRMETHOD", "None")
+    attr_type = os.environ("ATTRTYPE", "None")
+    attr_val = os.environ("ATTRVALUE", "None")
+    n_jobs = int(os.environ.get("NJOBS", -2))
+    
     # get subset from dynamodb
     if attr_name != "None":
         attr = {"name": attr_name, "method": attr_method, "value": attr_val, "type": attr_type}
@@ -67,7 +69,7 @@ if __name__ == "__main__":
     os.chdir(home)
     if cross_val == "only":
         # run_kfold, skip training
-        validate.run_kfold(df, bucket_mod, data_path, models, verbose)
+        validate.run_kfold(df, bucket_mod, data_path, models, verbose, n_jobs)
     else:
         train.train_models(df, bucket_mod, data_path, opt, models, verbose)
         io.zip_models("./models", zipname="models.zip")
@@ -75,4 +77,4 @@ if __name__ == "__main__":
         if cross_val == "skip":
             print("Skipping KFOLD")
         else:
-            validate.run_kfold(df, bucket_mod, data_path, models, verbose)
+            validate.run_kfold(df, bucket_mod, data_path, models, verbose, n_jobs)
