@@ -50,8 +50,8 @@ if __name__ == "__main__":
     table_name = os.environ.get("DDBTABLE", "calcloud-model-sb")
     attr_name = os.environ.get("ATTRNAME", "None")
     attr_method = os.environ.get("ATTRMETHOD", "None")
-    attr_type = os.environ("ATTRTYPE", "None")
-    attr_val = os.environ("ATTRVALUE", "None")
+    attr_type = os.environ.get("ATTRTYPE", "None")
+    attr_val = os.environ.get("ATTRVALUE", "None")
     n_jobs = int(os.environ.get("NJOBS", -2))
     
     # get subset from dynamodb
