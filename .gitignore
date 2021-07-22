@@ -19,4 +19,6 @@ terraform/local.tfvars
 terraform/.terraform.lock.hcl
 terraform/builds/
 
+testing/predict_lambda_tests/*
+
 *.DS_Store

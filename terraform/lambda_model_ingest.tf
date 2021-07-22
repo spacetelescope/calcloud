@@ -1,8 +1,8 @@
 resource "aws_dynamodb_table" "calcloud_model_db" {
   name           = "calcloud-model${local.environment}"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = 10
-  write_capacity = 10
+  billing_mode   = "PAY_PER_REQUEST" #"PROVISIONED"
+  #read_capacity  = 10
+  #write_capacity = 10
   hash_key       = "ipst"
 
   attribute {
@@ -21,11 +21,7 @@ module "lambda_model_ingest" {
   version = "~> 1.43.0"
 
   function_name = "calcloud-model-ingest${local.environment}"
-
-  #### NEW ROLE NEEDED HERE
-  lambda_role = nonsensitive(data.aws_ssm_parameter.lambda_predict_role.value)
-  ####
-
+  lambda_role = nonsensitive(data.aws_ssm_parameter.model_ingest_role.value)
   description   = "looks for processed-ipppssoot.trigger messages, scrapes and uploads completed job data to DynamoDB"
   handler       = "lambda_scrape.lambda_handler"
   runtime       = "python3.8"
