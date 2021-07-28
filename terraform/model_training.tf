@@ -24,6 +24,11 @@ resource "aws_batch_compute_environment" "model_compute_env" {
     max_vcpus = 8
     min_vcpus = 0
     desired_vcpus = 0
+
+    launch_template {
+      launch_template_id = aws_launch_template.hstdp.id
+      version = "$Latest"
+    }
   }
   lifecycle {
     ignore_changes = [compute_resources.0.desired_vcpus]
