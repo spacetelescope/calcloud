@@ -2,11 +2,6 @@
 
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
-# variables that will likely be changed frequently
-# CALCLOUD_VER="0.4.25"
-CALDP_VER="0.2.13"
-CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210721_CAL_final"
-
 # get the versions from ssm params
 calcloud_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/awsysver" | grep "Value"`
 CALCLOUD_VER=${calcloud_ver_response##*:}
