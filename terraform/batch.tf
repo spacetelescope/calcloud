@@ -199,6 +199,7 @@ resource "aws_batch_job_definition" "job_def" {
     "jobRoleArn": "${nonsensitive(data.aws_ssm_parameter.batch_job_role.value)}",
     "executionRoleArn": "${nonsensitive(data.aws_ssm_parameter.batch_exec.value)}",
     "user": "developer",
+    "privileged": false,
     "mountPoints": [],
     "resourceRequirements": [
         {"value" :  "${local.ladder[count.index].jd_memory}", "type" : "MEMORY"},
