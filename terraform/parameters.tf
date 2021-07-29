@@ -105,3 +105,21 @@ data aws_ssm_parameter model_bucket {
 data aws_ssm_parameter batch_exec {
   name = "/iam/roles/batch_exec"
 }
+
+resource "aws_ssm_parameter" "awsysver" {
+  name  = "/tf/env/awsysver"
+  type  = "String"
+  value = "${var.awsysver}"
+}
+
+resource "aws_ssm_parameter" "awsdpver" {
+  name  = "/tf/env/awsdpver"
+  type  = "String"
+  value = "${var.awsdpver}"
+}
+
+resource "aws_ssm_parameter" "csys_ver" {
+  name  = "/tf/env/csys_ver"
+  type  = "String"
+  value = "${var.csys_ver}"
+}
