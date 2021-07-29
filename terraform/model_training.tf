@@ -55,6 +55,8 @@ resource "aws_batch_job_definition" "model_job_def_main" {
     "image": "${local.ecr_model_training_image}",
     "jobRoleArn": "${data.aws_ssm_parameter.batch_job_role.value}",
     "mountPoints": [],
+    "user": "developer",
+    "privileged": false,
     "resourceRequirements": [
         {"value" :  "2048", "type" : "MEMORY"},
         {"value" : "8", "type": "VCPU"}
