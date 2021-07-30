@@ -48,18 +48,15 @@ then
     fi
 fi
 
-# # setting up the caldp source dir if it needs downloaded
-# # equivalent to "if len($var) == 0"
-# if [ -z "${CALDP_BUILD_DIR}"]
-# then
-#     mkdir -p $TMP_INSTALL_DIR
-#     CALDP_BUILD_DIR="${TMP_INSTALL_DIR}/caldp"
-#     cd $TMP_INSTALL_DIR
-#     # caldp source download/unpack
-#     # github's tarballs don't work with pip install, so we have to clone and checkout the tag
-#     git clone https://github.com/spacetelescope/caldp.git
-#     cd caldp && git fetch --all --tags && git checkout tags/v${CALDP_VER} && cd ..
-# fi
+# check for Batch jobs and exit if any exist that are running or should be soon
+cd ${CALCLOUD_BUILD_DIR}/scripts
+./check_batch_jobs.py 
+batch_jobs=$?
+if [[ $batch_jobs -ne 0 ]]; then
+    echo "there are running or submitted batch jobs; cannot rotate ami"
+    exit 1
+fi
+
 
 # get a couple of things from AWS ssm
 # the env, i.e. sb,dev,test,prod
@@ -98,3 +95,6 @@ awsudo $ADMIN_ARN terraform plan -var "environment=${aws_env}" -out ami_rotate.o
     -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}"
 
 awsudo $ADMIN_ARN terraform apply "ami_rotate.out"
+
+cd $HOME
+rm -rf $TMP_INSTALL_DIR
