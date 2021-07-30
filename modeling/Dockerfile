@@ -37,6 +37,8 @@ RUN DEBIAN_FRONTEND=noninteractive \
 && unzip awscliv2.zip \
 && ./aws/install
 
+RUN useradd --create-home --shell /bin/bash developer
+USER developer
 WORKDIR /home/developer
 COPY requirements.txt ./
 RUN python -m pip install --upgrade pip && python -m pip install -r requirements.txt && mkdir -p /home/developer/modeling
