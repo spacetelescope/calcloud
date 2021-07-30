@@ -18,6 +18,7 @@ terraform/*.out
 terraform/local.tfvars
 terraform/.terraform.lock.hcl
 terraform/builds/
+scripts/*.json
 
 testing/predict_lambda_tests/*
 

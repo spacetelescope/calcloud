@@ -2,10 +2,18 @@
 
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
-# variables that will likely be changed frequently
-CALCLOUD_VER="0.4.25"
-CALDP_VER="0.2.13"
-CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210721_CAL_final"
+# get the versions from ssm params
+calcloud_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/awsysver" | grep "Value"`
+CALCLOUD_VER=${calcloud_ver_response##*:}
+CALCLOUD_VER=`echo $CALCLOUD_VER | tr -d '",'`
+
+caldp_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/awsdpver" | grep "Value"`
+CALDP_VER=${caldp_ver_response##*:}
+CALDP_VER=`echo $CALDP_VER | tr -d '",'`
+
+csys_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/csys_ver" | grep "Value"`
+CSYS_VER=${csys_ver_response##*:}
+CSYS_VER=`echo $CSYS_VER | tr -d '",'`
 
 # these variables are overrides for developers that allow the deploy script to build from local calcloud/caldp source
 # i.e. CALCLOUD_BUILD_DIR="$HOME/deployer/calcloud"
@@ -14,12 +22,6 @@ CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210721_CAL_final"
 CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-""} 
 CALDP_BUILD_DIR=${CALDP_BUILD_DIR:-""}
 aws_env=${aws_env:-""}
-
-# turn CAL_BASE_IMAGE into CSYS_VER by splitting at the :, splitting again by underscore and keeping the
-# first two fields, and then converting to lowercase
-CSYS_VER=${CAL_BASE_IMAGE##*:}
-CSYS_VER=`echo $CSYS_VER | cut -f1,2 -d'_'` #split by underscores, keep the first two
-CSYS_VER=`echo $CSYS_VER | awk '{print tolower($0)}'`
 
 # variables that will be changed less-frequently
 TMP_INSTALL_DIR="/tmp/calcloud_install"
@@ -34,20 +36,27 @@ then
     cd $TMP_INSTALL_DIR
     git clone https://github.com/spacetelescope/calcloud.git
     cd calcloud && git fetch --all --tags && git checkout tags/v${CALCLOUD_VER} && cd ..
+    git_exit_status=$?
+    if [[ $git_exit_status -ne 0 ]]; then
+        # try without the v
+        cd calcloud && git fetch --all --tags && git checkout tags/${CALCLOUD_VER} && cd ..
+        git_exit_status=$?
+    fi
+    if [[ $git_exit_status -ne 0 ]]; then
+        echo "could not checkout ${CALCLOUD_VER}; exiting"
+        exit 1
+    fi
 fi
 
-# setting up the caldp source dir if it needs downloaded
-# equivalent to "if len($var) == 0"
-if [ -z "${CALDP_BUILD_DIR}"]
-then
-    mkdir -p $TMP_INSTALL_DIR
-    CALDP_BUILD_DIR="${TMP_INSTALL_DIR}/caldp"
-    cd $TMP_INSTALL_DIR
-    # caldp source download/unpack
-    # github's tarballs don't work with pip install, so we have to clone and checkout the tag
-    git clone https://github.com/spacetelescope/caldp.git
-    cd caldp && git fetch --all --tags && git checkout tags/v${CALDP_VER} && cd ..
+# check for Batch jobs and exit if any exist that are running or should be soon
+cd ${CALCLOUD_BUILD_DIR}/scripts
+./check_batch_jobs.py 
+batch_jobs=$?
+if [[ $batch_jobs -ne 0 ]]; then
+    echo "there are running or submitted batch jobs; cannot rotate ami"
+    exit 1
 fi
+
 
 # get a couple of things from AWS ssm
 # the env, i.e. sb,dev,test,prod
@@ -86,3 +95,6 @@ awsudo $ADMIN_ARN terraform plan -var "environment=${aws_env}" -out ami_rotate.o
     -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}"
 
 awsudo $ADMIN_ARN terraform apply "ami_rotate.out"
+
+cd $HOME
+rm -rf $TMP_INSTALL_DIR
