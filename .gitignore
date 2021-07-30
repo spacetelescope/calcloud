@@ -18,5 +18,6 @@ terraform/*.out
 terraform/local.tfvars
 terraform/.terraform.lock.hcl
 terraform/builds/
+scripts/*.json
 
 *.DS_Store
