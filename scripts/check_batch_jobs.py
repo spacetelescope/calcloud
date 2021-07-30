@@ -1,5 +1,9 @@
 #! /usr/bin/python3
 
+# the deploy_ami_rotate.sh script calls this script, 
+# and stops ami rotation before calling terraform
+# if this script exits non-zero
+
 import os
 import json
 import sys
@@ -25,6 +29,4 @@ for queue in queues['jobQueues']:
         with open(f"{name}_{status}.json", 'r') as f:
             jobs = json.load(f)
             if len(jobs['jobSummaryList']) > 0:
-                sys.exit(1)
-            print(jobs)
-    
+                sys.exit(1)    
