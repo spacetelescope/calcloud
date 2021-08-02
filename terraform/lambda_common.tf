@@ -92,11 +92,19 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
     filter_prefix       = "messages/clean-"
   }
 
+  lambda_function {
+    lambda_function_arn = module.lambda_model_ingest.this_lambda_function_arn
+    events = ["s3:ObjectCreated:Put"]
+    filter_prefix = "messages/processed-"
+    filter_suffix = ".trigger"
+  }
+
   depends_on = [
     aws_lambda_permission.allow_bucket,
     aws_lambda_permission.allow_bucket_deleteLambda,
     aws_lambda_permission.allow_bucket_rescueLambda,
     aws_lambda_permission.allow_bucket_broadcastLambda,
-    aws_lambda_permission.allow_bucket_cleanLambda
+    aws_lambda_permission.allow_bucket_cleanLambda,
+    aws_lambda_permission.allow_bucket_ingestLambda
   ]
 }

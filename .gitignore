@@ -20,4 +20,6 @@ terraform/.terraform.lock.hcl
 terraform/builds/
 scripts/*.json
 
+testing/predict_lambda_tests/*
+
 *.DS_Store
