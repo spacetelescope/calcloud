@@ -53,7 +53,7 @@ if __name__ == "__main__":
     attr_type = os.environ.get("ATTRTYPE", "None")
     attr_val = os.environ.get("ATTRVALUE", "None")
     n_jobs = int(os.environ.get("NJOBS", -2))
-    
+
     # get subset from dynamodb
     if attr_name != "None":
         attr = {"name": attr_name, "method": attr_method, "value": attr_val, "type": attr_type}
