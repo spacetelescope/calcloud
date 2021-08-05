@@ -1,8 +1,6 @@
 resource "aws_dynamodb_table" "calcloud_model_db" {
   name           = "calcloud-model${local.environment}"
   billing_mode   = "PAY_PER_REQUEST" #"PROVISIONED"
-  #read_capacity  = 10
-  #write_capacity = 10
   hash_key       = "ipst"
 
   attribute {
@@ -31,7 +29,9 @@ module "lambda_model_ingest" {
 
   source_path = [
     {
-      path = "${path.module}/../lambda/ModelIngest"
+      path = "${path.module}/../calcloud"
+      #path = "${path.module}/../lambda/ModelIngest"
+      prefix_in_zip = "calcloud"
       pip_requirements = true
     },
   ]
