@@ -152,15 +152,12 @@ def preprocess(bucket_mod, prefix, src, table_name, attr):
     df, pt_transform = update_power_transform(df)
     io.save_dataframe(df, "latest.csv")
     data_dict = {"pt_transform": pt_transform}
-    keys = io.save_to_pickle(data_dict, target_col=None, df_key=None)
+    keys = io.save_to_pickle(data_dict, target_col=None, df_key="latest.csv")
     io.s3_upload(keys, bucket_mod, prefix)
     return df
 
 
 def encode_target_data(y_train, y_test):
-    # reshape target data
-    # y_train = y_train.reshape(-1, 1)
-    # y_test = y_test.reshape(-1, 1)
     # label encode class values as integers
     encoder = LabelEncoder()
     encoder.fit(y_train)
