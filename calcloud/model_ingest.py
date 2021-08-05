@@ -18,6 +18,7 @@ s3 = boto3.resource("s3", config=common.retry_config)
 client = boto3.client("s3", config=common.retry_config)
 dynamodb = boto3.resource("dynamodb", config=common.retry_config, region_name="us-east-1")
 
+
 def proc_time(start, end):
     duration = np.round(end - start)
     proc_time = np.round(duration / 60)
@@ -45,7 +46,7 @@ class Scraper:
         self.ipst = ipst
         self.bucket = s3.Bucket(bucket_name)
         self.job_data = None
-    
+
     def scrape_job_data(self):
         """Calls scrape functions for retrieving feature and target data.
         Returns dictionary of data to be ingested for a given ipst/job"""
@@ -54,12 +55,13 @@ class Scraper:
         self.job_data = {"ipst": self.ipst, "features": features, "targets": targets}
         return self.job_data
 
+
 class Features(Scraper):
     def __init__(self, ipst, bucket):
         self.ipst = ipst
         self.bucket = bucket
         self.features = None
-    
+
     def scrape_features(self):
         self.input_data = self.download_inputs()
         self.inputs = self.scrub_keys()
@@ -146,7 +148,7 @@ class Features(Scraper):
             instr = 2
         elif i[0] == "i":
             instr = 3
-        
+
         inputs = {
             "n_files": n_files,
             "total_mb": total_mb,
@@ -165,8 +167,8 @@ class Features(Scraper):
         Returns: X inputs as 2D-array for generating predictions
         """
         X = self.inputs
-        n_files = X['n_files']
-        total_mb = X['total_mb']
+        n_files = X["n_files"]
+        total_mb = X["total_mb"]
         # apply power transformer normalization to continuous vars
         x = np.array([[n_files], [total_mb]]).reshape(1, -1)
         pt = PowerTransformer(standardize=False)
@@ -184,13 +186,13 @@ class Features(Scraper):
             "x_size": x_size,
             "n_files": n_files,
             "total_mb": total_mb,
-            "drizcorr": X['drizcorr'],
-            "pctecorr": X['pctecorr'],
-            "crsplit": X['crsplit'],
-            "subarray": X['subarray'],
-            "detector": X['detector'],
-            "dtype": X['dtype'],
-            "instr": X['instr'],
+            "drizcorr": X["drizcorr"],
+            "pctecorr": X["pctecorr"],
+            "crsplit": X["crsplit"],
+            "subarray": X["subarray"],
+            "detector": X["detector"],
+            "dtype": X["dtype"],
+            "instr": X["instr"],
         }
         print("Features:\n ", features)
         return features
@@ -203,7 +205,7 @@ class Targets(Scraper):
         self.process_log = f"outputs/{self.ipst}/process_metrics.txt"
         self.preview_log = f"outputs/{self.ipst}/preview_metrics.txt"
         self.targets = None
-    
+
     def scrape_targets(self):
         self.target_data = self.get_target_data()
         self.targets = self.convert_target_data()
@@ -265,9 +267,9 @@ class Targets(Scraper):
         targets["wallclock"] = clock + 1
         targets["memory"] = kb / (10 ** 6)
         targets["mem_bin"] = self.calculate_bin(targets["memory"])
-        print(f"Targets:\n", targets)
+        print("Targets:\n", targets)
         return targets
-    
+
     def calculate_bin(self, memory):
         """Calculates the memory bin (EC2 Instance type) according to the amount of memory in gigabytes needed to process the job."""
         if memory < 1.792:

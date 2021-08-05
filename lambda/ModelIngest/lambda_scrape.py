@@ -2,6 +2,7 @@ import os
 import urllib.parse
 from calcloud import model_ingest
 
+
 def lambda_handler(event, context=None):
     table_name = os.environ.get("DDBTABLE", "calcloud-model-sb")
     bucket_name = event["Records"][0]["s3"]["bucket"]["name"]
