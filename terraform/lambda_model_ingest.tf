@@ -29,11 +29,16 @@ module "lambda_model_ingest" {
 
   source_path = [
     {
-      path = "${path.module}/../calcloud"
-      #path = "${path.module}/../lambda/ModelIngest"
-      prefix_in_zip = "calcloud"
+      # this is the lambda itself. The code in path will be placed directly into the lambda execution path
+      path = "${path.module}/../lambda/ModelIngest"
       pip_requirements = true
     },
+    {
+      # calcloud for the package
+      path = "${path.module}/../calcloud"
+      prefix_in_zip = "calcloud"
+      pip_requirements = false
+    }
   ]
 
   store_on_s3 = true
