@@ -99,7 +99,7 @@ def lambda_handler(event, context):
                             LogStream,
                             s3Path,
                         ]
-                        line = "|".join(map(str, out_list)).replace("\n", "")
+                        line = "|".join(map(str, out_list)).replace("\n", " ")
                         fout.write(line + "\n")
 
     with open(temppath, "rb") as f:
