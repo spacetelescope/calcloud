@@ -77,7 +77,6 @@ def lambda_handler(event, context):
                         else:
                             exitReason = container.get("reason", j.get("statusReason", "None"))[:255]
 
-                        exitReason = exitReason.replace("\n", "")
                         dataset = j["jobName"].split("-")[-1]
 
                         # getting the LogStream requires calling describe_jobs which is very slow.
@@ -100,7 +99,8 @@ def lambda_handler(event, context):
                             LogStream,
                             s3Path,
                         ]
-                        fout.write("|".join(map(str, out_list)) + "\n")
+                        line = "|".join(map(str, out_list)).replace("\n", "")
+                        fout.write(line + "\n")
 
     with open(temppath, "rb") as f:
         s3.upload_fileobj(f, os.environ["BUCKET"], "blackboard/blackboardAWS.snapshot")
