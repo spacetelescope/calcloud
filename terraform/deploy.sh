@@ -5,7 +5,7 @@
 # variables that will likely be changed frequently
 CALCLOUD_VER="0.4.28"
 CALDP_VER="0.2.13"
-CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210721_CAL_final"
+CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_cosnuverrors_CAL_rc1"
 
 # this is the tag that the image will have in AWS ECR
 CALDP_IMAGE_TAG="latest"
