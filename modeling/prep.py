@@ -69,8 +69,6 @@ def combine_from_s3(keys, bucket_mod, prefix):
         for dataset in keys:
             data = pd.read_csv(dataset, index_col="ipst")
             df_list.append(data)
-        # if len(df_list) == 1:
-        #     df_list.append(master_data)
     return df_list
 
 
@@ -129,25 +127,6 @@ def preprocess(bucket_mod, prefix, src, table_name, attr):
         ddb_data = io.ddb_download(table_name, attr)
         io.write_to_csv(ddb_data, "batch.csv")
         df = pd.read_csv("batch.csv", index_col="ipst")
-        # df_list = [df]
-        # df_key = None
-    # elif src.startswith("s3"): # "s3:[batch.csv, master.csv]", "s3:[list of files]"
-    #     s3keys = src.split(':')[-1].lstrip("'[").rstrip("]'").split(', ')
-    #     df_list = combine_from_s3(s3keys, bucket_mod, prefix)
-    #     df_key = "latest.csv"
-    # elif src.startswith("file"): # file:latest.csv
-    #     filename = src.split(':')[-1]
-    #     if filename == "latest.csv":
-    #         df = pd.read_csv(filename, index_col="ipst")
-    #         return df
-    #     else:
-    #         files = filename.lstrip("'[").rstrip("]'").split(', ')
-    #         if isinstance(files, list):
-    #             df_list = [pd.read_csv(f, index_col="ipst") for f in files]
-    #         else:
-    #             df_list = [pd.read_csv(files, index_col="ipst")]
-    # combine previous with new data
-    # df = combine_training_sets(df_list)
     # update power transform
     df, pt_transform = update_power_transform(df)
     io.save_dataframe(df, "latest.csv")
