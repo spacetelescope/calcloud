@@ -91,7 +91,7 @@ class Preprocess:
             if k == "CRSPLIT":
                 if v == "NaN":
                     crsplit = 0
-                elif v in ["1.0","1"]:
+                elif v in ["1.0", "1"]:
                     crsplit = 1
                 else:
                     crsplit = 2
