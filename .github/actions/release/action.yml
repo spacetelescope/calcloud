@@ -1,0 +1,8 @@
+name: 'Tag or Release'
+description: 'tag or release from a given branch'
+
+runs:
+  using: "composite"
+  steps:
+    - run: ${{ github.action_path }}/tag_or_release.sh
+      shell: bash
