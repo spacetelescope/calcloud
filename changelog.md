@@ -1,0 +1,1 @@
+This file is used for the release description when the `tag-or-release` action is run
