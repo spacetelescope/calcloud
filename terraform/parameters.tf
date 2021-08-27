@@ -111,19 +111,22 @@ data aws_ssm_parameter batch_exec {
 }
 
 resource "aws_ssm_parameter" "awsysver" {
-  name  = "/tf/env/awsysver"
+  name  = "/tf/env/awsysver-${var.environment}"
   type  = "String"
   value = "${var.awsysver}"
+  overwrite = true
 }
 
 resource "aws_ssm_parameter" "awsdpver" {
-  name  = "/tf/env/awsdpver"
+  name  = "/tf/env/awsdpver-${var.environment}"
   type  = "String"
   value = "${var.awsdpver}"
+  overwrite = true
 }
 
 resource "aws_ssm_parameter" "csys_ver" {
-  name  = "/tf/env/csys_ver"
+  name  = "/tf/env/csys_ver-${var.environment}"
   type  = "String"
   value = "${var.csys_ver}"
+  overwrite = true
 }
