@@ -1,17 +1,18 @@
 #! /bin/bash -xu
 
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
+aws_env=${aws_env:-""}
 
 # get the versions from ssm params
-calcloud_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/awsysver" | grep "Value"`
+calcloud_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/awsysver-${aws_env}" | grep "Value"`
 CALCLOUD_VER=${calcloud_ver_response##*:}
 CALCLOUD_VER=`echo $CALCLOUD_VER | tr -d '",'`
 
-caldp_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/awsdpver" | grep "Value"`
+caldp_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/awsdpver-${aws_env}" | grep "Value"`
 CALDP_VER=${caldp_ver_response##*:}
 CALDP_VER=`echo $CALDP_VER | tr -d '",'`
 
-csys_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/csys_ver" | grep "Value"`
+csys_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/csys_ver-${aws_env}" | grep "Value"`
 CSYS_VER=${csys_ver_response##*:}
 CSYS_VER=`echo $CSYS_VER | tr -d '",'`
 
@@ -21,7 +22,6 @@ CSYS_VER=`echo $CSYS_VER | tr -d '",'`
 # (and avoid accidentally committing a custom path to the repo...)
 CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-""} 
 CALDP_BUILD_DIR=${CALDP_BUILD_DIR:-""}
-aws_env=${aws_env:-""}
 
 # variables that will be changed less-frequently
 TMP_INSTALL_DIR="/tmp/calcloud_install"
