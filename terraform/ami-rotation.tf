@@ -41,7 +41,7 @@ resource "aws_launch_template" "ami_rotation" {
             }
   }
   iam_instance_profile {
-    arn = nonsensitive(data.aws_ssm_parameter.ecs_instance_role.value)
+    arn = nonsensitive(data.aws_ssm_parameter.ci_instance_role.value)
   }
   monitoring {
     enabled = true

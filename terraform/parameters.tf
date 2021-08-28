@@ -114,6 +114,10 @@ data aws_ssm_parameter batch_exec {
   name = "/iam/roles/batch_exec"
 }
 
+data aws_ssm_parameter ci_instance_role {
+  name = "/iam/roles/ci_instance_role"
+}
+
 resource "aws_ssm_parameter" "awsysver" {
   name  = "/tf/env/awsysver${local.environment}"
   type  = "String"
