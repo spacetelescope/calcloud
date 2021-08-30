@@ -322,23 +322,43 @@ In our current implementation, the blackboard lambda runs on a 7 minute schedule
 To speed up this sync, we could capture Batch state change events in CloudWatch and send them to lambda for ingestion into a dynamodb, which could then be either hooked up directly to the GUIs, or replicated in a more efficient fashion to the on-prem databases. 
 
 
-Job Memory Model
+Job Memory Models
 ================
 
 Overview
 --------
 
-... describe key aspects of the ML here such as features and network layout ...
+Pre-trained artificial neural networks are implemented in the pipeline to predict job resource requirements for HST. All three network architectures are built using the Keras functional API from Tensorflow. 
 
-Job Submission
+1. Memory Classifier
+1D Convolutional Neural Network performs multi-class classification on 8 features to predict which of 4 possible "memory bins" is the most appropriate for a given dataset. An estimated probability score is assigned to each of the four possible target classes, i.e. Memory Bins, represented by an integer from 0 to 3. The memory size thresholds are categorized as follow:
+
+  - `0: < 2GB`
+  - `1: <= 8GB`
+  - `2: <= 16GB`
+  - `3: < 64GB`
+
+2. Memory Regressor
+1D-CNN performs logistic regression to estimate how much memory (in Gigabytes) a given dataset will require for processing. This prediction is not used directly by the pipeline because AWS compute doesn't require an exact number (hence the bin classification). We retain this model for the purpose of additional analysis of the datasets and their evolving characteristics.
+
+3. Wallclock Regressor
+1D-CNN performs logistic regression to estimate the job's execution time in wallclock seconds. AWS Batch requires a minimum threshold of 60 seconds to be set on each job, although many jobs take less than one minute to complete. The predicted value from this model is used by JobSubmit to set a maximum execution time in which the job has to be completed, after which a job is killed (regardless of whether or not it has finished).
+
+JobPredict 
 --------------
+The JobPredict lambda is invoked by JobSubmit to determine resource allocation needs pertaining to memory and execution time. Upon invocation, a container is created on the fly using a docker image stored in the caldp ECR. The container then loads pre-trained models along with their learned parameters (e.g. weights) from local keras (.pb) files. The model's inputs are scraped from a text file in S3 (`calcloud-processing/control/ipppssoot/MemoryModelFeatures.txt`) and converted into a numpy array. An additional preprocessing step applies a Yeo-Johnson power transform to the first two indices of the array (`n_files`, `total_mb`) using pre-calculated statistical values (mean, standard deviation and lambdas) representative of the entire training data "population". This transformation restricts all values into a 5-value range (-2 to 3) - see Model Training (below) for more details. The resulting 2D-array of transformed inputs are then fed into the models which generate predictions for minimum memory size and wallclock (execution) time requirements. The models' predicted outputs are formatted into JSON and returned back to the JobSubmit lambda to acquire the compute resources necessary for completing calibration processing on that particular ipppssoot's dataset.
 
-Describe model execution, lambda, image, etc.
+
+
+Model Ingest
+------------
+
+
 
 Model Training
 --------------
 
 Describe training, scraping, architecture
 
-Dashboard?
-----------
+Calcloud ML Dashboard
+---------------------
