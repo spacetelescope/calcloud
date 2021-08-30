@@ -49,7 +49,7 @@ resource "aws_batch_job_definition" "model_job_def_main" {
       {"name": "VERBOSE", "value": "0"},
       {"name": "DATASOURCE", "value": "ddb"},
       {"name": "DDBTABLE", "value": "calcloud-model${local.environment}"},
-      {"name": "KFOLD", "value": "None"},
+      {"name": "KFOLD", "value": "skip"},
       {"name": "ATTRNAME", "value": "None"},
       {"name": "ATTRMETHOD", "value": "None"},
       {"name": "ATTRVALUE", "value": "None"},
