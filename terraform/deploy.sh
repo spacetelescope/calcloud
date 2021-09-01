@@ -3,9 +3,9 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="0.4.28"
-CALDP_VER="0.2.13"
-CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210721_CAL_final"
+CALCLOUD_VER="0.4.29-rc3"
+CALDP_VER="0.2.14-rc2"
+CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210827_CAL_final"
 
 # this is the tag that the image will have in AWS ECR
 CALDP_IMAGE_TAG="latest"
@@ -83,7 +83,7 @@ repo_url=`echo $repo_url | tr -d '"'`
 
 ##### DOCKER IMAGE BUILDING #########
 CALDP_DOCKER_IMAGE="${repo_url}:${CALDP_IMAGE_TAG}"
-MODEL_DOCKER_IMAGE="${repo_url}:model"
+PREDICT_DOCKER_IMAGE="${repo_url}:predict"
 TRAINING_DOCKER_IMAGE="${repo_url}:training"
 
 # need to "log in" to ecr to push or pull the images
@@ -100,7 +100,7 @@ fi
 
 # jobPredict lambda env
 cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
-set -o pipefail && docker build -f Dockerfile -t "${MODEL_DOCKER_IMAGE}" .
+set -o pipefail && docker build -f Dockerfile -t "${PREDICT_DOCKER_IMAGE}" .
 model_docker_build_status=$?
 if [[ $model_docker_build_status -ne 0 ]]; then
     echo "predict lambda env docker build failed; exiting"
@@ -117,7 +117,7 @@ if [[ $caldp_docker_build_status -ne 0 ]]; then
 fi
 
 docker push ${TRAINING_DOCKER_IMAGE}
-docker push ${MODEL_DOCKER_IMAGE}
+docker push ${PREDICT_DOCKER_IMAGE}
 docker push ${CALDP_DOCKER_IMAGE}
 
 #### PRIMARY TERRAFORM BUILD #####
