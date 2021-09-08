@@ -1,7 +1,3 @@
-data aws_ssm_parameter batch_ami_id {
-  name = "/AMI/STSCI-HST-REPRO-ECS"
-}
-
 data aws_ssm_parameter batch_subnet_ids {
   name = "/subnets/private"
 }

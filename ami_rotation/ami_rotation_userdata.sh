@@ -9,6 +9,8 @@ Content-Type: text/x-shellscript; charset="us-ascii"
 
 # exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 exec &> >(while read line; do echo "$(date +'%Y-%m-%dT%H.%M.%S%z') $line" >> /var/log/user-data.log; done;)
+# ensures instance will shutdown even if we don't reach the end
+shutdown -h +20
 sleep 5
 echo BEGIN
 pwd
@@ -113,6 +115,6 @@ sed -i 's/cwagent/root/g' /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch
 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a append-config -m ec2 -s -c file:/home/ec2-user/cwa_config.json
 sleep 30
 
-# shutdown -h now
+shutdown -h now
 
 --==BOUNDARY==--
