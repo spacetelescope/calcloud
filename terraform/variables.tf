@@ -113,3 +113,8 @@ variable crds_bucket {
     "-ops" = "ops"
   }
 }
+
+variable ami {
+  # will be used in aws_ssm_parameter.repro_ami
+  type = string
+}

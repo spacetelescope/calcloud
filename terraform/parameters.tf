@@ -138,3 +138,10 @@ resource "aws_ssm_parameter" "csys_ver" {
   value = "${var.csys_ver}"
   overwrite = true
 }
+
+resource "aws_ssm_parameter" "repro_ami" {
+  name = "/tf/ami/stsci-hst-repro-ecs${local.environment}"
+  type = "String"
+  value = "${var.ami}"
+  overwrite = true
+}

@@ -3,7 +3,7 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="0.4.28"
+CALCLOUD_VER="ami-rotate"
 CALDP_VER="0.2.13"
 CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20210721_CAL_final"
 
@@ -67,13 +67,25 @@ aws_tfstate=${aws_tfstate_response##*:}
 aws_tfstate=`echo $aws_tfstate | tr -d '",'`
 echo $aws_tfstate
 
+# get AMI id
+cd $CALCLOUD_BUILD_DIR/ami_rotation
+ami_json=$(echo $(awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 --executable-users self))
+ami=`python3 parse_image_json.py "${ami_json}"`
+
+if [[ "$ami" =~ ^ami-[a-z0-9]+$ ]]; then
+    echo $ami
+else
+    echo "failed to retrieve valid ami id"
+    exit 1
+fi
+
 # initial terraform setup
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
 # terraform init and s3 state backend config
 awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
 # deploy ecr
-awsudo $ADMIN_ARN terraform plan -var "environment=${aws_env}" -out base.out -target aws_ecr_repository.caldp_ecr
+awsudo $ADMIN_ARN terraform plan -var "environment=${aws_env}" -var "ami=${ami}" -out base.out -target aws_ecr_repository.caldp_ecr
 awsudo $ADMIN_ARN terraform apply -auto-approve "base.out"
 # get repository url from tf state for use in caldp docker install
 repo_url_response=`awsudo $ADMIN_ARN terraform state show aws_ecr_repository.caldp_ecr | grep "repository_url"`
@@ -90,35 +102,35 @@ TRAINING_DOCKER_IMAGE="${repo_url}:training"
 awsudo $ADMIN_ARN aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $repo_url
 
 # naming is confusing here but "modeling" directory plus "training" image is correct
-cd ${CALCLOUD_BUILD_DIR}/modeling
-set -o pipefail && docker build -f Dockerfile -t "${TRAINING_DOCKER_IMAGE}" .
-training_docker_build_status=$?
-if [[ $training_docker_build_status -ne 0 ]]; then
-    echo "training job docker build failed; exiting"
-    exit 1
-fi
+# cd ${CALCLOUD_BUILD_DIR}/modeling
+# set -o pipefail && docker build -f Dockerfile -t "${TRAINING_DOCKER_IMAGE}" .
+# training_docker_build_status=$?
+# if [[ $training_docker_build_status -ne 0 ]]; then
+#     echo "training job docker build failed; exiting"
+#     exit 1
+# fi
 
-# jobPredict lambda env
-cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
-set -o pipefail && docker build -f Dockerfile -t "${PREDICT_DOCKER_IMAGE}" .
-model_docker_build_status=$?
-if [[ $model_docker_build_status -ne 0 ]]; then
-    echo "predict lambda env docker build failed; exiting"
-    exit 1
-fi
+# # jobPredict lambda env
+# cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
+# set -o pipefail && docker build -f Dockerfile -t "${PREDICT_DOCKER_IMAGE}" .
+# model_docker_build_status=$?
+# if [[ $model_docker_build_status -ne 0 ]]; then
+#     echo "predict lambda env docker build failed; exiting"
+#     exit 1
+# fi
 
-# caldp image
-cd ${CALDP_BUILD_DIR}
-set -o pipefail && docker build -f Dockerfile -t "${CALDP_DOCKER_IMAGE}" --build-arg CAL_BASE_IMAGE="${CAL_BASE_IMAGE}"  .
-caldp_docker_build_status=$?
-if [[ $caldp_docker_build_status -ne 0 ]]; then
-    echo "caldp docker build failed; exiting"
-    exit 1
-fi
+# # caldp image
+# cd ${CALDP_BUILD_DIR}
+# set -o pipefail && docker build -f Dockerfile -t "${CALDP_DOCKER_IMAGE}" --build-arg CAL_BASE_IMAGE="${CAL_BASE_IMAGE}"  .
+# caldp_docker_build_status=$?
+# if [[ $caldp_docker_build_status -ne 0 ]]; then
+#     echo "caldp docker build failed; exiting"
+#     exit 1
+# fi
 
-docker push ${TRAINING_DOCKER_IMAGE}
-docker push ${PREDICT_DOCKER_IMAGE}
-docker push ${CALDP_DOCKER_IMAGE}
+# docker push ${TRAINING_DOCKER_IMAGE}
+# docker push ${PREDICT_DOCKER_IMAGE}
+# docker push ${CALDP_DOCKER_IMAGE}
 
 #### PRIMARY TERRAFORM BUILD #####
 cd ${CALCLOUD_BUILD_DIR}/terraform
@@ -131,7 +143,7 @@ awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[3]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
 
 # manual confirmation required
-awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}"
+awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ami=${ami}"
 
 # make sure needed prefixes exist in primary s3 bucket
 # pulls the bucket name in from a tag called Name

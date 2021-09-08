@@ -73,6 +73,18 @@ aws_tfstate=${aws_tfstate_response##*:}
 aws_tfstate=`echo $aws_tfstate | tr -d '",'`
 echo $aws_tfstate
 
+# get AMI id
+cd $CALCLOUD_BUILD_DIR/ami_rotation
+ami_json=$(echo $(awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 --executable-users self))
+ami=`python3 parse_image_json.py "${ami_json}"`
+
+if [[ "$ami" =~ ^ami-[a-z0-9]+$ ]]; then
+    echo $ami
+else
+    echo "failed to retrieve valid ami id"
+    exit 1
+fi
+
 # initial terraform setup
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
@@ -92,7 +104,7 @@ awsudo $ADMIN_ARN terraform plan -var "environment=${aws_env}" -out ami_rotate.o
     -target aws_batch_job_queue.batch_queue \
     -target aws_batch_job_queue.model_queue \
     -target aws_launch_template.hstdp \
-    -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}"
+    -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var"ami=${ami}
 
 awsudo $ADMIN_ARN terraform apply "ami_rotate.out"
 

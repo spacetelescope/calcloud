@@ -3,7 +3,8 @@ data "template_file" "ami_rotation_userdata" {
   vars = {
       environment = var.environment,
       admin_arn = nonsensitive(data.aws_ssm_parameter.admin_arn.value),
-      calcloud_ver = var.awsysver
+      calcloud_ver = var.awsysver,
+      log_group = aws_cloudwatch_log_group.ami-rotation.name
   }
 }
 
@@ -11,7 +12,7 @@ resource "aws_launch_template" "ami_rotation" {
   name = "calcloud-ami-rotation${local.environment}"
   description             = "launch template for running ami rotation via terraform"
   ebs_optimized           = "false"
-  image_id                = nonsensitive(data.aws_ssm_parameter.batch_ami_id.value)
+  image_id                = nonsensitive(aws_ssm_parameter.repro_ami.value)
   update_default_version = true
   tags                    = {
     "Name"         = "calcloud-ami-rotation${local.environment}"
@@ -104,4 +105,9 @@ module "calcloud_env_amiRotation" {
   tags = {
     Name = "calcloud-env-AmiRotation${local.environment}"
   }
+}
+
+resource "aws_cloudwatch_log_group" "ami-rotation" {
+  name = "/tf/ec2/ami-rotation${local.environment}"
+  retention_in_days = local.lambda_log_retention_in_days
 }
