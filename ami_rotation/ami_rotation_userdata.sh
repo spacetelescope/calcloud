@@ -29,7 +29,7 @@ cat << EOF > /home/ec2-user/cwa_config.json
                          "file_path": "/var/log/user-data.log",
                          "log_group_name": "${log_group}",
                          "log_stream_name": "`date +"%Y-%m-%dT%H.%M.%S%z"`",
-                         "timestamp_format": "%Y-%m-%dT%H:%M:%S%z"
+                         "timestamp_format": "%Y-%m-%dT%H.%M.%S%z"
                      }
                  ]
              }
@@ -113,6 +113,6 @@ sed -i 's/cwagent/root/g' /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch
 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a append-config -m ec2 -s -c file:/home/ec2-user/cwa_config.json
 sleep 30
 
-shutdown -h now
+# shutdown -h now
 
 --==BOUNDARY==--
