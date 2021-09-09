@@ -139,9 +139,16 @@ resource "aws_ssm_parameter" "csys_ver" {
   overwrite = true
 }
 
-resource "aws_ssm_parameter" "repro_ami" {
+resource "aws_ssm_parameter" "ecs_ami" {
   name = "/tf/ami/stsci-hst-repro-ecs${local.environment}"
   type = "String"
-  value = "${var.ami}"
+  value = "${var.ecs_ami}"
+  overwrite = true
+}
+
+resource "aws_ssm_parameter" "ci_ami" {
+  name = "/tf/ami/stsci-hst-amazon-linux-2${local.environment}"
+  type = "String"
+  value = "${var.ci_ami}"
   overwrite = true
 }

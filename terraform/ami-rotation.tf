@@ -12,7 +12,7 @@ resource "aws_launch_template" "ami_rotation" {
   name = "calcloud-ami-rotation${local.environment}"
   description             = "launch template for running ami rotation via terraform"
   ebs_optimized           = "false"
-  image_id                = nonsensitive(aws_ssm_parameter.repro_ami.value)
+  image_id                = nonsensitive(aws_ssm_parameter.ci_ami.value)
   update_default_version = true
   tags                    = {
     "Name"         = "calcloud-ami-rotation${local.environment}"
@@ -20,7 +20,7 @@ resource "aws_launch_template" "ami_rotation" {
   user_data               = base64encode(data.template_file.ami_rotation_userdata.rendered)
 
   vpc_security_group_ids  = local.batch_sgs
-  instance_type = "t3.small"
+  instance_type = "t3.large"
   instance_initiated_shutdown_behavior = "terminate"
 
   block_device_mappings {

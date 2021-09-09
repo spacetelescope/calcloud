@@ -114,7 +114,10 @@ variable crds_bucket {
   }
 }
 
-variable ami {
-  # will be used in aws_ssm_parameter.repro_ami
+variable ci_ami {
+  type = string
+}
+
+variable ecs_ami {
   type = string
 }

@@ -5,6 +5,7 @@ from datetime import datetime
 
 response = json.loads(str(sys.argv[1]))
 images = response["Images"]
+image_name_filter = sys.argv[2]
 
 stsciLinux2Ami = {}
 for image in images:
@@ -12,7 +13,7 @@ for image in images:
     imageId = image["ImageId"]
     name = image["Name"]
     # Only look at particular AMIs
-    if name.startswith("STSCI-AWS-Linux-2"):
+    if name.startswith(image_name_filter):
         stsciLinux2Ami.update({creationDate: imageId})
 # Order the list most recent date first
 orderedAmi = OrderedDict(
