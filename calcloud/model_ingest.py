@@ -172,12 +172,12 @@ class Features(Scraper):
         # apply power transformer normalization to continuous vars
         x = np.array([[n_files], [total_mb]]).reshape(1, -1)
         pt = PowerTransformer(standardize=False)
-        # TODO: get pt.lambdas vals from s3 calcloud-modeling/latest
-        pt.lambdas_ = np.array([-1.51, -0.12])
+        # normalization (zero mean, unit variance)
+        pt.lambdas_ = np.array([-1.05989146, 0.1691683])
         xt = pt.transform(x)
         # normalization (zero mean, unit variance)
-        f_mean, f_sigma = 0.5682815234265285, 0.04222565843608133
-        s_mean, s_sigma = 1.6250374589283951, 1.0396138451086632
+        f_mean, f_sigma = 0.7313458816815209, 0.09209684806404451
+        s_mean, s_sigma = 4.18491577280472, 2.4467903663338366
         x_files = np.round(((xt[0, 0] - f_mean) / f_sigma), 5)
         x_size = np.round(((xt[0, 1] - s_mean) / s_sigma), 5)
         # print(f"Power Transformed variables: {x_files}, {x_size}")
