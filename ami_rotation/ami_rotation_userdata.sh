@@ -11,6 +11,7 @@ exec &> >(while read line; do echo "$(date +'%Y-%m-%dT%H.%M.%S%z') $line" >> /va
 # ensures instance will shutdown even if we don't reach the end
 shutdown -h +20
 sleep 5
+
 echo BEGIN
 pwd
 date '+%Y-%m-%d %H:%M:%S'
@@ -37,6 +38,12 @@ cat << EOF > /home/ec2-user/cwa_config.json
      }
  }
 EOF
+
+# setup pushing to cloudwatch
+sleep 5
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a remove-config -m ec2 -c all -o all -s
+sed -i 's/cwagent/root/g' /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.d/default
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a append-config -m ec2 -s -c file:/home/ec2-user/cwa_config.json
 
 yum install -y gcc libpng-devel libjpeg-devel unzip yum-utils
 yum update -y && yum upgrade
@@ -107,11 +114,8 @@ cd ami_rotate/calcloud/terraform
 ./deploy_ami_rotate.sh
 EOF
 
-sleep 10
-/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a remove-config -m ec2 -c all -o all -s
-sed -i 's/cwagent/root/g' /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.d/default
-/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a append-config -m ec2 -s -c file:/home/ec2-user/cwa_config.json
-sleep 30
+# give cloudwatch agent a little time to sync with cloudwatch
+sleep 70
 
 shutdown -h now
 
