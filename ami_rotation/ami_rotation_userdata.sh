@@ -7,7 +7,6 @@ Content-Type: text/x-shellscript; charset="us-ascii"
 
 #!/bin/bash -ex
 
-# exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 exec &> >(while read line; do echo "$(date +'%Y-%m-%dT%H.%M.%S%z') $line" >> /var/log/user-data.log; done;)
 # ensures instance will shutdown even if we don't reach the end
 shutdown -h +20
@@ -16,7 +15,6 @@ echo BEGIN
 pwd
 date '+%Y-%m-%d %H:%M:%S'
 
-# yum install amazon-cloudwatch-agent -y
 cat << EOF > /home/ec2-user/cwa_config.json
 {
      "agent": {

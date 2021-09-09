@@ -20,7 +20,7 @@ resource "aws_launch_template" "ami_rotation" {
   user_data               = base64encode(data.template_file.ami_rotation_userdata.rendered)
 
   vpc_security_group_ids  = local.batch_sgs
-  instance_type = "t3.large"
+  instance_type = "t3.small"
   instance_initiated_shutdown_behavior = "terminate"
 
   block_device_mappings {
@@ -28,15 +28,10 @@ resource "aws_launch_template" "ami_rotation" {
 
 
   ebs {
-    # IF YOU CHANGE THE LAUNCH TEMPLATE YOU MUST "TAINT" THE COMPUTE ENVIRONMENT BEFORE DEPLOY
-    # IN ORDER FOR YOUR CHANGES TO BE PICKED UP BY BATCH
-    # SAYING IT AGAIN IN THE PLACE WHERE YOU MAY BE TRYING TO MAKE A CHANGE TO THE TEMPLATE
+    # see the aws batch launch template for some comments about valid ebs construction
     delete_on_termination = "true"
     encrypted             = "true"
-    # iops is only valid for gp3, io1, io2 (not gp2)
-    # iops                  = lookup(var.lt_ebs_iops, local.environment, 0)
-    # throughput is only valid for gp3, but it doesn't accept '0' as valid. null works, which is then set to 0
-    # throughput            = lookup(var.lt_ebs_throughput, local.environment, null)
+    # must be >= 30 gb due to size of the base AMI created by IT
     volume_size           = 30
     volume_type           = "gp2"
             }
@@ -68,7 +63,7 @@ module "calcloud_env_amiRotation" {
   version = "~> 1.43.0"
 
   function_name = "calcloud-env-AmiRotation${local.environment}"
-  description   = "spawns an ec2 weekly which rotates the ami for batch"
+  description   = "spawns an ec2 bi-weekly which rotates the ami for batch"
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "ami_rotation.lambda_handler"
   runtime       = "python3.6"
@@ -95,7 +90,7 @@ module "calcloud_env_amiRotation" {
   attach_tracing_policy = false
   attach_async_event_policy = false
 
-  lambda_role = "arn:aws:iam::218835028644:role/calcloud-lambda-AmiRotation"
+  lambda_role = nonsensitive(data.aws_ssm_parameter.lambda_amiRotate_role.value)
 
   environment_variables = merge(local.common_env_vars, {
     LAUNCH_TEMPLATE_NAME=aws_launch_template.ami_rotation.name,
