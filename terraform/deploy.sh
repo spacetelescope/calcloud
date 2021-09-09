@@ -37,6 +37,16 @@ then
     cd $TMP_INSTALL_DIR
     git clone https://github.com/spacetelescope/calcloud.git
     cd calcloud && git fetch --all --tags && git checkout tags/v${CALCLOUD_VER} && cd ..
+    git_exit_status=$?
+    if [[ $git_exit_status -ne 0 ]]; then
+        # try without the v
+        cd calcloud && git fetch --all --tags && git checkout tags/${CALCLOUD_VER} && cd ..
+        git_exit_status=$?
+    fi
+    if [[ $git_exit_status -ne 0 ]]; then
+        echo "could not checkout ${CALCLOUD_VER}; exiting"
+        exit 1
+    fi
 fi
 
 # setting up the caldp source dir if it needs downloaded
@@ -50,6 +60,16 @@ then
     # github's tarballs don't work with pip install, so we have to clone and checkout the tag
     git clone https://github.com/spacetelescope/caldp.git
     cd caldp && git fetch --all --tags && git checkout tags/v${CALDP_VER} && cd ..
+    git_exit_status=$?
+    if [[ $git_exit_status -ne 0 ]]; then
+        # try without the v
+        cd caldp && git fetch --all --tags && git checkout tags/${CALDP_VER} && cd ..
+        git_exit_status=$?
+    fi
+    if [[ $git_exit_status -ne 0 ]]; then
+        echo "could not checkout ${CALDP_VER}; exiting"
+        exit 1
+    fi
 fi
 
 # get a couple of things from AWS ssm
