@@ -161,6 +161,6 @@ EOF
 
 sleep 120 #let logs catch up
 
-# shutdown -h now
+shutdown -h now
 
 --==BOUNDARY==--
