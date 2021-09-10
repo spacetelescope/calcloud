@@ -95,7 +95,6 @@ yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/has
 yum install terraform-0.15.4-1 -y -q
 yum install git -y -q
 yum install python3 -y -q
-python3 -m pip install -q --upgrade pip && python3 -m pip install boto3 -q
 
 chown -R ec2-user:ec2-user /home/ec2-user/
 
@@ -104,6 +103,8 @@ mkdir -p /etc/ssl/certs
 mkdir -p /etc/pki/ca-trust/extracted/pem
 ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/certs/ca-certificates.crt
 ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /usr/lib/ssl/cert.pem 
+
+python3 -m pip install -q --upgrade pip && python3 -m pip install boto3 -q
 
 sudo -i -u ec2-user bash << EOF
 mkdir ~/bin ~/tmp
