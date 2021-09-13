@@ -94,17 +94,17 @@ mkdir /home/ec2-user/.aws
 yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
 yum install terraform-0.15.4-1 -y -q
 yum install git -y -q
-yum install python3 -y -q
-
 chown -R ec2-user:ec2-user /home/ec2-user/
 
+echo "export REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem" >> /home/ec2-user/.bashrc
+echo "export CURL_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem" >> /home/ec2-user/.bashrc
 mkdir -p /usr/lib/ssl
 mkdir -p /etc/ssl/certs
 mkdir -p /etc/pki/ca-trust/extracted/pem
 ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/certs/ca-certificates.crt
 ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /usr/lib/ssl/cert.pem 
 
-python3 -m pip install -q --upgrade pip && python3 -m pip install boto3 -q
+yum install python3 -y -q
 
 sudo -i -u ec2-user bash << EOF
 mkdir ~/bin ~/tmp
@@ -116,6 +116,7 @@ nvm install node
 npm config set registry http://registry.npmjs.org/
 npm install -g awsudo
 npm config set cafile /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+python3 -m pip install -q --upgrade pip && python3 -m pip install boto3 -q
 cd ~
 rm -rf ~/tmp
 EOF
