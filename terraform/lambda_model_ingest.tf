@@ -1,6 +1,6 @@
 resource "aws_dynamodb_table" "calcloud_model_db" {
   name           = "calcloud-model${local.environment}"
-  billing_mode   = "PAY_PER_REQUEST" #"PROVISIONED"
+  billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "ipst"
 
   attribute {
@@ -25,6 +25,7 @@ module "lambda_model_ingest" {
   runtime       = "python3.8"
   publish       = false
   timeout       = 180
+  memory_size   = 512
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
 
   source_path = [
