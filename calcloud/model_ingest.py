@@ -81,7 +81,7 @@ class Features(Scraper):
             body = None
             print(e)
         if body is None:
-            print("Unable to download inputs")
+            print(f"Unable to download inputs: {self.ipst}")
             input_data = None
             sys.exit(3)
         else:

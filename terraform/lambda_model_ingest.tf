@@ -25,7 +25,7 @@ module "lambda_model_ingest" {
   runtime       = "python3.8"
   publish       = false
   timeout       = 180
-  memory_size   = 512
+  memory_size   = 256
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
 
   source_path = [
