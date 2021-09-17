@@ -1,5 +1,5 @@
-output batch_ami_id {
-  value       = nonsensitive(data.aws_ssm_parameter.batch_ami_id.value)
+output ecs_ami_id {
+  value       = nonsensitive(aws_ssm_parameter.ecs_ami.value)
   description = "AMI ID ssm parameter, for ITSD's latest Batch worker AMI"
 }
 

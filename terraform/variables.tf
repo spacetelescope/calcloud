@@ -113,3 +113,11 @@ variable crds_bucket {
     "-ops" = "ops"
   }
 }
+
+variable ci_ami {
+  type = string
+}
+
+variable ecs_ami {
+  type = string
+}
