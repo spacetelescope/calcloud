@@ -384,6 +384,13 @@ Analyze model performance, compare training iterations and explore statistical a
 Migrating Data Across Environments
 ----------------------------------
 
-In some cases, there may be a need to migrate existing data from the DynamoDB table of one environment into that of another (e.g. DDB-Test to DDB-Ops, DDB-Ops to DDB-Sandbox, etc). Included in this repo are two helper scripts (located in calcloud/scripts folder): 
+In some cases, there may be a need to migrate existing data from the DynamoDB table of one environment into that of another (e.g. DDB-Test to DDB-Ops, DDB-Ops to DDB-Sandbox, etc). Included in this repo are two helper scripts (located in calcloud/scripts folder)to simplify this process:
+
   - `scrape_dynamo.py` downloads data from source DDB table and saves to local .csv file
   - `import_dynamo.py` ingests data from local .csv file into DDB of destination DDB
+
+```bash
+$ cd calcloud/scripts
+$ python dynamo_scrape.py -t $SOURCE_TABLE_NAME -k latest.csv
+$ python dynamo_import.py -t $DESTINATION_TABLE_NAME -k latest.csv
+```
