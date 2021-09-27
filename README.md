@@ -371,7 +371,7 @@ Keeping the models performative requires periodic retraining with the latest ava
   4. Split data into train and test (validation) sets
   5. Run batch training for each model
   6. Calculate metrics and scores for evaluation 
-  7. Save and upload models and training results to s3
+  7. Save and upload models, training results, and training data CSV backup file to s3
   8. (optional) Run KFOLD cross-validation (10 splits)
 
 
@@ -379,3 +379,11 @@ Calcloud ML Dashboard
 ---------------------
 
 Analyze model performance, compare training iterations and explore statistical attributes of the continually evolving dataset with an interactive dashboard built specifically for Calcloud's prediction and classification models. The dashboard is maintained in a separate repository which can be found here: [CALCLOUD-ML-DASHBOARD](https://github.com/alphasentaurii/calcloud-ml-dashboard.git).
+
+
+Migrating Data Across Environments
+----------------------------------
+
+In some cases, there may be a need to migrate existing data from the DynamoDB table of one environment into that of another (e.g. DDB-Test to DDB-Ops, DDB-Ops to DDB-Sandbox, etc). Included in this repo are two helper scripts (located in calcloud/scripts folder): 
+  - `scrape_dynamo.py` downloads data from source DDB table and saves to local .csv file
+  - `import_dynamo.py` ingests data from local .csv file into DDB of destination DDB
