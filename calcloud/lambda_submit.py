@@ -23,8 +23,9 @@ class CalcloudInputsFailure(RuntimeError):
     """The inputs needed to plan and run this job were not ready in time."""
 
 
-def main(comm, ipppssoot, bucket_name):
+def main(comm, ipppssoot, bucket_name, overrides):
     """Submit the job for `ipppssoot` using `bucket_name` and io bundle `comm`.
+    Control parameters can be overridden by dictionary `overrides`.
 
     1. Deletes all messages for `ipppssoot`.
     2. Creates a metadata file for `ipppssoot` if it doesn't exist already.
@@ -39,7 +40,7 @@ def main(comm, ipppssoot, bucket_name):
     """
     try:
         terminated = comm.messages.listl(f"terminated-{ipppssoot}")
-        _main(comm, ipppssoot, bucket_name)
+        _main(comm, ipppssoot, bucket_name, overrides)
     except Exception as exc:
         print(f"Exception in lambda_submit.main for {ipppssoot} = {exc}")
         if terminated:
@@ -50,8 +51,10 @@ def main(comm, ipppssoot, bucket_name):
         comm.messages.put({status: "submit lambda exception handler " + bucket_name})
 
 
-def _main(comm, ipppssoot, bucket_name):
+def _main(comm, ipppssoot, bucket_name, overrides):
     """Core job submission function factored out of main() to clarify exception handling."""
+
+    print("Message payload overrides:", overrides)
 
     wait_for_inputs(comm, ipppssoot)
 
@@ -62,10 +65,13 @@ def _main(comm, ipppssoot, bucket_name):
     try:
         metadata = comm.xdata.get(ipppssoot)  # retry/rescue path
     except comm.xdata.client.exceptions.NoSuchKey:
-        metadata = dict(retries=0, memory_retries=0, job_id=None, terminated=False)
+        metadata = dict(retries=0, memory_retries=0, job_id=None, terminated=False, timeout_scale=1.0)
+    metadata.update(overrides)
 
     # get_plan() raises AllBinsTriedQuit when retries exhaust higher memory job definitions
-    p = plan.get_plan(ipppssoot, bucket_name, f"{bucket_name}/inputs", metadata["memory_retries"])
+    p = plan.get_plan(
+        ipppssoot, bucket_name, f"{bucket_name}/inputs", metadata["memory_retries"], metadata["timeout_scale"]
+    )
 
     # Only reached if get_plan() defines a viable job plan
     print("Job Plan:", p)

@@ -66,7 +66,7 @@ DEFAULT_VERBOSITY_LEVEL = 50
 
 
 class HstdpLogger:
-    def __init__(self, name="HSTDP", enable_console=True, level=logging.DEBUG, enable_time=True):
+    def __init__(self, name="HSTDP", enable_console=True, level=logging.DEBUG, enable_time=False):
         self.name = name
 
         self.handlers = []  # logging handlers, used e.g. to add console or file output streams
@@ -75,7 +75,7 @@ class HstdpLogger:
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
         self.logger.propagate = False
-        self.formatter = self.set_formatter()
+        self.formatter = self.set_formatter(enable_time=enable_time)
         self.console = None
         if enable_console:
             self.add_console_handler(level)

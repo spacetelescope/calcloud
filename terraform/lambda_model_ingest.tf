@@ -39,7 +39,12 @@ module "lambda_model_ingest" {
       path = "${path.module}/../calcloud"
       prefix_in_zip = "calcloud"
       pip_requirements = false
-    }
+    },
+    #  {
+    #    # pip dependencies defined for calcloud package in requirements.txt
+    #    path = "${path.module}/../calcloud"
+    #    pip_requirements = true
+    #  },
   ]
 
   store_on_s3 = true
