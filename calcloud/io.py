@@ -482,16 +482,16 @@ class MessageIo(YamlIo):
         A key purpose of message payloads is to pass override parameters into lambda handlers for messages
         such as 'place' or 'rescue':
 
-        >>> comm.messages.put('rescue-lcw303cjq', { "timeout_factor" : 1.25 })
+        >>> comm.messages.put('rescue-lcw303cjq', { "timeout_scale" : 1.25 })
         >>> comm.messages.get('rescue-lcw303cjq')
-        {'timeout_factor': 1.25}
+        {'timeout_scale': 1.25}
 
         While it could be individualized,  for simplicity broadcast nominally sends the same payload
         to all child messages.
 
-        >>> msg = comm.messages.broadcast("rescue", ['lcw303cjq', 'lcw304cjq', 'lcw305cjq'], {"timeout_factor" : 1.3})
+        >>> msg = comm.messages.broadcast("rescue", ['lcw303cjq', 'lcw304cjq', 'lcw305cjq'], {"timeout_scale" : 1.3})
         >>> comm.messages.pop(msg)
-        {'messages': ['rescue-lcw303cjq', 'rescue-lcw304cjq', 'rescue-lcw305cjq'], 'payload': {'timeout_factor': 1.3}}
+        {'messages': ['rescue-lcw303cjq', 'rescue-lcw304cjq', 'rescue-lcw305cjq'], 'payload': {'timeout_scale': 1.3}}
 
         >>> comm.messages.delete("all")
 
@@ -515,15 +515,15 @@ class MessageIo(YamlIo):
         >>> comm = get_io_bundle()
 
         >>> msg1, msg2 = comm.messages.bifurcate_broadcast(
-        ...    ['rescue-lcw303cjq', 'rescue-lcw304cjq', 'rescue-lcw305cjq'], {'timeout_factor' : 1.3})
+        ...    ['rescue-lcw303cjq', 'rescue-lcw304cjq', 'rescue-lcw305cjq'], {'timeout_scale' : 1.3})
 
         >>> comm.messages.listl() #doctest: +ELLIPSIS
         ['broadcast-..._..._..._..._...', 'broadcast-..._..._..._..._...']
 
         >>> comm.messages.pop(msg1)
-        {'messages': ['rescue-lcw303cjq'], 'payload': {'timeout_factor': 1.3}}
+        {'messages': ['rescue-lcw303cjq'], 'payload': {'timeout_scale': 1.3}}
         >>> comm.messages.pop(msg2)
-        {'messages': ['rescue-lcw304cjq', 'rescue-lcw305cjq'], 'payload': {'timeout_factor': 1.3}}
+        {'messages': ['rescue-lcw304cjq', 'rescue-lcw305cjq'], 'payload': {'timeout_scale': 1.3}}
         """
         msg1, msg2 = f"broadcast-{self.get_id()}", f"broadcast-{self.get_id()}"
         self.put(msg1, dict(messages=messages[: len(messages) // 2], payload=payload))

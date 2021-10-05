@@ -17,6 +17,7 @@ import os
 
 from . import plan
 from . import submit
+from . import log
 
 
 class CalcloudInputsFailure(RuntimeError):
@@ -42,7 +43,7 @@ def main(comm, ipppssoot, bucket_name, overrides):
         terminated = comm.messages.listl(f"terminated-{ipppssoot}")
         _main(comm, ipppssoot, bucket_name, overrides)
     except Exception as exc:
-        print(f"Exception in lambda_submit.main for {ipppssoot} = {exc}")
+        log.error(f"Exception in lambda_submit.main for {ipppssoot} = {exc}")
         if terminated:
             status = "terminated-" + ipppssoot
         else:
@@ -54,7 +55,7 @@ def main(comm, ipppssoot, bucket_name, overrides):
 def _main(comm, ipppssoot, bucket_name, overrides):
     """Core job submission function factored out of main() to clarify exception handling."""
 
-    print("Message payload overrides:", overrides)
+    _validate_overrides(overrides)
 
     wait_for_inputs(comm, ipppssoot)
 
@@ -74,9 +75,9 @@ def _main(comm, ipppssoot, bucket_name, overrides):
     )
 
     # Only reached if get_plan() defines a viable job plan
-    print("Job Plan:", p)
+    log.info("Job Plan:", p)
     response = submit.submit_job(p)
-    print("Submitted job for", ipppssoot, "as ID", response["jobId"])
+    log.info("Submitted job for", ipppssoot, "as ID", response["jobId"])
     metadata["job_id"] = response["jobId"]
     comm.xdata.put(ipppssoot, metadata)
     comm.messages.put(f"submit-{ipppssoot}")
@@ -101,7 +102,7 @@ def wait_for_inputs(comm, ipppssoot):
                 f"Both the 'placed' and 'rescue' messages for {ipppssoot} have been deleted. Aborting input wait and submission."
             )
         if not input_tarball or not memory_modeling:
-            print(
+            log.info(
                 f"Waiting for inputs for {ipppssoot} time remaining={seconds_to_fail}. input_tarball={len(input_tarball)}  memory_modeling={len(memory_modeling)}"
             )
             time.sleep(poll_seconds)
@@ -110,4 +111,23 @@ def wait_for_inputs(comm, ipppssoot):
                 raise CalcloudInputsFailure(
                     f"Wait for inputs for {ipppssoot} timeout, aborting submission.  input_tarball={len(input_tarball)}  memory_modeling={len(memory_modeling)}"
                 )
-    print(f"Inputs for {ipppssoot} found.")
+    log.info(f"Inputs for {ipppssoot} found.")
+
+
+OVERRIDE_KEYWORDS = {
+    "timeout_scale": (int, float),
+}
+
+
+def _validate_overrides(overrides):
+    """Check the `overrides` message payload for valid keywords and value types."""
+    log.info("Message payload overrides:", overrides)
+    if not isinstance(overrides, dict):
+        raise ValueError("The message job overrides didn't deserialize as a dict.")
+    for key, val in overrides.items():
+        valid_types = OVERRIDE_KEYWORDS.get(key)
+        if valid_types:
+            if not isinstance(overrides[key], valid_types):
+                raise ValueError(f"Override keyword {key} should define one of {valid_types}.")
+        else:
+            raise ValueError(f"Override keyword {key} is not one of {sorted(list(OVERRIDE_KEYWORDS))}.")
