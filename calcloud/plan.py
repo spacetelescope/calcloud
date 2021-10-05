@@ -106,7 +106,6 @@ def _get_resources(ipppssoot, output_bucket, input_path, timeout_scale):
     crds_config = "caldp-config-aws"
 
     clockTime, initial_bin = invoke_lambda_predict(ipppssoot, output_bucket)
-    # clockTime, initial_bin = 600, 0
 
     # predicted time * 5, clip between 20 minutes and 2 days, * timeout_scale
     kill_time = int(min(max(clockTime * 5, 20 * 60), 48 * 60 * 60) * timeout_scale)
