@@ -45,11 +45,13 @@ def main(comm, ipppssoot, bucket_name, overrides):
     except Exception as exc:
         log.error(f"Exception in lambda_submit.main for {ipppssoot} = {exc}")
         if terminated:
-            status = "terminated-" + ipppssoot
+            msg_name = "terminated-" + ipppssoot
         else:
-            status = "error-" + ipppssoot
+            msg_name = "error-" + ipppssoot
         comm.messages.delete(f"all-{ipppssoot}")
-        comm.messages.put({status: "submit lambda exception handler " + bucket_name})
+        comm.messages.put(
+            msg_name, payload=dict(where="submit lambda exception handler " + bucket_name, exception=str(exc))
+        )
 
 
 def _main(comm, ipppssoot, bucket_name, overrides):
