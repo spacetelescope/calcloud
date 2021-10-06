@@ -8,6 +8,7 @@ retry_config = Config(retries={"max_attempts": 5})
 client = boto3.client("s3", config=retry_config)
 dynamodb = boto3.resource("dynamodb", config=retry_config, region_name="us-east-1")
 
+
 def get_keys(items):
     keys = set([])
     for item in items:
@@ -54,7 +55,7 @@ def write_to_csv(ddb_data, filename=None):
     print(f"DDB data saved to: {filename}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", "--table", help="ddb table", type=str)
     parser.add_argument("-k", "--key", help="output csv filename", type=str)
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     if args.table:
         table_name = args.table
     else:
-        table_name = 'calcloud-model-ops'
+        table_name = "calcloud-model-ops"
     if args.key:
         key = args.key
     else:
