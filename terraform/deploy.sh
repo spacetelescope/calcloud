@@ -192,7 +192,9 @@ awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key inputs/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key outputs/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key control/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key blackboard/
+awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key crds_env_vars/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key crds_env_vars/${crds_context}
+
 
 cd $HOME
 rm -rf $TMP_INSTALL_DIR
