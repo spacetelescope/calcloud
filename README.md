@@ -327,23 +327,75 @@ In our current implementation, the blackboard lambda runs on a 7 minute schedule
 To speed up this sync, we could capture Batch state change events in CloudWatch and send them to lambda for ingestion into a dynamodb, which could then be either hooked up directly to the GUIs, or replicated in a more efficient fashion to the on-prem databases. 
 
 
-Job Memory Model
+Job Memory Models
 ================
 
 Overview
 --------
 
-... describe key aspects of the ML here such as features and network layout ...
+Pre-trained artificial neural networks are implemented in the pipeline to predict job resource requirements for HST. All three network architectures are built using the Keras functional API from the Tensorflow library. 
 
-Job Submission
+1. Memory Classifier
+1D Convolutional Neural Network performs multi-class classification on 8 features to predict which of 4 possible "memory bins" is the most appropriate for a given dataset. An estimated probability score is assigned to each of the four possible target classes, i.e. Memory Bins, represented by an integer from 0 to 3. The memory size thresholds are categorized as follow:
+
+  - `0: < 2GB`
+  - `1: <= 8GB`
+  - `2: <= 16GB`
+  - `3: < 64GB`
+
+2. Memory Regressor
+1D-CNN performs logistic regression to estimate how much memory (in Gigabytes) a given dataset will require for processing. This prediction is not used directly by the pipeline because AWS compute doesn't require an exact number (hence the bin classification). We retain this model for the purpose of additional analysis of the datasets and their evolving characteristics.
+
+3. Wallclock Regressor
+1D-CNN performs logistic regression to estimate the job's execution time in wallclock seconds. AWS Batch requires a minimum threshold of 60 seconds to be set on each job, although many jobs take less than one minute to complete. The predicted value from this model is used by JobSubmit to set a maximum execution time in which the job has to be completed, after which a job is killed (regardless of whether or not it has finished).
+
+JobPredict 
 --------------
 
-Describe model execution, lambda, image, etc.
+The JobPredict lambda is invoked by JobSubmit to determine resource allocation needs pertaining to memory and execution time. Upon invocation, a container is created on the fly using a docker image stored in the caldp ECR. The container then loads pre-trained models along with their learned parameters (e.g. weights) from saved keras files.
+
+The model's inputs are scraped from a text file in the calcloud-processing s3 bucket (`control/ipppssoot/MemoryModelFeatures.txt`) and converted into a numpy array. An additional preprocessing step applies a Yeo-Johnson power transform to the first two indices of the array (`n_files`, `total_mb`) using pre-calculated statistical values (mean, standard deviation and lambdas) representative of the entire training data "population". This transformation restricts all values into a 5-value range (-2 to 3) - see Model Training (below) for more details. 
+
+The resulting 2D-array of transformed inputs are then fed into the models which generate predictions for minimum memory size and wallclock (execution) time requirements. Predicted outputs are formatted into JSON and returned back to the JobSubmit lambda to acquire the compute resources necessary for completing calibration processing on that particular ipppssoot's data.
+
+
+Model Ingest
+------------
+
+When a job finishes successfully, its status message (in s3) changes to `processed-$ipppssoot.trigger`, and the  `model-ingest` lambda is automatically triggered. Similar to JobPredict lambda, the job's inputs/features are scraped from the control file in s3, in addition to the actual measured values for memory usage and wallclock time as recorded in the s3 outputs log files `process_metrics.txt | preview_metrics.txt`. The latter serve as ground truth target class labels for training the model. The features and targets are combined into a python dictionary, which is then formatted into a DynamoDB-compatible json object and ingested into the `calcloud-model` DynamoDB table for inclusion in the next model training iteration.
+
 
 Model Training
 --------------
 
-Describe training, scraping, architecture
+Keeping the models performative requires periodic retraining with the latest available data. Unless revisions are otherwise deemed necessary, the overall architecture and tuned hyperparameters of each network are re-built from scratch using the Keras functional API, then trained and validated using all available data. Model training iterations are manually submitted via AWS batch, which fires up a Docker container from the `training` image stored in CALDP elastic container repository (ECR) and runs through the entire training process as a standalone job (separate from the main calcloud processing runs):
 
-Dashboard?
-----------
+  1. Download training data from DynamoDB table
+  2. Preprocess (calculate statisics and re-run the PowerTransform on `n_files` and `total_mb`)
+  3. Build and compile models using Keras Functional API
+  4. Split data into train and test (validation) sets
+  5. Run batch training for each model
+  6. Calculate metrics and scores for evaluation 
+  7. Save and upload models, training results, and training data CSV backup file to s3
+  8. (optional) Run KFOLD cross-validation (10 splits)
+
+
+Calcloud ML Dashboard
+---------------------
+
+Analyze model performance, compare training iterations and explore statistical attributes of the continually evolving dataset with an interactive dashboard built specifically for Calcloud's prediction and classification models. The dashboard is maintained in a separate repository which can be found here: [CALCLOUD-ML-DASHBOARD](https://github.com/alphasentaurii/calcloud-ml-dashboard.git).
+
+
+Migrating Data Across Environments
+----------------------------------
+
+In some cases, there may be a need to migrate existing data from the DynamoDB table of one environment into that of another (e.g. DDB-Test to DDB-Ops, DDB-Ops to DDB-Sandbox, etc). Included in this repo are two helper scripts (located in calcloud/scripts folder)to simplify this process:
+
+  - `scrape_dynamo.py` downloads data from source DDB table and saves to local .csv file
+  - `import_dynamo.py` ingests data from local .csv file into DDB of destination DDB
+
+```bash
+$ cd calcloud/scripts
+$ python dynamo_scrape.py -t $SOURCE_TABLE_NAME -k latest.csv
+$ python dynamo_import.py -t $DESTINATION_TABLE_NAME -k latest.csv
+```
