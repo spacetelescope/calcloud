@@ -47,8 +47,9 @@ module "calcloud_lambda_submit" {
 
   environment_variables = merge(local.common_env_vars, {
       JOBPREDICTLAMBDA = module.lambda_function_container_image.this_lambda_function_arn,
-      SUBMIT_TIMEOUT = 14*60,  # leave some room for polling jitter, 14 min vs  15 min above
-  })                           # this is our timeout so error handling / cleanup should occur
+      SUBMIT_TIMEOUT = 14*60,  # leave some room for polling jitter, 14 min vs  15 min above. This is our timeout so error handling / cleanup should occur
+      DDBTABLE = "${aws_dynamodb_table.calcloud_model_db.name}"
+  })                           
 
   tags = {
     Name = "calcloud-job-submit${local.environment}"
