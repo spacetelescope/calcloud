@@ -17,14 +17,16 @@ import os
 
 from . import plan
 from . import submit
+from . import log
 
 
 class CalcloudInputsFailure(RuntimeError):
     """The inputs needed to plan and run this job were not ready in time."""
 
 
-def main(comm, ipppssoot, bucket_name):
+def main(comm, ipppssoot, bucket_name, overrides):
     """Submit the job for `ipppssoot` using `bucket_name` and io bundle `comm`.
+    Control parameters can be overridden by dictionary `overrides`.
 
     1. Deletes all messages for `ipppssoot`.
     2. Creates a metadata file for `ipppssoot` if it doesn't exist already.
@@ -39,21 +41,25 @@ def main(comm, ipppssoot, bucket_name):
     """
     try:
         terminated = comm.messages.listl(f"terminated-{ipppssoot}")
-        _main(comm, ipppssoot, bucket_name)
+        _main(comm, ipppssoot, bucket_name, overrides)
     except Exception as exc:
-        print(f"Exception in lambda_submit.main for {ipppssoot} = {exc}")
+        log.error(f"Exception in lambda_submit.main for {ipppssoot} = {exc}")
         if terminated:
-            status = "terminated-" + ipppssoot
+            msg_name = "terminated-" + ipppssoot
         else:
-            status = "error-" + ipppssoot
+            msg_name = "error-" + ipppssoot
         comm.messages.delete(f"all-{ipppssoot}")
-        comm.messages.put({status: "submit lambda exception handler " + bucket_name})
+        comm.messages.put(
+            msg_name, payload=dict(where="submit lambda exception handler " + bucket_name, exception=str(exc))
+        )
 
 
-def _main(comm, ipppssoot, bucket_name):
+def _main(comm, ipppssoot, bucket_name, overrides):
     """Core job submission function factored out of main() to clarify exception handling."""
 
-    wait_for_inputs(comm, ipppssoot)
+    overrides = _validate_overrides(overrides)
+
+    _wait_for_inputs(comm, ipppssoot)
 
     comm.messages.delete(f"all-{ipppssoot}")
     comm.outputs.delete(f"{ipppssoot}")
@@ -62,21 +68,24 @@ def _main(comm, ipppssoot, bucket_name):
     try:
         metadata = comm.xdata.get(ipppssoot)  # retry/rescue path
     except comm.xdata.client.exceptions.NoSuchKey:
-        metadata = dict(retries=0, memory_retries=0, job_id=None, terminated=False)
+        metadata = dict(retries=0, memory_retries=0, job_id=None, terminated=False, timeout_scale=1.0)
+    metadata.update(overrides)
 
     # get_plan() raises AllBinsTriedQuit when retries exhaust higher memory job definitions
-    p = plan.get_plan(ipppssoot, bucket_name, f"{bucket_name}/inputs", metadata["memory_retries"])
+    p = plan.get_plan(
+        ipppssoot, bucket_name, f"{bucket_name}/inputs", metadata["memory_retries"], metadata["timeout_scale"]
+    )
 
     # Only reached if get_plan() defines a viable job plan
-    print("Job Plan:", p)
+    log.info("Job Plan:", p)
     response = submit.submit_job(p)
-    print("Submitted job for", ipppssoot, "as ID", response["jobId"])
+    log.info("Submitted job for", ipppssoot, "as ID", response["jobId"])
     metadata["job_id"] = response["jobId"]
     comm.xdata.put(ipppssoot, metadata)
     comm.messages.put(f"submit-{ipppssoot}")
 
 
-def wait_for_inputs(comm, ipppssoot):
+def _wait_for_inputs(comm, ipppssoot):
     """Ensure that the inputs required to plan and run the job for `ipppssoot` are available.
 
     Each iteration,  check for the S3 message files which trigger submissions and abort if none
@@ -95,7 +104,7 @@ def wait_for_inputs(comm, ipppssoot):
                 f"Both the 'placed' and 'rescue' messages for {ipppssoot} have been deleted. Aborting input wait and submission."
             )
         if not input_tarball or not memory_modeling:
-            print(
+            log.info(
                 f"Waiting for inputs for {ipppssoot} time remaining={seconds_to_fail}. input_tarball={len(input_tarball)}  memory_modeling={len(memory_modeling)}"
             )
             time.sleep(poll_seconds)
@@ -104,4 +113,26 @@ def wait_for_inputs(comm, ipppssoot):
                 raise CalcloudInputsFailure(
                     f"Wait for inputs for {ipppssoot} timeout, aborting submission.  input_tarball={len(input_tarball)}  memory_modeling={len(memory_modeling)}"
                 )
-    print(f"Inputs for {ipppssoot} found.")
+    log.info(f"Inputs for {ipppssoot} found.")
+
+
+OVERRIDE_KEYWORDS = {
+    "timeout_scale": (int, float),
+}
+
+
+def _validate_overrides(overrides):
+    """Check the `overrides` message payload for valid keywords and value types."""
+    log.info("Message payload overrides:", overrides)
+    if overrides is None:
+        return {}
+    if not isinstance(overrides, dict):
+        raise ValueError("The message job overrides didn't deserialize as a dict.")
+    for key, val in overrides.items():
+        valid_types = OVERRIDE_KEYWORDS.get(key)
+        if valid_types:
+            if not isinstance(overrides[key], valid_types):
+                raise ValueError(f"Override value for {key} should be one of these types: {valid_types}.")
+        else:
+            raise ValueError(f"Override keyword {key} is not one of {sorted(list(OVERRIDE_KEYWORDS))}.")
+    return overrides

@@ -66,7 +66,7 @@ module "calcloud_env_amiRotation" {
   description   = "spawns an ec2 bi-weekly which rotates the ami for batch"
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "ami_rotation.lambda_handler"
-  runtime       = "python3.6"
+  runtime       = "python3.7"
   publish       = false
   timeout       = 60
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days

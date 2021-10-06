@@ -308,7 +308,12 @@ These are distinguished as either "retryable" or "not retryable".
 
 3. Job Cancelled           - An operator cancelled the job so it should not be retried.
 
-4. Other errors            - No automatic rescue
+4. Job timeout             - The job exceeded it's maximum permitted/modeled compute time. This can be manually
+                             rescued by putting the string 'timeout_scale: 1.25' into a rescue message
+			     which will trigger reprocessing the job with 25% extra time. Any postive floating
+			     point scale should work, included fractional scales < 1.0.
+
+5. Other errors            - No automatic rescue
 
 
 Blackboard

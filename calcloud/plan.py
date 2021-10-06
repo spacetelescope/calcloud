@@ -51,14 +51,9 @@ class AllBinsTriedQuit(Exception):
 
 # This is the top level entrypoint called from calcloud.lambda_submit.main
 # It returns a Plan() tuple which is passed to the submit function.
-#
-# It's the expectation that most/all of this file will be re-written during
-# the integration of new memory requirements modelling and new AWS Batch
-# infrastructure allocation strategies.   The signature of the get_plan()
-# function is the main thing to worry about changing externally.
 
 
-def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0):
+def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0, timeout_scale=1.0):
     """Given the resource requirements for a job,  map them onto appropriate
     requirements and Batch infrastructure needed to process the job.
 
@@ -68,16 +63,17 @@ def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0):
     memory_retries     increasing counter of retries with 0 being first try,
                        intended to drive increasing memory for each subsequent retry
                        with the maximum retry value set in Terraform.
+    timeout_scale      factor to multiply kill time by
 
     Returns    Plan   (named tuple)
     """
-    job_resources = _get_resources(ipppssoot, output_bucket, input_path)
+    job_resources = _get_resources(ipppssoot, output_bucket, input_path, timeout_scale)
     env = _get_environment(job_resources, memory_retries)
     return Plan(*(job_resources + env))
 
 
 def invoke_lambda_predict(ipppssoot, output_bucket):
-    # invoke calcloud-ai lambda
+    """Invoke calcloud-ai lambda to compute baseline memory bin and kill time."""
     bucket = output_bucket.replace("s3://", "")
     key = f"control/{ipppssoot}/{ipppssoot}_MemModelFeatures.txt"
     inputParams = {"Bucket": bucket, "Key": key, "Ipppssoot": ipppssoot}
@@ -89,10 +85,10 @@ def invoke_lambda_predict(ipppssoot, output_bucket):
     )
     predictions = json.load(response["Payload"])
     print(f"Predictions for {ipppssoot}: \n {predictions}")
-    return predictions
+    return predictions["clockTime"], predictions["memBin"]
 
 
-def _get_resources(ipppssoot, output_bucket, input_path):
+def _get_resources(ipppssoot, output_bucket, input_path, timeout_scale):
     """Given an HST IPPPSSOOT ID,  return information used to schedule it as a batch job.
 
     Conceptually resource requirements can be tailored to individual IPPPSSOOTs.
@@ -108,10 +104,13 @@ def _get_resources(ipppssoot, output_bucket, input_path):
     job_name = ipppssoot
     input_path = input_path
     crds_config = "caldp-config-aws"
-    # invoke calcloud-ai lambda
-    predictions = invoke_lambda_predict(ipppssoot, output_bucket)
-    initial_bin = predictions["memBin"]  # 0
-    kill_time = min(max(predictions["clockTime"] * 5, 20 * 60), 48 * 60 * 60)  # between 20 minutes and 2 days
+
+    clockTime, initial_bin = invoke_lambda_predict(ipppssoot, output_bucket)
+
+    # predicted time * 5, clip between 20 minutes and 2 days, * timeout_scale
+    kill_time = int(min(max(clockTime * 5, 20 * 60), 48 * 60 * 60) * timeout_scale)
+    # minimum Batch requirement 60 seconds
+    kill_time = int(max(kill_time, 60))
 
     return JobResources(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time)
 
@@ -119,7 +118,7 @@ def _get_resources(ipppssoot, output_bucket, input_path):
 def _get_environment(job_resources, memory_retries):
     """Based on a resources tuple and a memory_retries counter,  determine:
 
-    (queue,  job_definition_for_memory,  kill seconds)
+    (queue,  job_definition_for_memory,  caldp_entrypoint)
     """
     job_defs = os.environ["JOBDEFINITIONS"].split(",")
     job_queues = os.environ["JOBQUEUES"].split(",")
