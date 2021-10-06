@@ -57,9 +57,9 @@ def main(comm, ipppssoot, bucket_name, overrides):
 def _main(comm, ipppssoot, bucket_name, overrides):
     """Core job submission function factored out of main() to clarify exception handling."""
 
-    _validate_overrides(overrides)
+    overrides = _validate_overrides(overrides)
 
-    wait_for_inputs(comm, ipppssoot)
+    _wait_for_inputs(comm, ipppssoot)
 
     comm.messages.delete(f"all-{ipppssoot}")
     comm.outputs.delete(f"{ipppssoot}")
@@ -85,7 +85,7 @@ def _main(comm, ipppssoot, bucket_name, overrides):
     comm.messages.put(f"submit-{ipppssoot}")
 
 
-def wait_for_inputs(comm, ipppssoot):
+def _wait_for_inputs(comm, ipppssoot):
     """Ensure that the inputs required to plan and run the job for `ipppssoot` are available.
 
     Each iteration,  check for the S3 message files which trigger submissions and abort if none
@@ -124,12 +124,15 @@ OVERRIDE_KEYWORDS = {
 def _validate_overrides(overrides):
     """Check the `overrides` message payload for valid keywords and value types."""
     log.info("Message payload overrides:", overrides)
+    if overrides is None:
+        return {}
     if not isinstance(overrides, dict):
         raise ValueError("The message job overrides didn't deserialize as a dict.")
     for key, val in overrides.items():
         valid_types = OVERRIDE_KEYWORDS.get(key)
         if valid_types:
             if not isinstance(overrides[key], valid_types):
-                raise ValueError(f"Override keyword {key} should define one of {valid_types}.")
+                raise ValueError(f"Override value for {key} should be one of these types: {valid_types}.")
         else:
             raise ValueError(f"Override keyword {key} is not one of {sorted(list(OVERRIDE_KEYWORDS))}.")
+    return overrides
