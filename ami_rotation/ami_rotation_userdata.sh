@@ -114,8 +114,8 @@ bash ~/.nvm/nvm.sh
 source ~/.bashrc
 nvm install node
 npm config set registry http://registry.npmjs.org/
-npm install -g awsudo
 npm config set cafile /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+npm install -g awsudo
 python3 -m pip install -q --upgrade pip && python3 -m pip install boto3 -q
 cd ~
 rm -rf ~/tmp
