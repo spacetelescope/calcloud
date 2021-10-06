@@ -94,7 +94,9 @@ def invoke_lambda_predict(ipppssoot, output_bucket):
     inputParams = {"Bucket": bucket, "Key": key, "Ipppssoot": ipppssoot}
     job_predict_lambda = os.environ["JOBPREDICTLAMBDA"]
     response = client.invoke(
-        FunctionName=job_predict_lambda, InvocationType="RequestResponse", Payload=json.dumps(inputParams),
+        FunctionName=job_predict_lambda,
+        InvocationType="RequestResponse",
+        Payload=json.dumps(inputParams),
     )
     predictions = json.load(response["Payload"])
     print(f"Predictions for {ipppssoot}: \n {predictions}")
