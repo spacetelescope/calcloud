@@ -24,18 +24,18 @@ def lambda_handler(event, context):
     if check_for_kill(comm, "Detected broadcast-kill on entry."):
         return
 
-    broadcasted = comm.messages.pop(f"broadcast-{serial}")
+    bmsg = comm.messages.pop(f"broadcast-{serial}")
 
-    if len(broadcasted) > 100:
-        serial1, serial2 = comm.messages.get_id(), comm.messages.get_id()
-        comm.messages.put(f"broadcast-{serial1}", broadcasted[: len(broadcasted) // 2])
-        comm.messages.put(f"broadcast-{serial2}", broadcasted[len(broadcasted) // 2 :])
-    else:
+    broadcasted, payload = bmsg["messages"], bmsg["payload"]
+
+    if len(broadcasted) > 100:  # split broadcast into two new broadcasts
+        comm.messages.bifurcate_broadcast(broadcasted, payload)
+    else:  # iteratively send payload to each message in broadcasted
         for i, msg in enumerate(broadcasted):
             if not i % 10:
                 if check_for_kill(comm, "Detected broadcast-kill in put loop"):
                     return
-            comm.messages.put(msg)
+            comm.messages.put(msg, payload)
 
 
 def check_for_kill(comm, message):

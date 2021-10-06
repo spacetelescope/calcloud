@@ -7,10 +7,10 @@ jobs:
     name: run flake8
     runs-on: ubuntu-18.04
     steps:
-      - name: set up python 3.8
+      - name: set up python 3.7
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.7
 
       - name: checkout code
         uses: actions/checkout@v2
@@ -25,10 +25,10 @@ jobs:
     name: run black
     runs-on: ubuntu-18.04
     steps:
-      - name: set up python 3.8
+      - name: set up python 3.7
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.7
 
       - name: checkout code
         uses: actions/checkout@v2
@@ -43,10 +43,10 @@ jobs:
     name: run bandit
     runs-on: ubuntu-18.04
     steps:
-      - name: set up python 3.8
+      - name: set up python 3.7
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.7
 
       - name: checkout code
         uses: actions/checkout@v2
