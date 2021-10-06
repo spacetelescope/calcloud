@@ -19,8 +19,10 @@ from . import common
 
 import json
 import boto3
+from boto3.dynamodb.conditions import Key
 
 client = boto3.client("lambda", config=common.retry_config)
+dynamodb = boto3.resource("dynamodb", config=common.retry_config, region_name="us-east-1")
 
 # ----------------------------------------------------------------------
 
@@ -72,6 +74,19 @@ def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0, timeout_sca
     return Plan(*(job_resources + env))
 
 
+def query_ddb(ipppssoot):
+    table_name = os.environ["DDBTABLE"]
+    table = dynamodb.Table(table_name)
+    response = table.query(KeyConditionExpression=Key("ipst").eq(ipppssoot))
+    db_clock, std_err = 20 * 60, 5
+    if len(response["Items"]) > 0:
+        data = response["Items"][0]
+        db_clock = int(data["wallclock"])
+        if "std_err" in data:
+            std_err = float(data["std_err"])
+    return db_clock, std_err
+
+
 def invoke_lambda_predict(ipppssoot, output_bucket):
     """Invoke calcloud-ai lambda to compute baseline memory bin and kill time."""
     bucket = output_bucket.replace("s3://", "")
@@ -85,7 +100,10 @@ def invoke_lambda_predict(ipppssoot, output_bucket):
     )
     predictions = json.load(response["Payload"])
     print(f"Predictions for {ipppssoot}: \n {predictions}")
-    return predictions["clockTime"], predictions["memBin"]
+    # defaults: db_clock=20 minutes, std_err=5
+    db_clock, std_err = query_ddb(ipppssoot)
+    clockTime = predictions["clockTime"] * (1 + std_err)
+    return clockTime, db_clock, predictions["memBin"]
 
 
 def _get_resources(ipppssoot, output_bucket, input_path, timeout_scale):
@@ -104,11 +122,10 @@ def _get_resources(ipppssoot, output_bucket, input_path, timeout_scale):
     job_name = ipppssoot
     input_path = input_path
     crds_config = "caldp-config-aws"
-
-    clockTime, initial_bin = invoke_lambda_predict(ipppssoot, output_bucket)
-
-    # predicted time * 5, clip between 20 minutes and 2 days, * timeout_scale
-    kill_time = int(min(max(clockTime * 5, 20 * 60), 48 * 60 * 60) * timeout_scale)
+    # default: predicted time * 6 or * 1+std_err
+    clockTime, db_clock, initial_bin = invoke_lambda_predict(ipppssoot, output_bucket)
+    # clip between 20 minutes and 2 days, * timeout_scale
+    kill_time = int(min(max(clockTime, db_clock), 48 * 60 * 60) * timeout_scale)
     # minimum Batch requirement 60 seconds
     kill_time = int(max(kill_time, 60))
 
