@@ -9,6 +9,7 @@ import pprint
 
 # ----------------------------------------------------------------------------------------------------
 
+
 def _sh(command, **keys):
     """Run a subprogram,  inheriting stdout and stderr from the calller, and
     return the program exit status.  Output is not captured.
@@ -16,17 +17,12 @@ def _sh(command, **keys):
     """
     if len(command) == 1:
         lines = command[0].splitlines()
-        command = (" && ".join(
-            [line.strip() for line in lines
-             if line.strip()]
-        ),)
-    baseline = dict(
-        env=os.environ,
-        universal_newlines=True,
-        shell=True)
+        command = (" && ".join([line.strip() for line in lines if line.strip()]),)
+    baseline = dict(env=os.environ, universal_newlines=True, shell=True)
     keys = dict(keys)
     keys.update(baseline)
     return subprocess.run(command, **keys)
+
 
 def out(*command, **keys):
     """Run a subprogram and return it's stdout."""
@@ -34,10 +30,13 @@ def out(*command, **keys):
     keys["stdout"] = subprocess.PIPE
     return _sh(command, **keys).stdout
 
+
 def lines(*command, **keys):
     return out(*command, **keys).splitlines()
 
+
 # ----------------------------------------------------------------------------------------------------
+
 
 class BatchLogReducer:
     def __init__(self, logdir):
@@ -47,7 +46,7 @@ class BatchLogReducer:
         self.total_failures = 0
 
     def divider(self):
-        print("+-"*60)
+        print("+-" * 60)
         print(".", file=sys.stderr, end="")
         sys.stderr.flush()
 
@@ -90,13 +89,13 @@ class BatchLogReducer:
     def reduce_one_job(self, all_text):
         fail_output = self.reduce_lines(all_text.splitlines())
         self.divider()
-        if not fail_output: # no fail output == no failure
+        if not fail_output:  # no fail output == no failure
             # Print 2nd line of job, IPPPSSOOT + cmd
             print(all_text.splitlines()[1])
         elif self.category in self.suppress:
-            print("+-"*20, "XXXX", self.category,  "FAILED/SUPPRESSED XXXX", "+-"*20)
+            print("+-" * 20, "XXXX", self.category, "FAILED/SUPPRESSED XXXX", "+-" * 20)
         else:
-            print("+-"*20, "XXXX", self.category,  "FAILED XXXX", "+-"*20)
+            print("+-" * 20, "XXXX", self.category, "FAILED XXXX", "+-" * 20)
             print(fail_output)
             self.divider()
             print(all_text)
@@ -114,9 +113,11 @@ class BatchLogReducer:
                     self.category = category
         return ""
 
+
 def main(logdir):
     reducer = BatchLogReducer(logdir)
     return reducer.reduce()
+
 
 if __name__ == "__main__":
     main(sys.argv[1])
