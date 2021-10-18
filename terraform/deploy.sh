@@ -5,7 +5,7 @@
 # variables that will likely be changed frequently
 CALCLOUD_VER="0.4.30-rc1"
 CALDP_VER="v0.2.15-rc1"
-CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_drizzlecats_CAL_rc1"
+CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_drizzlecats_CAL_rc4"
 
 # this is the tag that the image will have in AWS ECR
 CALDP_IMAGE_TAG="latest"
@@ -51,7 +51,7 @@ fi
 
 # setting up the caldp source dir if it needs downloaded
 # equivalent to "if len($var) == 0"
-if [ -z "${CALDP_BUILD_DIR}"]
+if [ -z "${CALDP_BUILD_DIR}" ]
 then
     mkdir -p $TMP_INSTALL_DIR
     CALDP_BUILD_DIR="${TMP_INSTALL_DIR}/caldp"
