@@ -93,4 +93,4 @@ def lambda_handler(event, context):
     print(metadata)
     comm.xdata.put(ipppssoot, metadata)
     comm.messages.delete("all-" + ipppssoot)
-    comm.messages.put({continuation_msg: "batch failure event handler " + bucket})
+    comm.messages.put(continuation_msg)
