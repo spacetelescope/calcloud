@@ -272,7 +272,7 @@ class PayloadIo(S3Io):
 
     def dumper(self, value):
         """Ensure the empty string is dumped as an empty string,  not serialization of empty string."""
-        if value is not "":
+        if value != "":
             return self._dumper(value)
         else:
             return ""
