@@ -242,7 +242,7 @@ class PayloadIo(S3Io):
     """Abstract serializes/deserializes objects when putting/getting from S3."""
 
     loader = None
-    dumper = None
+    _dumper = None
 
     def get(self, prefixes):
         """Return the decoded message object fetched from literal message name `prefixes` if
@@ -270,19 +270,26 @@ class PayloadIo(S3Io):
         msgs = self.normalize_put_parameters(msgs, payload)
         super().put({msg: self.dumper(value) for (msg, value) in msgs.items()}, encoding=encoding)
 
+    def dumper(self, value):
+        """Ensure the empty string is dumped as an empty string,  not serialization of empty string."""
+        if value is not "":
+            return self._dumper(value)
+        else:
+            return ""
+
 
 class JsonIo(PayloadIo):
     """Serialize to/from JSON before storing/loading message payloads."""
 
     loader = staticmethod(json.loads)
-    dumper = staticmethod(json.dumps)
+    _dumper = staticmethod(json.dumps)
 
 
 class YamlIo(PayloadIo):
     """Serialize to/from YAML before storing/loading message payloads."""
 
     loader = staticmethod(yaml.safe_load)
-    dumper = staticmethod(yaml.dump)
+    _dumper = staticmethod(yaml.dump)
 
 
 class MessageIo(YamlIo):
