@@ -22,12 +22,12 @@ def format_row_item(row):
     row["instr"] = int(row["instr"])
     row["wallclock"] = float(row["wallclock"])
     row["memory"] = float(row["memory"])
-    row["mem_bin"] = float(row["mem_bin"])
+    #row["mem_bin"] = float(row["mem_bin"])
     row["n_files"] = float(row["n_files"])
     row["total_mb"] = float(row["total_mb"])
-    row["bin_pred"] = float(row["bin_pred"])
-    row["mem_pred"] = float(row["mem_pred"])
-    row["wall_pred"] = float(row["wall_pred"])
+    #row["bin_pred"] = float(row["bin_pred"])
+    #row["mem_pred"] = float(row["mem_pred"])
+    #row["wall_pred"] = float(row["wall_pred"])
     return json.loads(json.dumps(row, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
 
 
@@ -51,8 +51,13 @@ def main(key, table_name):
     batch = []
 
     for row in input_file:
-        item = format_row_item(row)
-
+        try:
+            item = format_row_item(row)
+        except Exception as e:
+            import traceback; traceback.print_exc()
+            print(e)
+            print(row)
+            import sys; sys.exit()
         if len(batch) >= batch_size:
             write_to_dynamo(batch, table_name)
             batch.clear()
