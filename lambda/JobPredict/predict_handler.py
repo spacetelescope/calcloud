@@ -126,11 +126,11 @@ class Preprocess:
         # apply power transformer normalization to continuous vars
         x = np.array([[n_files], [total_mb]]).reshape(1, -1)
         pt = PowerTransformer(standardize=False)
-        pt.lambdas_ = np.array([-1.05989146, 0.1691683])
+        pt.lambdas_ = np.array([-1.53012642, -0.08805166])
         xt = pt.transform(x)
         # normalization (zero mean, unit variance)
-        f_mean, f_sigma = 0.7313458816815209, 0.09209684806404451
-        s_mean, s_sigma = 4.18491577280472, 2.4467903663338366
+        f_mean, f_sigma = 0.5690156475654576, 0.04177326202270394
+        s_mean, s_sigma = 2.0786578109854394, 1.2068026984185416
         x_files = np.round(((xt[0, 0] - f_mean) / f_sigma), 5)
         x_size = np.round(((xt[0, 1] - s_mean) / s_sigma), 5)
         X = np.array([x_files, x_size, X[2], X[3], X[4], X[5], X[6], X[7], X[8]]).reshape(1, -1)
