@@ -1,5 +1,6 @@
 import sys
 import os
+import shutil
 from . import io
 from . import prep
 from . import train
@@ -71,9 +72,14 @@ if __name__ == "__main__":
         # run_kfold, skip training
         validate.run_kfold(df, bucket_mod, data_path, models, verbose, n_jobs)
     else:
-        train.train_models(df, bucket_mod, data_path, opt, models, verbose)
+        df_new = train.train_models(df, bucket_mod, data_path, opt, models, verbose)
+        io.save_dataframe(df_new, f"{prefix}/latest.csv")
+        io.s3_upload([f"{prefix}/latest.csv"], bucket_mod, prefix)
+        shutil.copy(f"{prefix}/pt_transform", "./models/pt_transform")
         io.zip_models("./models", zipname="models.zip")
         io.s3_upload(["models.zip"], bucket_mod, f"{data_path}/models")
+        io.batch_ddb_writer(f"{prefix}/latest.csv", table_name)
+        
         if cross_val == "skip":
             print("Skipping KFOLD")
         else:

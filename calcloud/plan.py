@@ -78,13 +78,13 @@ def query_ddb(ipppssoot):
     table_name = os.environ["DDBTABLE"]
     table = dynamodb.Table(table_name)
     response = table.query(KeyConditionExpression=Key("ipst").eq(ipppssoot))
-    db_clock, std_err = 20 * 60, 5
+    db_clock, wc_std = 20 * 60, 5
     if len(response["Items"]) > 0:
         data = response["Items"][0]
         db_clock = int(data["wallclock"])
-        if "std_err" in data:
-            std_err = float(data["std_err"])
-    return db_clock, std_err
+        if "wc_std" in data:
+            wc_std = float(data["wc_std"])
+    return db_clock, wc_std
 
 
 def invoke_lambda_predict(ipppssoot, output_bucket):
@@ -100,9 +100,9 @@ def invoke_lambda_predict(ipppssoot, output_bucket):
     )
     predictions = json.load(response["Payload"])
     print(f"Predictions for {ipppssoot}: \n {predictions}")
-    # defaults: db_clock=20 minutes, std_err=5
-    db_clock, std_err = query_ddb(ipppssoot)
-    clockTime = predictions["clockTime"] * (1 + std_err)
+    # defaults: db_clock=20 minutes, wc_std=5
+    db_clock, wc_std = query_ddb(ipppssoot)
+    clockTime = predictions["clockTime"] * (1 + wc_std)
     return clockTime, db_clock, predictions["memBin"]
 
 

@@ -8,6 +8,7 @@ import numpy as np
 import zipfile
 from boto3.dynamodb.conditions import Attr
 import pickle
+from decimal import Decimal
 
 # mitigation of potential API rate restrictions (esp for Batch API)
 retry_config = Config(retries={"max_attempts": 5})
@@ -239,3 +240,50 @@ def zip_models(path_to_models, zipname="models.zip"):
         for file in file_paths:
             zip_ref.write(file)
             print(file)
+
+
+def format_row_item(row):
+    row["timestamp"] = int(row["timestamp"])
+    row["x_files"] = float(row["x_files"])
+    row["x_size"] = float(row["x_size"])
+    row["bin_pred"] = float(row["bin_pred"])
+    row["mem_pred"] = float(row["mem_pred"])
+    row["wall_pred"] = float(row["wall_pred"])
+    row["wc_mean"] = float(row["wc_mean"])
+    row["wc_std"] = float(row["wc_std"])
+    row["wc_err"] = float(row["wc_err"])
+    return json.loads(json.dumps(row, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
+
+
+def write_to_dynamo(rows, table_name):
+    try:
+        table = dynamodb.Table(table_name)
+    except:
+        print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
+    try:
+        print("Writing batch to DDB...")
+        with table.batch_writer() as batch:
+            for i in range(len(rows)):
+                batch.put_item(Item=rows[i])
+    except:
+        print("Error executing batch_writer")
+
+
+def batch_ddb_writer(key, table_name):
+    input_file = csv.DictReader(open(key))
+
+    batch_size = 100
+    batch = []
+
+    for row in input_file:
+        item = format_row_item(row)
+
+        if len(batch) >= batch_size:
+            write_to_dynamo(batch, table_name)
+            batch.clear()
+            print("Batch uploaded.")
+
+        batch.append(item)
+    if batch:
+        write_to_dynamo(batch, table_name)
+    return {"statusCode": 200, "body": json.dumps("Uploaded to DynamoDB Table")}
