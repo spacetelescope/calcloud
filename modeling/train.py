@@ -285,7 +285,7 @@ def train_memory_classifier(df, clf, bucket_mod, data_path, verbose):
     X, _ = prep.split_Xy(df, target_col, keep_index=True)
     y_proba = clf.predict(X)
     y_pred = np.argmax(y_proba, axis=-1)
-    bin_preds = pd.DataFrame(y_pred, index=X.index, columns=['bin_pred'])
+    bin_preds = pd.DataFrame(y_pred, index=X.index, columns=["bin_pred"])
     return bin_preds
 
 
@@ -302,7 +302,7 @@ def train_memory_regressor(df, mem_reg, bucket_mod, data_path, verbose):
     io.s3_upload(["mem_reg.zip"], bucket_mod, f"{data_path}/models")
     X, _ = prep.split_Xy(df, target_col, keep_index=True)
     y_pred = mem_reg.predict(X)
-    mem_preds = pd.DataFrame(y_pred, index=X.index, columns=['mem_pred'])
+    mem_preds = pd.DataFrame(y_pred, index=X.index, columns=["mem_pred"])
     return mem_preds
 
 
@@ -319,28 +319,28 @@ def train_wallclock_regressor(df, wall_reg, bucket_mod, data_path, verbose):
     io.s3_upload(["wall_reg.zip"], bucket_mod, f"{data_path}/models")
     X, _ = prep.split_Xy(df, target_col, keep_index=True)
     y_pred = wall_reg.predict(X)
-    wall_preds = pd.DataFrame(y_pred, index=X.index, columns=['wall_pred'])
+    wall_preds = pd.DataFrame(y_pred, index=X.index, columns=["wall_pred"])
     return wall_preds
 
 
 def wallclock_stats(df):
     wc_dict = {}
     wc_stats = {}
-    wc_preds = list(df['wall_pred'].unique())
+    wc_preds = list(df["wall_pred"].unique())
     for p in wc_preds:
         wc_dict[p] = {}
-        wall = df.loc[df.wall_pred == p]['wallclock']
+        wall = df.loc[df.wall_pred == p]["wallclock"]
         std = np.std(wall)
-        wc_dict[p]['wc_mean'] = np.mean(wall)
-        wc_dict[p]['wc_std'] = std
-        wc_dict[p]['wc_err'] = std / np.sqrt(len(wall))
+        wc_dict[p]["wc_mean"] = np.mean(wall)
+        wc_dict[p]["wc_std"] = std
+        wc_dict[p]["wc_err"] = std / np.sqrt(len(wall))
     for idx, row in df.iterrows():
         wc_stats[idx] = {}
-        wp = row['wall_pred']
+        wp = row["wall_pred"]
         if wp in wc_dict:
-            wc_stats[idx]['wc_mean'] = wc_dict[wp]['wc_mean']
-            wc_stats[idx]['wc_std'] = wc_dict[wp]['wc_std']
-            wc_stats[idx]['wc_err'] = wc_dict[wp]['wc_err']
+            wc_stats[idx]["wc_mean"] = wc_dict[wp]["wc_mean"]
+            wc_stats[idx]["wc_std"] = wc_dict[wp]["wc_std"]
+            wc_stats[idx]["wc_err"] = wc_dict[wp]["wc_err"]
     df_stats = pd.DataFrame.from_dict(wc_stats, orient="index")
     return df_stats
 
@@ -359,7 +359,7 @@ def train_models(df, bucket_mod, data_path, opt, models, verbose):
     for target in models:
         M = pipeline[target]["model"]
         preds[target] = pipeline[target]["function"].__call__(df, M, bucket_mod, data_path, verbose)
-    
+
     cols = ["bin_pred", "mem_pred", "wall_pred", "wc_mean", "wc_std", "wc_err"]
     drop_cols = [col for col in cols if col in df.columns]
     df = df.drop(drop_cols, axis=1)
@@ -367,4 +367,3 @@ def train_models(df, bucket_mod, data_path, opt, models, verbose):
     df_stats = wallclock_stats(df_preds)
     df_new = df_preds.join(df_stats, how="left")
     return df_new
-

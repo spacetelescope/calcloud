@@ -79,7 +79,7 @@ if __name__ == "__main__":
         io.zip_models("./models", zipname="models.zip")
         io.s3_upload(["models.zip"], bucket_mod, f"{data_path}/models")
         io.batch_ddb_writer(f"{prefix}/latest.csv", table_name)
-        
+
         if cross_val == "skip":
             print("Skipping KFOLD")
         else:

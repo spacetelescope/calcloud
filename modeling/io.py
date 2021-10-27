@@ -258,15 +258,17 @@ def format_row_item(row):
 def write_to_dynamo(rows, table_name):
     try:
         table = dynamodb.Table(table_name)
-    except:
+    except Exception as e:
         print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
+        print(e)
     try:
         print("Writing batch to DDB...")
         with table.batch_writer() as batch:
             for i in range(len(rows)):
                 batch.put_item(Item=rows[i])
-    except:
+    except Exception as e:
         print("Error executing batch_writer")
+        print(e)
 
 
 def batch_ddb_writer(key, table_name):

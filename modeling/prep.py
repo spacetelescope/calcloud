@@ -131,10 +131,10 @@ def preprocess(bucket_mod, prefix, src, table_name, attr):
     df, pt_transform = update_power_transform(df)
     io.save_dataframe(df, "latest.csv")
     data_dict = {"pt_transform": pt_transform}
-    #TODO update this with preds post-training, then upload
+    # TODO update this with preds post-training, then upload
     keys = io.save_to_pickle(data_dict, target_col=None, df_key="latest.csv")
     io.s3_upload(keys, bucket_mod, prefix)
-    #io.batch_ddb_writer("latest.csv", table_name)
+    # io.batch_ddb_writer("latest.csv", table_name)
     return df
 
 
@@ -177,11 +177,11 @@ def split_Xy(df, target_col, keep_index=False):
         "timestamp",
         "wc_mean",
         "wc_std",
-        "wc_err"
+        "wc_err",
     ]
     drop_cols = [col for col in cols if col in df.columns]
     features = df.drop(columns=drop_cols, axis=1, inplace=False)
-    if keep_index == False:
+    if keep_index is False:
         X = features.values
         y = targets.values
     else:

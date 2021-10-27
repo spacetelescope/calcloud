@@ -16,6 +16,7 @@ retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
 s3 = boto3.resource("s3", config=retry_config)
 client = boto3.client("s3", config=retry_config)
 
+
 def load_pt_data(pt_file):
     with open(pt_file, "rb") as pick:
         pt_data = pickle.load(pick)
@@ -136,8 +137,8 @@ class Preprocess:
         # pt.lambdas_ = np.array([-1.05989146, 0.1691683])
         xt = pt.transform(x)
         # normalization (zero mean, unit variance)
-        f_mean, f_sigma =  pt_data["f_mean"], pt_data["f_sigma"]
-        s_mean, s_sigma  = pt_data["s_mean"], pt_data["s_sigma"]
+        f_mean, f_sigma = pt_data["f_mean"], pt_data["f_sigma"]
+        s_mean, s_sigma = pt_data["s_mean"], pt_data["s_sigma"]
         # f_mean, f_sigma = 0.7313458816815209, 0.09209684806404451
         # s_mean, s_sigma = 4.18491577280472, 2.4467903663338366
         x_files = np.round(((xt[0, 0] - f_mean) / f_sigma), 5)
