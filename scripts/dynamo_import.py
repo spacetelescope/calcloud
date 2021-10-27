@@ -4,6 +4,7 @@ import os
 import argparse
 import csv
 from decimal import Decimal
+import sys
 
 s3 = boto3.resource("s3")
 dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
@@ -42,6 +43,9 @@ def write_to_dynamo(rows, table_name):
             for i in range(len(rows)):
                 batch.put_item(Item=rows[i])
     except:
+        import traceback
+        traceback.print_exc()
+        sys.exit()
         print("Error executing batch_writer")
 
 
