@@ -44,6 +44,7 @@ def write_to_dynamo(rows, table_name):
                 batch.put_item(Item=rows[i])
     except:
         import traceback
+
         traceback.print_exc()
         sys.exit()
         print("Error executing batch_writer")
