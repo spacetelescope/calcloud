@@ -162,20 +162,8 @@ def make_tensors(X_train, y_train, X_test, y_test):
 
 def split_Xy(df, target_col):
     targets = df[target_col]
-    cols = [
-        "n_files",
-        "total_mb",
-        "wallclock",
-        "memory",
-        "mem_bin",
-        "mem_pred",
-        "bin_pred",
-        "wall_pred",
-        "ipst",
-        "timestamp",
-    ]
-    drop_cols = [col for col in cols if col in df.columns]
-    features = df.drop(columns=drop_cols, axis=1, inplace=False)
+    input_cols = ["x_files", "x_size", "drizcorr", "pctecorr", "crsplit", "subarray", "detector", "dtype", "instr"]
+    features = df[input_cols]
     X = features.values
     y = targets.values
     return X, y
