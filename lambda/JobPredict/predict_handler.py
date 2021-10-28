@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.preprocessing import PowerTransformer
 import tensorflow as tf
 from botocore.config import Config
-import pickle
+import json
 
 # mitigation of potential API rate restrictions (esp for Batch API)
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
@@ -18,8 +18,8 @@ client = boto3.client("s3", config=retry_config)
 
 
 def load_pt_data(pt_file):
-    with open(pt_file, "rb") as pick:
-        pt_data = pickle.load(pick)
+    with open(pt_file, "r") as j:
+        pt_data = json.load(j)
     return pt_data
 
 
@@ -133,7 +133,7 @@ class Preprocess:
         # apply power transformer normalization to continuous vars
         x = np.array([[n_files], [total_mb]]).reshape(1, -1)
         pt = PowerTransformer(standardize=False)
-        pt.lambdas_ = np.array([pt_data["lambdas"][0], pt_data["lambdas"][1]])
+        pt.lambdas_ = np.array([pt_data["f_lambda"], pt_data["s_lambda"][1]])
         # pt.lambdas_ = np.array([-1.05989146, 0.1691683])
         xt = pt.transform(x)
         # normalization (zero mean, unit variance)

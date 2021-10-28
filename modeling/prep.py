@@ -116,7 +116,12 @@ def update_power_transform(df):
     df_norm = pd.DataFrame(normalized, index=idx, columns=["x_files", "x_size"])
     df["x_files"] = df_norm["x_files"]
     df["x_size"] = df_norm["x_size"]
-    pt_transform = {"lambdas": pt.lambdas_, "f_mean": f_mean, "f_sigma": f_sigma, "s_mean": s_mean, "s_sigma": s_sigma}
+    lambdas = pt.lambdas_
+    pt_transform = {
+        "f_lambda": lambdas[0], "s_lambda": lambdas[1], 
+        "f_mean": f_mean, "f_sigma": f_sigma, 
+        "s_mean": s_mean, "s_sigma": s_sigma
+        }
     print(pt_transform)
     return df, pt_transform
 
@@ -130,11 +135,8 @@ def preprocess(bucket_mod, prefix, src, table_name, attr):
     # update power transform
     df, pt_transform = update_power_transform(df)
     io.save_dataframe(df, "latest.csv")
-    data_dict = {"pt_transform": pt_transform}
-    # TODO update this with preds post-training, then upload
-    keys = io.save_to_pickle(data_dict, target_col=None, df_key="latest.csv")
-    io.s3_upload(keys, bucket_mod, prefix)
-    # io.batch_ddb_writer("latest.csv", table_name)
+    io.save_json(pt_transform, "pt_transform")
+    io.s3_upload(["pt_transform", "latest.csv"], bucket_mod, f"{prefix}/data")
     return df
 
 

@@ -8,6 +8,7 @@ import numpy as np
 import zipfile
 from boto3.dynamodb.conditions import Attr
 import pickle
+import json
 from decimal import Decimal
 
 # mitigation of potential API rate restrictions (esp for Batch API)
@@ -172,6 +173,11 @@ def save_dict(data_dict, df_key=None):
         keys.append(df_key)
     print(f"File keys:\n {keys}")
     return keys
+
+def save_json(data, name):
+    with open(name, "w") as fp:
+        json.dump(data, fp)
+    print(f"\nJSON file saved:\n {os.path.abspath(name)}")
 
 
 def save_dataframe(df, df_key):
