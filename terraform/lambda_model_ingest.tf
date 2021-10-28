@@ -32,7 +32,7 @@ module "lambda_model_ingest" {
     {
       # this is the lambda itself. The code in path will be placed directly into the lambda execution path
       path = "${path.module}/../lambda/ModelIngest"
-      pip_requirements = false
+      pip_requirements = true
     },
     {
       # calcloud for the package
