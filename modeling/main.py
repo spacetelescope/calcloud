@@ -74,7 +74,7 @@ if __name__ == "__main__":
         df_new = train.train_models(df, bucket_mod, prefix, opt, models, verbose)
         io.save_dataframe(df_new, "latest.csv")
         io.s3_upload(["latest.csv"], bucket_mod, f"{prefix}/data")
-        shutil.copy(f"data/pt_transform", "./models/pt_transform")
+        shutil.copy("data/pt_transform", "./models/pt_transform")
         io.zip_models("./models", zipname="models.zip")
         io.s3_upload(["models.zip"], bucket_mod, f"{prefix}/models")
         io.batch_ddb_writer("latest.csv", table_name)

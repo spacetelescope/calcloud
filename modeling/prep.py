@@ -118,10 +118,13 @@ def update_power_transform(df):
     df["x_size"] = df_norm["x_size"]
     lambdas = pt.lambdas_
     pt_transform = {
-        "f_lambda": lambdas[0], "s_lambda": lambdas[1], 
-        "f_mean": f_mean, "f_sigma": f_sigma, 
-        "s_mean": s_mean, "s_sigma": s_sigma
-        }
+        "f_lambda": lambdas[0],
+        "s_lambda": lambdas[1],
+        "f_mean": f_mean,
+        "f_sigma": f_sigma,
+        "s_mean": s_mean,
+        "s_sigma": s_sigma,
+    }
     print(pt_transform)
     return df, pt_transform
 

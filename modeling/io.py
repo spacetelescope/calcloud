@@ -8,7 +8,6 @@ import numpy as np
 import zipfile
 from boto3.dynamodb.conditions import Attr
 import pickle
-import json
 from decimal import Decimal
 
 # mitigation of potential API rate restrictions (esp for Batch API)
@@ -174,6 +173,7 @@ def save_dict(data_dict, df_key=None):
     print(f"File keys:\n {keys}")
     return keys
 
+
 def save_json(data, name):
     with open(name, "w") as fp:
         json.dump(data, fp)
@@ -268,7 +268,6 @@ def write_to_dynamo(rows, table_name):
         print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
         print(e)
     try:
-        print("Writing batch to DDB...")
         with table.batch_writer() as batch:
             for i in range(len(rows)):
                 batch.put_item(Item=rows[i])
@@ -289,7 +288,6 @@ def batch_ddb_writer(key, table_name):
         if len(batch) >= batch_size:
             write_to_dynamo(batch, table_name)
             batch.clear()
-            print("Batch uploaded.")
 
         batch.append(item)
     if batch:

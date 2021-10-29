@@ -81,7 +81,7 @@ def query_ddb(ipppssoot):
     db_clock, wc_std = 20 * 60, 5
     if len(response["Items"]) > 0:
         data = response["Items"][0]
-        db_clock = int(data["wallclock"])
+        db_clock = float(data["wallclock"])
         if "wc_std" in data:
             wc_std = float(data["wc_std"])
     return db_clock, wc_std
