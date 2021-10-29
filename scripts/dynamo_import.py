@@ -51,7 +51,6 @@ def write_to_dynamo(rows, table_name):
         sys.exit()
 
 
-
 def main(key, table_name):
     input_file = csv.DictReader(open(key))
     batch_size = 100
