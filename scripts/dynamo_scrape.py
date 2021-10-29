@@ -57,16 +57,10 @@ def write_to_csv(ddb_data, filename=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--table", help="ddb table", type=str)
-    parser.add_argument("-k", "--key", help="output csv filename", type=str)
+    parser.add_argument("-t", "--table", default="calcloud-model-ops", help="ddb table", type=str)
+    parser.add_argument("-k", "--key", default="latest.csv", help="output csv filename", type=str)
     args = parser.parse_args()
-    if args.table:
-        table_name = args.table
-    else:
-        table_name = "calcloud-model-ops"
-    if args.key:
-        key = args.key
-    else:
-        key = "latest.csv"
+    table_name = args.table
+    key = args.key
     ddb_data = ddb_download(table_name)
     write_to_csv(ddb_data, key)

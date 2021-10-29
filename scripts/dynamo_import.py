@@ -1,6 +1,5 @@
 import json
 import boto3
-import os
 import argparse
 import csv
 from decimal import Decimal
@@ -23,22 +22,25 @@ def format_row_item(row):
     row["instr"] = int(row["instr"])
     row["wallclock"] = float(row["wallclock"])
     row["memory"] = float(row["memory"])
-    # row["mem_bin"] = float(row["mem_bin"])
+    row["mem_bin"] = float(row["mem_bin"])
     row["n_files"] = float(row["n_files"])
     row["total_mb"] = float(row["total_mb"])
-    # row["bin_pred"] = float(row["bin_pred"])
-    # row["mem_pred"] = float(row["mem_pred"])
-    # row["wall_pred"] = float(row["wall_pred"])
+    row["bin_pred"] = float(row["bin_pred"])
+    row["mem_pred"] = float(row["mem_pred"])
+    row["wall_pred"] = float(row["wall_pred"])
+    row["wc_mean"] = float(row["wc_mean"])
+    row["wc_std"] = float(row["wc_std"])
+    row["wc_err"] = float(row["wc_err"])
     return json.loads(json.dumps(row, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
 
 
 def write_to_dynamo(rows, table_name):
     try:
         table = dynamodb.Table(table_name)
-    except:
+    except Exception as e:
         print("Error loading DynamoDB table. Check if table was created correctly and environment variable.")
+        print(e)
     try:
-        print("Writing batch to DDB...")
         with table.batch_writer() as batch:
             for i in range(len(rows)):
                 batch.put_item(Item=rows[i])
@@ -47,7 +49,7 @@ def write_to_dynamo(rows, table_name):
 
         traceback.print_exc()
         sys.exit()
-        print("Error executing batch_writer")
+
 
 
 def main(key, table_name):
@@ -80,15 +82,9 @@ def main(key, table_name):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-t", "--table", help="ddb table", type=str)
-    parser.add_argument("-k", "--key", help="local csv filepath", type=str)
+    parser.add_argument("-t", "--table", type=str, default="calcloud-model-sb", help="ddb table")
+    parser.add_argument("-k", "--key", type=str, default="latest.csv", help="local csv filepath")
     args = parser.parse_args()
-    if args.table:
-        table_name = args.table
-    else:
-        table_name = "calcloud-model-sb"
-    if args.key:
-        key = args.key
-    else:
-        key = "latest.csv"
+    table_name = args.table
+    key = args.key
     main(key, table_name)
