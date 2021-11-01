@@ -55,7 +55,7 @@ def test_blackboard(batch_client, s3_client, iam_client):
         # Add job
         batch_client.submit_job(jobName=f"ipst_{i}", jobQueue=job_q_arn, jobDefinition=job_definition_arn)
 
-    time.sleep(5)
+    time.sleep(15)
     scrape_batch.lambda_handler({}, {})
 
     # check the file
