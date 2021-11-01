@@ -1,5 +1,6 @@
 import time
 import os
+import tempfile
 
 from . import conftest
 import scrape_batch
@@ -58,11 +59,12 @@ def test_blackboard(batch_client, s3_client, iam_client):
     scrape_batch.lambda_handler({}, {})
 
     # check the file
-    snapshot_location = f"{conftest.artifact_path}/blackboardAWS.snapshot"
-    s3_client.download_file(os.environ["BUCKET"], "blackboard/blackboardAWS.snapshot", snapshot_location)
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        snapshot_location = f"{tmp_dir}/blackboardAWS.snapshot"
+        s3_client.download_file(os.environ["BUCKET"], "blackboard/blackboardAWS.snapshot", snapshot_location)
 
-    with open(snapshot_location, "r") as f:
-        lines = f.readlines()
+        with open(snapshot_location, "r") as f:
+            lines = f.readlines()
 
     # header + 4 jobs submitted in this test
     assert len(lines) == 5
