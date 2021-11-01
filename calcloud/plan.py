@@ -67,7 +67,7 @@ def get_plan(ipppssoot, output_bucket, input_path, metadata):
                           intended to drive increasing memory for each subsequent retry
                           with the maximum retry value set in Terraform.
        memory_bin      absolute memory bin number or None
-       timeout_scale      factor to multiply kill time by
+       timeout_scale   factor to multiply kill time by
 
     Returns    Plan   (named tuple)
     """
@@ -146,7 +146,8 @@ def _get_environment(job_resources, memory_retries, memory_bin):
     job_queues = os.environ["JOBQUEUES"].split(",")
     job_resources = JobResources(*job_resources)
 
-    final_bin = memory_bin if memory_bin is not None else job_resources.initial_modeled_bin + memory_retries
+    final_bin = memory_bin if memory_bin is not None else job_resources.initial_modeled_bin
+    final_bin += memory_retries
     if final_bin < len(job_defs):
         log.info(
             "Selecting resources for",
