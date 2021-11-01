@@ -23,6 +23,7 @@ artifact_path = Path(__file__).resolve().parent / "test_artifacts"
 os.environ["JOBDEFINITIONS"] = ",".join(JOBDEFINITIONS)
 os.environ["JOBQUEUES"] = ",".join(JOBQUEUES)
 os.environ["BUCKET"] = BUCKET
+os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 
 
 @pytest.fixture(scope="function")
