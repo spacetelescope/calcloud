@@ -1,9 +1,6 @@
-import sys
 import time
 import os
 
-from calcloud import batch
-from calcloud import common
 from . import conftest
 import scrape_batch
 
