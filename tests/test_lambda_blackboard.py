@@ -59,7 +59,7 @@ def test_blackboard(batch_client, s3_client, iam_client):
     scrape_batch.lambda_handler({}, {})
 
     # check the file
-    with tempfile.TemporaryFile(dir="/tmp") as tmp_file:
+    with tempfile.TemporaryFile() as tmp_file:
         snapshot_location = f"{tmp_file}"
         s3_client.download_file(os.environ["BUCKET"], "blackboard/blackboardAWS.snapshot", snapshot_location)
 
