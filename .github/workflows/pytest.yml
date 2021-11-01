@@ -20,7 +20,7 @@ jobs:
         run: pip install .[dev]
 
       - name: run pytest code coverage check
-        run: pytest --cov=lambda --cov-fail-under 75
+        run: pytest --cov=lambda --cov-fail-under 75 -rP
 
   pytest:
     name: pytest
@@ -39,4 +39,4 @@ jobs:
         run: pip install .[dev]
 
       - name: run pytest
-        run: pytest
+        run: pytest -rP
