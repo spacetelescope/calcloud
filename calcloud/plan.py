@@ -14,7 +14,6 @@ from collections import namedtuple
 
 from . import hst
 from . import log
-from . import s3
 from . import common
 
 import json
@@ -55,22 +54,28 @@ class AllBinsTriedQuit(Exception):
 # It returns a Plan() tuple which is passed to the submit function.
 
 
-def get_plan(ipppssoot, output_bucket, input_path, memory_retries=0, timeout_scale=1.0):
+def get_plan(ipppssoot, output_bucket, input_path, metadata):
     """Given the resource requirements for a job,  map them onto appropriate
     requirements and Batch infrastructure needed to process the job.
 
     ipppssoot          dataset ID to plan
     output_bucket      S3 output bucket,  top level
     input_path
-    memory_retries     increasing counter of retries with 0 being first try,
-                       intended to drive increasing memory for each subsequent retry
-                       with the maximum retry value set in Terraform.
-    timeout_scale      factor to multiply kill time by
+    metadata           dictionary of parameters sent in message override payloads or
+                       recorded in the control file.  Relevant here:
+       memory_retries     increasing counter of retries with 0 being first try,
+                          intended to drive increasing memory for each subsequent retry
+                          with the maximum retry value set in Terraform.
+       memory_bin      absolute memory bin number or None
+       timeout_scale      factor to multiply kill time by
 
     Returns    Plan   (named tuple)
     """
+    timeout_scale = metadata["timeout_scale"]
+    memory_retries = metadata["memory_retries"]
+    memory_bin = metadata["memory_bin"]
     job_resources = _get_resources(ipppssoot, output_bucket, input_path, timeout_scale)
-    env = _get_environment(job_resources, memory_retries)
+    env = _get_environment(job_resources, memory_retries, memory_bin)
     return Plan(*(job_resources + env))
 
 
@@ -132,8 +137,8 @@ def _get_resources(ipppssoot, output_bucket, input_path, timeout_scale):
     return JobResources(ipppssoot, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time)
 
 
-def _get_environment(job_resources, memory_retries):
-    """Based on a resources tuple and a memory_retries counter,  determine:
+def _get_environment(job_resources, memory_retries, memory_bin):
+    """Based on a resources tuple and a memory_retries counter or memory_bin,  determine:
 
     (queue,  job_definition_for_memory,  caldp_entrypoint)
     """
@@ -141,7 +146,7 @@ def _get_environment(job_resources, memory_retries):
     job_queues = os.environ["JOBQUEUES"].split(",")
     job_resources = JobResources(*job_resources)
 
-    final_bin = job_resources.initial_modeled_bin + memory_retries
+    final_bin = memory_bin if memory_bin is not None else job_resources.initial_modeled_bin + memory_retries
     if final_bin < len(job_defs):
         log.info(
             "Selecting resources for",
@@ -150,14 +155,24 @@ def _get_environment(job_resources, memory_retries):
             job_resources.initial_modeled_bin,
             "Memory retries",
             memory_retries,
+            "Memory bin",
+            memory_bin,
             "Final bin index",
             final_bin,
         )
         job_definition = job_defs[final_bin]
         job_queue = job_queues[final_bin]
     else:
-        log.info("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
-        raise AllBinsTriedQuit("No higher memory job definition for", job_resources.ipppssoot, "after", memory_retries)
+        msg = (
+            "No higher memory job definition for",
+            job_resources.ipppssoot,
+            "after",
+            memory_retries,
+            "and",
+            memory_bin,
+        )
+        log.info(*msg)
+        raise AllBinsTriedQuit(*msg)
 
     return JobEnv(job_queue, job_definition, "caldp-process")
 
@@ -175,33 +190,6 @@ def test():
 # ----------------------------------------------------------------------
 
 
-def _planner(ipppssoots_file, output_bucket=s3.DEFAULT_BUCKET, input_path=s3.DEFAULT_BUCKET, retries=0):
-    """Given a set of ipppssoots in `ipppssoots_file` separated by spaces or newlines,
-    as well as an `output_bucket` to define how the jobs are named and
-    where outputs should be stored,  print out the associated batch resources tuples which
-    can be submitted.
-    """
-    for line in open(ipppssoots_file).readlines():
-        if line.strip().startswith("#"):
-            continue
-        for ipst in line.split():
-            print(
-                tuple(get_plan(ipst, "s3://" + output_bucket, "s3://" + input_path, retries))
-            )  # Drop type to support literal_eval() vs. eval()
-
-
 if __name__ == "__main__":
-    if len(sys.argv) in [2, 3, 4, 5]:
-        if sys.argv[1] == "test":
-            print(test())
-        else:
-            # ipppssoots_file = sys.argv[1] # filepath listing ipppssoots to plan
-            # output_bucket = sys.argv[2]   # 's3://calcloud-processing'
-            # inputs = sys.argv[3]          #  astroquery: or S3 inputs
-            # retries = sys.argv[4]         #  0..N
-            _planner(*sys.argv[1:])
-    else:
-        print(
-            "usage: python -m calcloud.plan  <ipppssoots_file>  [<output_bucket>]  [input_path]  [retry]",
-            file=sys.stderr,
-        )
+    if sys.argv[1] == "test":
+        print(test())

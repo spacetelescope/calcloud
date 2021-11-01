@@ -44,7 +44,7 @@ def lambda_handler(event, context):
         comm.messages.delete_literal(f"cancel-{job_id}")
         with log.trap_exception("Handling messages + control for", job_id):
             ipst = batch.get_job_name(job_id)
-            print("Handlign messages and control for", ipst)
+            print("Handling messages and control for", ipst)
             comm.messages.delete(f"all-{ipst}")
             comm.messages.put(f"terminated-{ipst}", "cancel lambda " + bucket_name)
             try:
@@ -62,6 +62,7 @@ def lambda_handler(event, context):
         comm.messages.put(f"terminated-{ipst}", "cancel lambda " + bucket_name)
         metadata = comm.xdata.get(ipst)
         metadata["terminated"] = True
+        metadata["cancel_type"] = "ipppssoot"
         comm.xdata.put(ipst, metadata)
         job_id = metadata["job_id"]
         with log.trap_exception("Terminating", job_id):
