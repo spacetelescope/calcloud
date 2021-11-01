@@ -22,6 +22,6 @@ scripts/*.json
 
 testing/predict_lambda_tests/*
 
-tests/test_artifacts
+tests/test_artifacts/*
 
 *.DS_Store
