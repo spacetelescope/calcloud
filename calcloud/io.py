@@ -11,6 +11,7 @@ import yaml
 
 from calcloud import s3
 from calcloud import hst
+from calcloud import batch
 from calcloud import log
 
 # -------------------------------------------------------------
@@ -684,6 +685,67 @@ class MetadataIo(JsonIo):
         assert hst.IPPPSSOOT_RE.match(ipppssoot) or ipppssoot in ["all", ""], f"Bad ipppssoot {ipppssoot}"
         prefix = f"{ipppssoot}/job.json" if ipppssoot not in ["all", ""] else ""
         return super().path(prefix)
+
+
+# Control values can be sent as part of message override payloads or can be recorded in comm.xdata.
+# XXXX NOTE: value checks are not currently active,  only field name and type.
+CONTROL_KEYWORDS = {
+    "cancel_type": ((str,), lambda x: x in ("job_id", "ipppssoot")),
+    "job_id": ((str,), batch.JOB_ID_RE.match),
+    "memory_bin": ((int, type(None)), lambda x: x in (0, 1, 2, 3, None)),
+    "terminated": ((bool,), lambda x: True),
+    "timeout_scale": ((int, float), lambda x: x > 0),
+    "ipppssoot": ((str,), hst.IPPPSSOOT_RE.match),
+    "bucket": ((str,), lambda x: True),
+    "job_name": ((str,), lambda x: True),
+    "exit_code": ((int, str), lambda x: True),
+    "exit_reason": ((str,), lambda x: True),
+    "exit_status": ((str,), lambda x: True),
+    "status_reason": (
+        (
+            int,
+            str,
+        ),
+        lambda x: True,
+    ),
+    "container_reason": (
+        (
+            int,
+            str,
+        ),
+        lambda x: True,
+    ),
+    "memory_retries": ((int,), lambda x: x >= 0),
+    "retries": ((int,), lambda x: x >= 0),
+}
+
+
+def validate_control(metadata):
+    """Check the `metadata` dictionary for valid keywords and value types."""
+    log.info("Validating control metadata", metadata)
+    if metadata is None:
+        return {}
+    if not isinstance(metadata, dict):
+        raise ValueError("Job metadata isn't a dict.")
+    for key, value in metadata.items():
+        defined = CONTROL_KEYWORDS.get(key)
+        if defined:
+            valid_types = defined[0]
+            if not isinstance(value, valid_types):
+                raise ValueError(f"Control value for {key} should be one of these types: {valid_types}.")
+            # f_valid_value = defined[1]
+            # if not f_valid_value(value):
+            #    raise ValueError(f"Control value for {key} is not valid.")
+        else:
+            raise ValueError(f"Control keyword {key} is not one of {sorted(list(CONTROL_KEYWORDS))}.")
+    return metadata
+
+
+def get_default_metadata():
+    """Return the default metadata needed to run the planner if no corresponding overrides or control data
+    are defined.
+    """
+    return dict(retries=0, memory_retries=0, memory_bin=None, job_id="undefined", terminated=False, timeout_scale=1.0)
 
 
 # -------------------------------------------------------------

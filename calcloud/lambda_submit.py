@@ -18,6 +18,7 @@ import os
 from . import plan
 from . import submit
 from . import log
+from . import io
 
 
 class CalcloudInputsFailure(RuntimeError):
@@ -57,7 +58,7 @@ def main(comm, ipppssoot, bucket_name, overrides):
 def _main(comm, ipppssoot, bucket_name, overrides):
     """Core job submission function factored out of main() to clarify exception handling."""
 
-    overrides = _validate_overrides(overrides)
+    overrides = io.validate_control(overrides)
 
     _wait_for_inputs(comm, ipppssoot)
 
@@ -68,13 +69,12 @@ def _main(comm, ipppssoot, bucket_name, overrides):
     try:
         metadata = comm.xdata.get(ipppssoot)  # retry/rescue path
     except comm.xdata.client.exceptions.NoSuchKey:
-        metadata = dict(retries=0, memory_retries=0, job_id=None, terminated=False, timeout_scale=1.0)
+        metadata = io.get_default_metadata()
+    metadata = io.validate_control(metadata)
     metadata.update(overrides)
 
     # get_plan() raises AllBinsTriedQuit when retries exhaust higher memory job definitions
-    p = plan.get_plan(
-        ipppssoot, bucket_name, f"{bucket_name}/inputs", metadata["memory_retries"], metadata["timeout_scale"]
-    )
+    p = plan.get_plan(ipppssoot, bucket_name, f"{bucket_name}/inputs", metadata)
 
     # Only reached if get_plan() defines a viable job plan
     log.info("Job Plan:", p)
@@ -114,25 +114,3 @@ def _wait_for_inputs(comm, ipppssoot):
                     f"Wait for inputs for {ipppssoot} timeout, aborting submission.  input_tarball={len(input_tarball)}  memory_modeling={len(memory_modeling)}"
                 )
     log.info(f"Inputs for {ipppssoot} found.")
-
-
-OVERRIDE_KEYWORDS = {
-    "timeout_scale": (int, float),
-}
-
-
-def _validate_overrides(overrides):
-    """Check the `overrides` message payload for valid keywords and value types."""
-    log.info("Message payload overrides:", overrides)
-    if overrides is None:
-        return {}
-    if not isinstance(overrides, dict):
-        raise ValueError("The message job overrides didn't deserialize as a dict.")
-    for key, val in overrides.items():
-        valid_types = OVERRIDE_KEYWORDS.get(key)
-        if valid_types:
-            if not isinstance(overrides[key], valid_types):
-                raise ValueError(f"Override value for {key} should be one of these types: {valid_types}.")
-        else:
-            raise ValueError(f"Override keyword {key} is not one of {sorted(list(OVERRIDE_KEYWORDS))}.")
-    return overrides
