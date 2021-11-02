@@ -9,7 +9,8 @@ Any errors not explicitly handled by CALDP are intended to be mapped to
 generic values of 0 or 1 to prevent conflicts with these codes.
 """
 
-_MEMORY_ERROR_NAMES = ["SUBPROCESS_MEMORY_ERROR", "CALDP_MEMORY_ERROR", "CONTAINER_MEMORY_ERROR"]
+
+_MEMORY_ERROR_NAMES = ["SUBPROCESS_MEMORY_ERROR", "CALDP_MEMORY_ERROR", "CONTAINER_MEMORY_ERROR", "OS_MEMORY_ERROR"]
 
 
 _EXIT_CODES = dict(
@@ -27,6 +28,7 @@ _EXIT_CODES = dict(
     SUBPROCESS_MEMORY_ERROR=31,  # See caldp-process for this
     CALDP_MEMORY_ERROR=32,
     CONTAINER_MEMORY_ERROR=33,
+    OS_MEMORY_ERROR=34,
 )
 
 
@@ -47,6 +49,7 @@ _NAME_EXPLANATIONS = dict(
     CALDP_MEMORY_ERROR="CALDP generated a Python MemoryError during processing or preview creation.",
     # This is never directly returned.  It's intended to be used to trigger a container memory limit
     CONTAINER_MEMORY_ERROR="The Batch/ECS container runtime killed the job due to memory limits.",
+    OS_MEMORY_ERROR="Python raised OSError(Cannot allocate memory...),  possibly fork failure.",
 )
 
 _CODE_TO_NAME = dict()
@@ -57,6 +60,8 @@ for (name, code) in _EXIT_CODES.items():
     _CODE_TO_NAME[code] = name
     _CODE_TO_NAME[str(code)] = name
     assert name in _NAME_EXPLANATIONS
+
+# -----------------------------------------------------------------------------------------------
 
 
 def explain(exit_code):
@@ -113,6 +118,9 @@ def is_memory_error(exit_code):
     True
     """
     return (exit_code in [globals()[name] for name in _MEMORY_ERROR_NAMES]) or (exit_code in _MEMORY_ERROR_NAMES)
+
+
+# -----------------------------------------------------------------------------------------------
 
 
 def test():  # pragma: no cover
