@@ -68,3 +68,5 @@ def test_blackboard(batch_client, s3_client, iam_client):
 
     # header + 4 jobs submitted in this test
     assert len(lines) == 5
+
+    #TODO: validate contents of snapshot
