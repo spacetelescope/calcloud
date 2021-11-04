@@ -170,6 +170,7 @@ def lambda_handler(event, context):
     key = event["Key"]
     ipppssoot = event["Ipppssoot"]
     pt_data = load_pt_data("./models/pt_transform")
+    print(f"pt_data: {pt_data}")
     prep = Preprocess(ipppssoot, bucket_name, key)
     prep.input_data = prep.import_data()
     prep.inputs = prep.scrub_keys()
