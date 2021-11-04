@@ -3,7 +3,7 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="0.4.30-rc13"
+CALCLOUD_VER="v0.4.30-rc14"
 CALDP_VER="v0.2.15-rc4"
 CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_drizzlecats_CAL_rc5"
 
@@ -169,6 +169,7 @@ awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[1]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[2]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[3]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
+awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
 
 # manual confirmation required
 awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}"
