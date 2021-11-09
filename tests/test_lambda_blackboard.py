@@ -7,9 +7,6 @@ import scrape_batch
 
 
 def test_blackboard(batch_client, s3_client, iam_client):
-    # mock s3 bucket
-    bucket = s3_client.create_bucket(Bucket=os.environ["BUCKET"])
-    print(bucket)
 
     # we'll need a mock iam role to pass to the mock batch client
     iams = iam_client.create_role(
