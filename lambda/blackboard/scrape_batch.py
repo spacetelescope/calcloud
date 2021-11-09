@@ -50,9 +50,10 @@ def lambda_handler(event, context):
                     jobs = page["jobSummaryList"]
                     print(f"handling {len(jobs)} jobs from {q} in {jobStatus} status...")
                     for j in jobs:
+                        print(j)
                         jobId = j["jobId"]
 
-                        submitDate = int(j["createdAt"] / 1000.0)
+                        submitDate = int(j.get("createdAt", default_timestamp) / 1000.0)
 
                         jobStartDate = int(j.get("startedAt", default_timestamp) / 1000.0)
                         completionDate = int(j.get("stoppedAt", default_timestamp) / 1000.0)

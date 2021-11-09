@@ -1,0 +1,42 @@
+name: pytest
+
+on: [push, pull_request]
+
+jobs:
+  coverage:
+    name: code coverage check
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: set up python 3.7.12
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7.12
+
+      - name: checkout code
+        uses: actions/checkout@v2
+
+      - name: install requirements
+        run: pip install .[dev]
+
+      - name: run pytest code coverage check
+        run: pytest --cov=lambda --cov-fail-under 75 -rP
+
+  pytest:
+    name: pytest
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: set up python 3.7.12
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7.12
+
+      - name: checkout code
+        uses: actions/checkout@v2
+
+      - name: install requirements
+        run: pip install .[dev]
+
+      - name: run pytest
+        run: pytest -rP
