@@ -1,0 +1,80 @@
+account: xxxxxxxxxxxx
+detail:
+  attempts:
+  - container:
+      containerInstanceArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:container-instance/calcloud-hst-02g-test20211104212201200000000004_Batch_19bef41a-8430-35fb-b7f9-c71086490373/58d2dacf8a1346849921fa40268b9cb7
+      exitCode: 24
+      logStreamName: calcloud-jobdef-02g-test/default/6c2a097f4261465392ff63aea14928cc
+      networkInterfaces: []
+      reason: 'OutOfMemoryError: Container killed due to memory usage'
+      taskArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:task/calcloud-hst-02g-test20211104212201200000000004_Batch_19bef41a-8430-35fb-b7f9-c71086490373/6c2a097f4261465392ff63aea14928cc
+    startedAt: 1636132332930
+    statusReason: Essential container in task exited
+    stoppedAt: 1636132974807
+  container:
+    command:
+    - caldp-process
+    - j8hqdfgaq
+    - s3://calcloud-processing-moto/inputs
+    - s3://calcloud-processing-moto/outputs/j8hqdfgaq
+    - caldp-config-aws
+    containerInstanceArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:container-instance/calcloud-hst-02g-test20211104212201200000000004_Batch_19bef41a-8430-35fb-b7f9-c71086490373/58d2dacf8a1346849921fa40268b9cb7
+    environment:
+    - name: AWSYSVER
+      value: v0.4.30-rc14
+    - name: AWSDPVER
+      value: v0.2.15-rc4
+    - name: CRDSBUCKET
+      value: s3://hst-crds-cache-ops
+    - name: CSYS_VER
+      value: caldp_drizzlecats
+    executionRoleArn: arn:aws:iam::xxxxxxxxxxxx:role/batch_exec
+    exitCode: 24
+    image: xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/caldp-test:latest
+    jobRoleArn: arn:aws:iam::xxxxxxxxxxxx:role/HSTDP-BatchJobRole
+    logStreamName: calcloud-jobdef-02g-test/default/6c2a097f4261465392ff63aea14928cc
+    mountPoints: []
+    networkInterfaces: []
+    privileged: false
+    reason: 'OutOfMemoryError: Container killed due to memory usage'
+    resourceRequirements:
+    - type: MEMORY
+      value: '1792'
+    - type: VCPU
+      value: '1'
+    secrets: []
+    taskArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:task/calcloud-hst-02g-test20211104212201200000000004_Batch_19bef41a-8430-35fb-b7f9-c71086490373/6c2a097f4261465392ff63aea14928cc
+    ulimits: []
+    user: developer
+    volumes: []
+  createdAt: 1636132204903
+  dependsOn: []
+  jobArn: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/ef9e8d6c-f480-418a-87e0-3cf72f3d3eb7
+  jobDefinition: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job-definition/calcloud-jobdef-02g-test:44
+  jobId: ef9e8d6c-f480-418a-87e0-3cf72f3d3eb7
+  jobName: j8hqdfgaq
+  jobQueue: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job-queue/calcloud-hst-queue-02g-test
+  parameters:
+    command: caldp-process
+    crds_config: caldp-config-offsite
+    dataset: j8cb010b0
+    input_path: 'astroquery:'
+    s3_output_path: s3://calcloud-processing-moto/outputs
+  platformCapabilities: []
+  propagateTags: false
+  startedAt: 1636132332930
+  status: FAILED
+  statusReason: Essential container in task exited
+  stoppedAt: 1636132974807
+  tags:
+    resourceArn: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/ef9e8d6c-f480-418a-87e0-3cf72f3d3eb7
+  timeout:
+    attemptDurationSeconds: 6333
+detail-type: Batch Job State Change
+id: 301e3166-89dd-fe06-422e-4c9a7415d088
+region: us-east-1
+resources:
+- arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/ef9e8d6c-f480-418a-87e0-3cf72f3d3eb7
+source: aws.batch
+time: '2021-11-05T17:22:56Z'
+version: '0'
