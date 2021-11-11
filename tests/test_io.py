@@ -1,11 +1,10 @@
-import os, doctest
-
-from calcloud import s3, io
-
 from . import conftest
+
+_fakeout = conftest
 
 
 def test_io_mock(s3_client):
+    import doctest
     from calcloud import io
 
     doctest_result = doctest.testmod(io)
