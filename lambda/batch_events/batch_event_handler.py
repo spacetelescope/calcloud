@@ -39,8 +39,6 @@ def lambda_handler(event, context):
     exit_code = container.get("exitCode", "undefined")
     exit_reason = exit_codes.explain(exit_code) if exit_code != "undefined" else exit_code
 
-    io.reject_cross_env_bucket(bucket)
-
     comm = io.get_io_bundle(bucket)
 
     metadata = comm.xdata.get(ipppssoot)

@@ -832,10 +832,11 @@ def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):
     """Return the IoBundle defined by root S3 `bucket` and accessed using
     S3 `client`.
     """
+    _reject_cross_env_bucket(bucket)
     return IoBundle(bucket, client)
 
 
-def reject_cross_env_bucket(bucket):
+def _reject_cross_env_bucket(bucket):
     """Raise an exception if `bucket` does not match BUCKET in os.environ in order to
     short circuit lambdas executing based on events from other environments.
     """
