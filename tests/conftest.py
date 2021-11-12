@@ -59,8 +59,6 @@ def iam_client(aws_credentials):
         yield boto3.client("iam", region_name="us-east-1")
 
 
-
 def load_event(basename):
     with open(f"{EVENT_DIR}/{basename}") as file:
         return yaml.safe_load(file)
-

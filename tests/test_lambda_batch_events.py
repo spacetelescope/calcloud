@@ -17,6 +17,7 @@ def starting_metadata(overrides):
     d.update(overrides)
     return d
 
+
 def setup_job(event_basename, **overrides):
     """Set up system as if batch job corresponding to `event_basename` event artifact has been submitted,
     first applying `overrides` to nominal xdata.
@@ -28,6 +29,7 @@ def setup_job(event_basename, **overrides):
     metadata = starting_metadata(overrides)
     comm.xdata.put(ipppssoot, metadata)
     return event, comm, ipppssoot, metadata
+
 
 def assert_final_message(msg_type, event_basename, **overrides):
     """Run a test on event file event_basename overriding values in the event using **overrides.
