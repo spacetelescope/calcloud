@@ -1,0 +1,13 @@
+detail:
+  jobId: fake-job-id
+  jobName: fake-job-name
+  statusReason: Essential container in task exited
+  container:
+    command:
+    - caldp-process
+    - ipppssoot
+    - s3://calcloud-processing-moto/inputs
+    - s3://calcloud-processing-moto/outputs/ipppssoot
+    - caldp-config-aws
+    exitCode: 137
+    reason: Essential container in task exited.

@@ -1,4 +1,0 @@
-n_files=4
-total_mb=0.39168000000000003
-DETECTOR=FUV
-SUBARRAY=False

@@ -1,7 +1,0 @@
-#! /bin/bash
-
-# Note that s3_dir can be a bucket or a bucket + subdir,
-# nominally the batch dir.
-s3_dir=${1:-"s3://hstdp-batch-outputs"}
-
-aws s3 ls --recursive $s3_dir | grep "\.txt" | awk '{print $4;}'

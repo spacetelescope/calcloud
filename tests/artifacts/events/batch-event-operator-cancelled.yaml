@@ -1,0 +1,78 @@
+account: xxxxxxxxxxxx
+detail:
+  attempts:
+  - container:
+      containerInstanceArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:container-instance/calcloud-hst-02g-test20211104212201200000000004_Batch_19bef41a-8430-35fb-b7f9-c71086490373/a80d33eed4924de19ff836f13bc01799
+      exitCode: 137
+      logStreamName: calcloud-jobdef-02g-test/default/c60f908e49e5482dad28513b9dddec8f
+      networkInterfaces: []
+      taskArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:task/calcloud-hst-02g-test20211104212201200000000004_Batch_19bef41a-8430-35fb-b7f9-c71086490373/c60f908e49e5482dad28513b9dddec8f
+    startedAt: 1636131879103
+    statusReason: Operator cancelled
+    stoppedAt: 1636132053106
+  container:
+    command:
+    - caldp-process
+    - j8hqdfgaq
+    - s3://calcloud-processing-moto/inputs
+    - s3://calcloud-processing-moto/outputs/j8hqdfgaq
+    - caldp-config-aws
+    containerInstanceArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:container-instance/calcloud-hst-02g-test20211104212201200000000004_Batch_19bef41a-8430-35fb-b7f9-c71086490373/a80d33eed4924de19ff836f13bc01799
+    environment:
+    - name: AWSYSVER
+      value: v0.4.30-rc14
+    - name: AWSDPVER
+      value: v0.2.15-rc4
+    - name: CRDSBUCKET
+      value: s3://hst-crds-cache-ops
+    - name: CSYS_VER
+      value: caldp_drizzlecats
+    executionRoleArn: arn:aws:iam::xxxxxxxxxxxx:role/batch_exec
+    exitCode: 137
+    image: xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/caldp-test:latest
+    jobRoleArn: arn:aws:iam::xxxxxxxxxxxx:role/HSTDP-BatchJobRole
+    logStreamName: calcloud-jobdef-02g-test/default/c60f908e49e5482dad28513b9dddec8f
+    mountPoints: []
+    networkInterfaces: []
+    privileged: false
+    resourceRequirements:
+    - type: MEMORY
+      value: '1792'
+    - type: VCPU
+      value: '1'
+    secrets: []
+    taskArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:task/calcloud-hst-02g-test20211104212201200000000004_Batch_19bef41a-8430-35fb-b7f9-c71086490373/c60f908e49e5482dad28513b9dddec8f
+    ulimits: []
+    user: developer
+    volumes: []
+  createdAt: 1636131868959
+  dependsOn: []
+  jobArn: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/5c202a35-06d6-4afd-b2f4-168a6430ceda
+  jobDefinition: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job-definition/calcloud-jobdef-02g-test:44
+  jobId: 5c202a35-06d6-4afd-b2f4-168a6430ceda
+  jobName: j8hqdfgaq
+  jobQueue: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job-queue/calcloud-hst-queue-02g-test
+  parameters:
+    command: caldp-process
+    crds_config: caldp-config-offsite
+    dataset: j8cb010b0
+    input_path: 'astroquery:'
+    s3_output_path: s3://calcloud-processing-moto/outputs
+  platformCapabilities: []
+  propagateTags: false
+  startedAt: 1636131879103
+  status: FAILED
+  statusReason: Operator cancelled
+  stoppedAt: 1636132053106
+  tags:
+    resourceArn: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/5c202a35-06d6-4afd-b2f4-168a6430ceda
+  timeout:
+    attemptDurationSeconds: 1266
+detail-type: Batch Job State Change
+id: 88a068a4-e494-9f78-14a3-daa7c6d09ac4
+region: us-east-1
+resources:
+- arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/5c202a35-06d6-4afd-b2f4-168a6430ceda
+source: aws.batch
+time: '2021-11-05T17:07:34Z'
+version: '0'

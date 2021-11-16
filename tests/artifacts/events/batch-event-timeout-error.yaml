@@ -1,0 +1,78 @@
+account: xxxxxxxxxxxx
+detail:
+  attempts:
+  - container:
+      containerInstanceArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:container-instance/calcloud-hst-16g-ops20210930124026279000000004_Batch_8cc15524-408e-38de-b6a4-f514b48d1506/6fb310dfc11f40c6b4b66bfda4fe459d
+      exitCode: 137
+      logStreamName: calcloud-jobdef-16g-ops/default/cf00768d95af4b7e8bd24b4f70d16367
+      networkInterfaces: []
+      taskArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:task/calcloud-hst-16g-ops20210930124026279000000004_Batch_8cc15524-408e-38de-b6a4-f514b48d1506/cf00768d95af4b7e8bd24b4f70d16367
+    startedAt: 1634590841754
+    statusReason: Job attempt duration exceeded timeout
+    stoppedAt: 1634603846539
+  container:
+    command:
+    - caldp-process
+    - iea607020
+    - s3://calcloud-processing-moto/inputs
+    - s3://calcloud-processing-moto/outputs/iea607020
+    - caldp-config-aws
+    containerInstanceArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:container-instance/calcloud-hst-16g-ops20210930124026279000000004_Batch_8cc15524-408e-38de-b6a4-f514b48d1506/6fb310dfc11f40c6b4b66bfda4fe459d
+    environment:
+    - name: AWSYSVER
+      value: 0.4.29
+    - name: AWSDPVER
+      value: 0.2.14
+    - name: CRDSBUCKET
+      value: s3://hst-crds-cache-ops
+    - name: CSYS_VER
+      value: caldp_20210827
+    executionRoleArn: arn:aws:iam::xxxxxxxxxxxx:role/batch_exec
+    exitCode: 137
+    image: xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/caldp-ops:latest
+    jobRoleArn: arn:aws:iam::xxxxxxxxxxxx:role/HSTDP-BatchJobRole
+    logStreamName: calcloud-jobdef-16g-ops/default/cf00768d95af4b7e8bd24b4f70d16367
+    mountPoints: []
+    networkInterfaces: []
+    privileged: false
+    resourceRequirements:
+    - type: MEMORY
+      value: '14336'
+    - type: VCPU
+      value: '2'
+    secrets: []
+    taskArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:task/calcloud-hst-16g-ops20210930124026279000000004_Batch_8cc15524-408e-38de-b6a4-f514b48d1506/cf00768d95af4b7e8bd24b4f70d16367
+    ulimits: []
+    user: developer
+    volumes: []
+  createdAt: 1634590833994
+  dependsOn: []
+  jobArn: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/91945767-e5e0-4420-8e54-1e0b18e3d011
+  jobDefinition: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job-definition/calcloud-jobdef-16g-ops:8
+  jobId: 91945767-e5e0-4420-8e54-1e0b18e3d011
+  jobName: iea607020
+  jobQueue: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job-queue/calcloud-hst-queue-16g-ops
+  parameters:
+    command: caldp-process
+    crds_config: caldp-config-offsite
+    dataset: j8cb010b0
+    input_path: 'astroquery:'
+    s3_output_path: s3://calcloud-processing-moto/outputs
+  platformCapabilities: []
+  propagateTags: false
+  startedAt: 1634590841754
+  status: FAILED
+  statusReason: Job attempt duration exceeded timeout
+  stoppedAt: 1634603846539
+  tags:
+    resourceArn: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/91945767-e5e0-4420-8e54-1e0b18e3d011
+  timeout:
+    attemptDurationSeconds: 12970
+detail-type: Batch Job State Change
+id: ac21af28-f71f-4a73-f13f-dd071f4dada5
+region: us-east-1
+resources:
+- arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/91945767-e5e0-4420-8e54-1e0b18e3d011
+source: aws.batch
+time: '2021-10-19T00:37:27Z'
+version: '0'
