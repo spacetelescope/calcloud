@@ -1,13 +1,3 @@
-data "template_file" "ami_rotation_userdata" {
-  template = file("${path.module}/../ami_rotation/ami_rotation_userdata.sh")
-  vars = {
-      environment = var.environment,
-      admin_arn = nonsensitive(data.aws_ssm_parameter.admin_arn.value),
-      calcloud_ver = var.awsysver,
-      log_group = aws_cloudwatch_log_group.ami-rotation.name
-  }
-}
-
 resource "aws_launch_template" "ami_rotation" {
   name = "calcloud-ami-rotation${local.environment}"
   description             = "launch template for running ami rotation via terraform"
@@ -17,7 +7,14 @@ resource "aws_launch_template" "ami_rotation" {
   tags                    = {
     "Name"         = "calcloud-ami-rotation${local.environment}"
   }
-  user_data               = base64encode(data.template_file.ami_rotation_userdata.rendered)
+  user_data               = base64encode(
+      templatefile("${path.module}/../ami_rotation/ami_rotation_userdata.sh", {
+          environment = var.environment,
+          admin_arn = nonsensitive(data.aws_ssm_parameter.admin_arn.value),
+          calcloud_ver = var.awsysver,
+          log_group = aws_cloudwatch_log_group.ami-rotation.name
+      })
+  )
 
   vpc_security_group_ids  = local.batch_sgs
   instance_type = "t3.large"
@@ -60,7 +57,7 @@ resource "aws_launch_template" "ami_rotation" {
 
 module "calcloud_env_amiRotation" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 1.43.0"
+  version = "~> 2.26.0"
 
   function_name = "calcloud-env-AmiRotation${local.environment}"
   description   = "spawns an ec2 bi-weekly which rotates the ami for batch"
@@ -116,13 +113,13 @@ resource "aws_cloudwatch_event_rule" "ami-rotate-scheduler" {
 resource "aws_cloudwatch_event_target" "ami-rotate-scheduler" {
   rule      = aws_cloudwatch_event_rule.ami-rotate-scheduler.name
   target_id = "lambda"
-  arn       = module.calcloud_env_amiRotation.this_lambda_function_arn
+  arn       = module.calcloud_env_amiRotation.lambda_function_arn
 }
 
 resource "aws_lambda_permission" "allow_lambda_exec_ami_rotate" {
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_env_amiRotation.this_lambda_function_name
+  function_name = module.calcloud_env_amiRotation.lambda_function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.ami-rotate-scheduler.arn
 }

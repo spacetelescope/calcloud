@@ -1,6 +1,6 @@
 module "calcloud_lambda_rescueJob" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 1.43.0"
+  version = "~> 2.26.0"
 
   function_name = "calcloud-job-rescue${local.environment}"
   description   = "Rescues the specified ipppssoot (must be in error state) by deleting all outputs and messages and re-placing."
@@ -45,7 +45,7 @@ module "calcloud_lambda_rescueJob" {
   lambda_role = nonsensitive(data.aws_ssm_parameter.lambda_rescue_role.value)
 
   environment_variables = merge(local.common_env_vars, {
-      JOBPREDICTLAMBDA = module.lambda_function_container_image.this_lambda_function_arn,
+      JOBPREDICTLAMBDA = module.lambda_function_container_image.lambda_function_arn,
       SUBMIT_TIMEOUT = 14*60,  # leave some room for polling jitter, 14 min vs  15 min above
       DDBTABLE = "${aws_dynamodb_table.calcloud_model_db.name}"
   })   
@@ -59,7 +59,7 @@ module "calcloud_lambda_rescueJob" {
 resource "aws_lambda_permission" "allow_bucket_rescueLambda" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_lambda_rescueJob.this_lambda_function_arn
+  function_name = module.calcloud_lambda_rescueJob.lambda_function_arn
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.calcloud.arn
   source_account = data.aws_caller_identity.this.account_id
