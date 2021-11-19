@@ -99,8 +99,8 @@ variable crds_context {
   default = {
     "-sb" = "hst_0866.pmap"
     "-dev" = "hst_0866.pmap"
-    "-test" = "hst_0964.pmap"
-    "-ops" = "hst_0964.pmap"
+    "-test" = "hst_0967.pmap"
+    "-ops" = "hst_0967.pmap"
   }
 }
 
