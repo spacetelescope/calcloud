@@ -1,6 +1,6 @@
 module "calcloud_lambda_batchEvents" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 1.43.0"
+  version = "~> 2.26.0"
 
   function_name = "calcloud-job-events${local.environment}"
   description   = "listens for Batch failure events from cloudWatch event rule"
@@ -77,13 +77,13 @@ EOF
 resource "aws_cloudwatch_event_target" "batch_events" {
   rule      = aws_cloudwatch_event_rule.batch.name
   target_id = "lambda"
-  arn       = module.calcloud_lambda_batchEvents.this_lambda_function_arn
+  arn       = module.calcloud_lambda_batchEvents.lambda_function_arn
 }
 
 resource "aws_lambda_permission" "allow_lambda_exec_batch" {
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_lambda_batchEvents.this_lambda_function_name
+  function_name = module.calcloud_lambda_batchEvents.lambda_function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.batch.arn
 }

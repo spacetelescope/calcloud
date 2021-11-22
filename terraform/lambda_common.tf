@@ -63,37 +63,37 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
   bucket = aws_s3_bucket.calcloud.id
 
   lambda_function {
-    lambda_function_arn = module.calcloud_lambda_submit.this_lambda_function_arn
+    lambda_function_arn = module.calcloud_lambda_submit.lambda_function_arn
     events              = ["s3:ObjectCreated:Put"]
     filter_prefix       = "messages/placed-"
   }
 
   lambda_function {
-    lambda_function_arn = module.calcloud_lambda_deleteJob.this_lambda_function_arn
+    lambda_function_arn = module.calcloud_lambda_deleteJob.lambda_function_arn
     events              = ["s3:ObjectCreated:Put"]
     filter_prefix       = "messages/cancel-"
   }
 
   lambda_function {
-    lambda_function_arn = module.calcloud_lambda_rescueJob.this_lambda_function_arn
+    lambda_function_arn = module.calcloud_lambda_rescueJob.lambda_function_arn
     events              = ["s3:ObjectCreated:Put"]
     filter_prefix       = "messages/rescue-"
   }
 
   lambda_function {
-    lambda_function_arn = module.calcloud_lambda_broadcast.this_lambda_function_arn
+    lambda_function_arn = module.calcloud_lambda_broadcast.lambda_function_arn
     events              = ["s3:ObjectCreated:Put"]
     filter_prefix       = "messages/broadcast-"
   }
 
   lambda_function {
-    lambda_function_arn = module.calcloud_lambda_cleanJob.this_lambda_function_arn
+    lambda_function_arn = module.calcloud_lambda_cleanJob.lambda_function_arn
     events              = ["s3:ObjectCreated:Put"]
     filter_prefix       = "messages/clean-"
   }
 
   lambda_function {
-    lambda_function_arn = module.lambda_model_ingest.this_lambda_function_arn
+    lambda_function_arn = module.lambda_model_ingest.lambda_function_arn
     events = ["s3:ObjectCreated:Put"]
     filter_prefix = "messages/processed-"
     filter_suffix = ".trigger"

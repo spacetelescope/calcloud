@@ -1,6 +1,6 @@
 module "calcloud_lambda_refresh_cache_submit" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 1.43.0"
+  version = "~> 2.26.0"
 
   function_name = "calcloud-fileshare-refresh_cache_submit${local.environment}"
   description   = "submits refresh cache operations"
@@ -67,13 +67,13 @@ resource "aws_cloudwatch_event_rule" "refresh_cache_schedule" {
 resource "aws_cloudwatch_event_target" "refresh_cache_submit" {
   rule      = aws_cloudwatch_event_rule.refresh_cache_schedule.name
   target_id = "lambda"
-  arn       = module.calcloud_lambda_refresh_cache_submit.this_lambda_function_arn
+  arn       = module.calcloud_lambda_refresh_cache_submit.lambda_function_arn
 }
 
 resource "aws_lambda_permission" "refresh_cache_submit" {
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_lambda_refresh_cache_submit.this_lambda_function_name
+  function_name = module.calcloud_lambda_refresh_cache_submit.lambda_function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.refresh_cache_schedule.arn
 }

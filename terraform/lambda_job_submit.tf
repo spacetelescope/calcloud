@@ -1,7 +1,7 @@
 module "calcloud_lambda_submit" {
   source = "terraform-aws-modules/lambda/aws"
   # https://github.com/hashicorp/terraform/issues/17211
-  version = "~> 1.43.0"
+  version = "~> 2.26.0"
 
   function_name = "calcloud-job-submit${local.environment}"
   description   = "looks for placed-ipppssoot messages and submits jobs to Batch"
@@ -46,7 +46,7 @@ module "calcloud_lambda_submit" {
   lambda_role = nonsensitive(data.aws_ssm_parameter.lambda_submit_role.value)
 
   environment_variables = merge(local.common_env_vars, {
-      JOBPREDICTLAMBDA = module.lambda_function_container_image.this_lambda_function_arn,
+      JOBPREDICTLAMBDA = module.lambda_function_container_image.lambda_function_arn,
       SUBMIT_TIMEOUT = 14*60,  # leave some room for polling jitter, 14 min vs  15 min above. This is our timeout so error handling / cleanup should occur
       DDBTABLE = "${aws_dynamodb_table.calcloud_model_db.name}"
   })                           
@@ -60,7 +60,7 @@ module "calcloud_lambda_submit" {
 resource "aws_lambda_permission" "allow_bucket" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_lambda_submit.this_lambda_function_arn
+  function_name = module.calcloud_lambda_submit.lambda_function_arn
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.calcloud.arn
   source_account = data.aws_caller_identity.this.account_id

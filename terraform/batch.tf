@@ -8,11 +8,7 @@ terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = "~> 3.42.0"
-    }
-    hashicorp-template = {
-      source = "hashicorp/template"
-      version = "~> 2.2.0"
+      version = "~> 3.65.0"
     }
     hashicorp-null = {
       source = "hashicorp/null"
@@ -32,17 +28,12 @@ terraform {
     }
     docker = {
       source = "kreuzwerker/docker"
-      version = "~> 2.11.0"
+      version = "~> 2.15.0"
     }
   }
 }
 
-data "template_file" "userdata" {
-  template = file("${path.module}/user_data.sh")
-  vars = {
-      // Any var you need to pass to the script
-  }
-}
+# See also lambda module version in each lambda .tf file
 
 resource "aws_launch_template" "hstdp" {
   # IF YOU CHANGE THE LAUNCH TEMPLATE YOU MUST "TAINT" THE COMPUTE ENVIRONMENT BEFORE DEPLOY
@@ -58,7 +49,7 @@ resource "aws_launch_template" "hstdp" {
     "Name"         = "calcloud-hst-worker${local.environment}"
     "calcloud-hst" = "calcloud-hst-worker${local.environment}"
   }
-  user_data               = base64encode(data.template_file.userdata.rendered)
+  user_data               = base64encode(templatefile("${path.module}/user_data.sh", {}))
 
   vpc_security_group_ids  = local.batch_sgs
 

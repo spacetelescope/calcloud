@@ -16,13 +16,13 @@ resource "aws_dynamodb_table" "calcloud_model_db" {
 
 module "lambda_model_ingest" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 1.43.0"
+  version = "~> 2.26.0"
 
   function_name = "calcloud-model-ingest${local.environment}"
   lambda_role = nonsensitive(data.aws_ssm_parameter.model_ingest_role.value)
   description   = "looks for processed-ipppssoot.trigger messages, scrapes and uploads completed job data to DynamoDB"
   handler       = "lambda_scrape.lambda_handler"
-  runtime       = "python3.8"
+  runtime       = "python3.7"
   publish       = false
   timeout       = 180
   memory_size   = 256
@@ -65,7 +65,7 @@ module "lambda_model_ingest" {
 resource "aws_lambda_permission" "allow_bucket_ingestLambda" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
-  function_name = module.lambda_model_ingest.this_lambda_function_arn
+  function_name = module.lambda_model_ingest.lambda_function_arn
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.calcloud.arn
   source_account = data.aws_caller_identity.this.account_id
