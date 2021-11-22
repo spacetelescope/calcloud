@@ -1,5 +1,6 @@
 import sys
 import os
+import shutil
 from . import io
 from . import prep
 from . import train
@@ -60,21 +61,25 @@ if __name__ == "__main__":
     else:
         attr = None
     # load training data
-    data_path = io.get_paths(timestamp)
-    home = os.path.join(os.getcwd(), data_path)
-    prefix = f"{data_path}/data"
-    os.makedirs(prefix, exist_ok=True)
-    os.chdir(prefix)
+    prefix = io.get_paths(timestamp)
+    home = os.path.join(os.getcwd(), prefix)
+    os.makedirs(f"{prefix}/data", exist_ok=True)
+    os.chdir(f"{prefix}/data")
     df = prep.preprocess(bucket_mod, prefix, src, table_name, attr)
     os.chdir(home)
     if cross_val == "only":
         # run_kfold, skip training
-        validate.run_kfold(df, bucket_mod, data_path, models, verbose, n_jobs)
+        validate.run_kfold(df, bucket_mod, prefix, models, verbose, n_jobs)
     else:
-        train.train_models(df, bucket_mod, data_path, opt, models, verbose)
+        df_new = train.train_models(df, bucket_mod, prefix, opt, models, verbose)
+        io.save_dataframe(df_new, "latest.csv")
+        io.s3_upload(["latest.csv"], bucket_mod, f"{prefix}/data")
+        shutil.copy("data/pt_transform", "./models/pt_transform")
         io.zip_models("./models", zipname="models.zip")
-        io.s3_upload(["models.zip"], bucket_mod, f"{data_path}/models")
+        io.s3_upload(["models.zip"], bucket_mod, f"{prefix}/models")
+        io.batch_ddb_writer("latest.csv", table_name)
+
         if cross_val == "skip":
             print("Skipping KFOLD")
         else:
-            validate.run_kfold(df, bucket_mod, data_path, models, verbose, n_jobs)
+            validate.run_kfold(df, bucket_mod, prefix, models, verbose, n_jobs)

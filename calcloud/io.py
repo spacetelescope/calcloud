@@ -7,9 +7,11 @@ import os
 import doctest
 import json
 import uuid
+import yaml
 
 from calcloud import s3
 from calcloud import hst
+from calcloud import batch
 from calcloud import log
 
 # -------------------------------------------------------------
@@ -237,8 +239,11 @@ class S3Io:
 # -------------------------------------------------------------
 
 
-class JsonIo(S3Io):
-    """Serializes/deserializes objects to JSON when putting/getting from S3."""
+class PayloadIo(S3Io):
+    """Abstract serializes/deserializes objects when putting/getting from S3."""
+
+    loader = None
+    _dumper = None
 
     def get(self, prefixes):
         """Return the decoded message object fetched from literal message name `prefixes` if
@@ -247,7 +252,7 @@ class JsonIo(S3Io):
         """
         if isinstance(prefixes, str):
             text = super().get(prefixes)
-            return json.loads(text)
+            return self.loader(text)
         else:
             return {prefix: self.get(prefix) for prefix in prefixes}
 
@@ -264,10 +269,31 @@ class JsonIo(S3Io):
         JsonIo,  including handling of `encoding`.
         """
         msgs = self.normalize_put_parameters(msgs, payload)
-        super().put({msg: json.dumps(value) for (msg, value) in msgs.items()}, encoding=encoding)
+        super().put({msg: self.dumper(value) for (msg, value) in msgs.items()}, encoding=encoding)
+
+    def dumper(self, value):
+        """Ensure the empty string is dumped as an empty string,  not serialization of empty string."""
+        if value != "":
+            return self._dumper(value)
+        else:
+            return ""
 
 
-class MessageIo(JsonIo):
+class JsonIo(PayloadIo):
+    """Serialize to/from JSON before storing/loading message payloads."""
+
+    loader = staticmethod(json.loads)
+    _dumper = staticmethod(json.dumps)
+
+
+class YamlIo(PayloadIo):
+    """Serialize to/from YAML before storing/loading message payloads."""
+
+    loader = staticmethod(yaml.safe_load)
+    _dumper = staticmethod(yaml.dump)
+
+
+class MessageIo(YamlIo):
     """The MessageIo class provides put/get/list/delete operations for
     messages of various types used to track the state of dataset
     processing.
@@ -429,10 +455,12 @@ class MessageIo(JsonIo):
         """Return a unique message ID,  nominally for broadcast messages."""
         return str(uuid.uuid4()).replace("-", "_")
 
-    def broadcast(self, type, ipppssoots):
+    def broadcast(self, type, ipppssoots, payload=None):
         """Output a `type` message for each dataset in `ipppssoots`.  This
         is nominally done by sending a list of messages to the broadcast lambda
         which then sends them using a divide-and-conquer approach.
+
+        A yaml-serializable `payload` may also be sent for all messages.
 
         >>> comm = get_io_bundle()
 
@@ -443,19 +471,38 @@ class MessageIo(JsonIo):
         >>> comm.messages.listl() #doctest: +ELLIPSIS
         ['broadcast-..._..._..._..._...']
 
-        The contents of a broadcast message is a list of no-payload messages which will later be sent
+        The contents of a broadcast message is a dictionary defining:
+
+        1. A list of messages which will be written to S3.
+        2. A single optional payload object which is sent for all messages.
+
         by the lambda which processes broadcast messages:
 
         >>> comm.messages.pop(msg)
-        ['cancel-lcw303cjq', 'cancel-lcw304cjq', 'cancel-lcw305cjq']
+        {'messages': ['cancel-lcw303cjq', 'cancel-lcw304cjq', 'cancel-lcw305cjq'], 'payload': None}
 
-        When the payload of a broadcast message contains large numbers of messages,  the message list is
+        When the messages list a broadcast message contains large numbers of messages,  the message list is
         partitioned into two half-length lists and re-broadcast.
 
-        When the payload of a broadcast message is sufficiently small,  each message is sent serially and
+        When the message list is sufficiently small,  each message is sent serially and
         requires ~50-200 msec each.   So e.g. 100 serial messages might take 5-20 seconds.
 
+        A key purpose of message payloads is to pass override parameters into lambda handlers for messages
+        such as 'place' or 'rescue':
+
+        >>> comm.messages.put('rescue-lcw303cjq', { "timeout_scale" : 1.25 })
+        >>> comm.messages.get('rescue-lcw303cjq')
+        {'timeout_scale': 1.25}
+
+        While it could be individualized,  for simplicity broadcast nominally sends the same payload
+        to all child messages.
+
+        >>> msg = comm.messages.broadcast("rescue", ['lcw303cjq', 'lcw304cjq', 'lcw305cjq'], {"timeout_scale" : 1.3})
+        >>> comm.messages.pop(msg)
+        {'messages': ['rescue-lcw303cjq', 'rescue-lcw304cjq', 'rescue-lcw305cjq'], 'payload': {'timeout_scale': 1.3}}
+
         >>> comm.messages.delete("all")
+
         """
         assert type in MESSAGE_TYPES
         assert type != "broadcast"  # don't broadcast broadcasts....
@@ -464,8 +511,32 @@ class MessageIo(JsonIo):
         assert "all" not in ipppssoots  # don't broadcast message tails of "all"
         assert len(ipppssoots) < MAX_BROADCAST_MSGS
         msg = f"broadcast-{self.get_id()}"
-        self.put(msg, [f"{type}-{ipst}" for ipst in ipppssoots])
+        self.put(msg, dict(messages=[f"{type}-{ipst}" for ipst in ipppssoots], payload=payload))
         return msg
+
+    def bifurcate_broadcast(self, messages, payload):
+        """Given the `messages` and object `payload` of a broadcast message,  send two new
+        broadcast messages,  each with half the original messages and same payload.
+
+        Returns (broadcast_msg_name1, broadcast_msg_name2)
+
+        >>> comm = get_io_bundle()
+
+        >>> msg1, msg2 = comm.messages.bifurcate_broadcast(
+        ...    ['rescue-lcw303cjq', 'rescue-lcw304cjq', 'rescue-lcw305cjq'], {'timeout_scale' : 1.3})
+
+        >>> comm.messages.listl() #doctest: +ELLIPSIS
+        ['broadcast-..._..._..._..._...', 'broadcast-..._..._..._..._...']
+
+        >>> comm.messages.pop(msg1)
+        {'messages': ['rescue-lcw303cjq'], 'payload': {'timeout_scale': 1.3}}
+        >>> comm.messages.pop(msg2)
+        {'messages': ['rescue-lcw304cjq', 'rescue-lcw305cjq'], 'payload': {'timeout_scale': 1.3}}
+        """
+        msg1, msg2 = f"broadcast-{self.get_id()}", f"broadcast-{self.get_id()}"
+        self.put(msg1, dict(messages=messages[: len(messages) // 2], payload=payload))
+        self.put(msg2, dict(messages=messages[len(messages) // 2 :], payload=payload))
+        return msg1, msg2
 
     def ids(self, message_types="all"):
         """Given a list of `message_types`, return the list of unique
@@ -614,6 +685,67 @@ class MetadataIo(JsonIo):
         assert hst.IPPPSSOOT_RE.match(ipppssoot) or ipppssoot in ["all", ""], f"Bad ipppssoot {ipppssoot}"
         prefix = f"{ipppssoot}/job.json" if ipppssoot not in ["all", ""] else ""
         return super().path(prefix)
+
+
+# Control values can be sent as part of message override payloads or can be recorded in comm.xdata.
+# XXXX NOTE: value checks are not currently active,  only field name and type.
+CONTROL_KEYWORDS = {
+    "cancel_type": ((str,), lambda x: x in ("job_id", "ipppssoot")),
+    "job_id": ((str,), batch.JOB_ID_RE.match),
+    "memory_bin": ((int, type(None)), lambda x: x in (0, 1, 2, 3, None)),
+    "terminated": ((bool,), lambda x: True),
+    "timeout_scale": ((int, float), lambda x: x > 0),
+    "ipppssoot": ((str,), hst.IPPPSSOOT_RE.match),
+    "bucket": ((str,), lambda x: True),
+    "job_name": ((str,), lambda x: True),
+    "exit_code": ((int, str), lambda x: True),
+    "exit_reason": ((str,), lambda x: True),
+    "exit_status": ((str,), lambda x: True),
+    "status_reason": (
+        (
+            int,
+            str,
+        ),
+        lambda x: True,
+    ),
+    "container_reason": (
+        (
+            int,
+            str,
+        ),
+        lambda x: True,
+    ),
+    "memory_retries": ((int,), lambda x: x >= 0),
+    "retries": ((int,), lambda x: x >= 0),
+}
+
+
+def validate_control(metadata):
+    """Check the `metadata` dictionary for valid keywords and value types."""
+    log.info("Validating control metadata", metadata)
+    if metadata is None:
+        return {}
+    if not isinstance(metadata, dict):
+        raise ValueError("Job metadata isn't a dict.")
+    for key, value in metadata.items():
+        defined = CONTROL_KEYWORDS.get(key)
+        if defined:
+            valid_types = defined[0]
+            if not isinstance(value, valid_types):
+                raise ValueError(f"Control value for {key} should be one of these types: {valid_types}.")
+            # f_valid_value = defined[1]
+            # if not f_valid_value(value):
+            #    raise ValueError(f"Control value for {key} is not valid.")
+        else:
+            raise ValueError(f"Control keyword {key} is not one of {sorted(list(CONTROL_KEYWORDS))}.")
+    return metadata
+
+
+def get_default_metadata():
+    """Return the default metadata needed to run the planner if no corresponding overrides or control data
+    are defined.
+    """
+    return dict(retries=0, memory_retries=0, memory_bin=None, job_id="undefined", terminated=False, timeout_scale=1.0)
 
 
 # -------------------------------------------------------------

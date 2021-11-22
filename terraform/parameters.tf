@@ -1,7 +1,3 @@
-data aws_ssm_parameter batch_ami_id {
-  name = "/AMI/STSCI-HST-REPRO-ECS"
-}
-
 data aws_ssm_parameter batch_subnet_ids {
   name = "/subnets/private"
 }
@@ -28,6 +24,10 @@ data aws_ssm_parameter environment {
 
 data aws_ssm_parameter vpc {
    name = "vpc"
+}
+
+data aws_ssm_parameter admin_arn {
+  name = "/iam/roles/calcloud_admin"
 }
 
 data aws_ssm_parameter lambda_submit_role {
@@ -60,6 +60,10 @@ data aws_ssm_parameter lambda_cloudwatch_role {
 
 data aws_ssm_parameter lambda_refreshCacheSubmit_role {
   name = "/iam/roles/calcloud_lambda_refreshCacheSubmit"
+}
+
+data aws_ssm_parameter lambda_amiRotate_role {
+  name = "/iam/roles/calcloud_lambda_amiRotate"
 }
 
 data aws_ssm_parameter model_ingest_role {
@@ -110,20 +114,41 @@ data aws_ssm_parameter batch_exec {
   name = "/iam/roles/batch_exec"
 }
 
+data aws_ssm_parameter ci_instance_role {
+  name = "/iam/roles/ci_instance_role"
+}
+
 resource "aws_ssm_parameter" "awsysver" {
-  name  = "/tf/env/awsysver"
+  name  = "/tf/env/awsysver${local.environment}"
   type  = "String"
   value = "${var.awsysver}"
+  overwrite = true
 }
 
 resource "aws_ssm_parameter" "awsdpver" {
-  name  = "/tf/env/awsdpver"
+  name  = "/tf/env/awsdpver${local.environment}"
   type  = "String"
   value = "${var.awsdpver}"
+  overwrite = true
 }
 
 resource "aws_ssm_parameter" "csys_ver" {
-  name  = "/tf/env/csys_ver"
+  name  = "/tf/env/csys_ver${local.environment}"
   type  = "String"
   value = "${var.csys_ver}"
+  overwrite = true
+}
+
+resource "aws_ssm_parameter" "ecs_ami" {
+  name = "/tf/ami/stsci-hst-repro-ecs${local.environment}"
+  type = "String"
+  value = "${var.ecs_ami}"
+  overwrite = true
+}
+
+resource "aws_ssm_parameter" "ci_ami" {
+  name = "/tf/ami/stsci-hst-amazon-linux-2${local.environment}"
+  type = "String"
+  value = "${var.ci_ami}"
+  overwrite = true
 }

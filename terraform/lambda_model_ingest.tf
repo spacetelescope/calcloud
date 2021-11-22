@@ -1,6 +1,6 @@
 resource "aws_dynamodb_table" "calcloud_model_db" {
   name           = "calcloud-model${local.environment}"
-  billing_mode   = "PAY_PER_REQUEST" #"PROVISIONED"
+  billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "ipst"
 
   attribute {
@@ -22,9 +22,10 @@ module "lambda_model_ingest" {
   lambda_role = nonsensitive(data.aws_ssm_parameter.model_ingest_role.value)
   description   = "looks for processed-ipppssoot.trigger messages, scrapes and uploads completed job data to DynamoDB"
   handler       = "lambda_scrape.lambda_handler"
-  runtime       = "python3.8"
+  runtime       = "python3.7"
   publish       = false
   timeout       = 180
+  memory_size   = 256
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
 
   source_path = [

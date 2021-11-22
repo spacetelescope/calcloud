@@ -1,0 +1,33 @@
+name: tag-or-release
+on:
+  workflow_dispatch:
+    inputs:
+      tag_or_release:
+        description: 'must be string of either "tag" or "release"'     
+        required: true
+        default: 'tag'
+      name:
+        description: 'the tag or release name, i.e. v1.0.0'     
+        required: true
+      source_branch:
+        description: 'the branch to tag or release'
+        required: true
+        default: "main"
+
+jobs:
+  tag_or_release:
+    runs-on: ubuntu-latest
+    name: tag or release the given branch with the given name
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: release
+        id: release
+        uses: ./.github/actions/release
+        env:
+          tag_or_release: "${{ github.event.inputs.tag_or_release }}"
+          name: "${{ github.event.inputs.name }}"
+          source_branch: "${{ github.event.inputs.source_branch }}"
+          token: "${{ secrets.GITHUB_TOKEN }}"

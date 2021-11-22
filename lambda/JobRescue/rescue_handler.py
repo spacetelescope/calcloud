@@ -22,6 +22,8 @@ def lambda_handler(event, context):
 
     comm = io.get_io_bundle(bucket_name)
 
+    overrides = comm.messages.get(f"rescue-{ipst}")
+
     if ipst == "all":
         print("Rescuing all")
 
@@ -29,8 +31,8 @@ def lambda_handler(event, context):
 
         rescues = comm.messages.ids(RESCUE_TYPES)
 
-        comm.messages.broadcast("rescue", rescues)
+        comm.messages.broadcast("rescue", rescues, overrides)
     else:
         print("Rescuing", ipst)
         # comm.outputs.delete(ipst)
-        lambda_submit.main(comm, ipst, bucket_name)
+        lambda_submit.main(comm, ipst, bucket_name, overrides)

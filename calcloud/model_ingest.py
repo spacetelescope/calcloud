@@ -10,8 +10,6 @@ import time
 import json
 from decimal import Decimal
 from pprint import pprint
-from sklearn.preprocessing import PowerTransformer
-
 from . import common
 
 s3 = boto3.resource("s3", config=common.retry_config)
@@ -64,8 +62,7 @@ class Features(Scraper):
 
     def scrape_features(self):
         self.input_data = self.download_inputs()
-        self.inputs = self.scrub_keys()
-        self.features = self.transformer()
+        self.features = self.scrub_keys()
         return self.features
 
     def download_inputs(self):
@@ -81,7 +78,7 @@ class Features(Scraper):
             body = None
             print(e)
         if body is None:
-            print("Unable to download inputs")
+            print(f"Unable to download inputs: {self.ipst}")
             input_data = None
             sys.exit(3)
         else:
@@ -149,7 +146,7 @@ class Features(Scraper):
         elif i[0] == "i":
             instr = 3
 
-        inputs = {
+        features = {
             "n_files": n_files,
             "total_mb": total_mb,
             "drizcorr": drizcorr,
@@ -160,41 +157,6 @@ class Features(Scraper):
             "dtype": dtype,
             "instr": instr,
         }
-        return inputs
-
-    def transformer(self):
-        """applies yeo-johnson power transform to first two indices of array (n_files, total_mb) using lambdas, mean and standard deviation calculated for each variable prior to model training.
-        Returns: X inputs as 2D-array for generating predictions
-        """
-        X = self.inputs
-        n_files = X["n_files"]
-        total_mb = X["total_mb"]
-        # apply power transformer normalization to continuous vars
-        x = np.array([[n_files], [total_mb]]).reshape(1, -1)
-        pt = PowerTransformer(standardize=False)
-        # normalization (zero mean, unit variance)
-        pt.lambdas_ = np.array([-1.05989146, 0.1691683])
-        xt = pt.transform(x)
-        # normalization (zero mean, unit variance)
-        f_mean, f_sigma = 0.7313458816815209, 0.09209684806404451
-        s_mean, s_sigma = 4.18491577280472, 2.4467903663338366
-        x_files = np.round(((xt[0, 0] - f_mean) / f_sigma), 5)
-        x_size = np.round(((xt[0, 1] - s_mean) / s_sigma), 5)
-        # print(f"Power Transformed variables: {x_files}, {x_size}")
-        features = {
-            "x_files": x_files,
-            "x_size": x_size,
-            "n_files": n_files,
-            "total_mb": total_mb,
-            "drizcorr": X["drizcorr"],
-            "pctecorr": X["pctecorr"],
-            "crsplit": X["crsplit"],
-            "subarray": X["subarray"],
-            "detector": X["detector"],
-            "dtype": X["dtype"],
-            "instr": X["instr"],
-        }
-        print("Features:\n ", features)
         return features
 
 
@@ -296,8 +258,6 @@ def create_payload(job_data, timestamp):
     data = {
         "ipst": ipst,
         "timestamp": int(timestamp),
-        "x_files": float(features["x_files"]),
-        "x_size": float(features["x_size"]),
         "total_mb": float(features["total_mb"]),
         "n_files": int(features["n_files"]),
         "drizcorr": int(features["drizcorr"]),

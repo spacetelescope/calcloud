@@ -6,7 +6,7 @@ module "calcloud_lambda_rescueJob" {
   description   = "Rescues the specified ipppssoot (must be in error state) by deleting all outputs and messages and re-placing."
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "rescue_handler.lambda_handler"
-  runtime       = "python3.6"
+  runtime       = "python3.7"
   publish       = false
   timeout       = 900
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
@@ -23,7 +23,12 @@ module "calcloud_lambda_rescueJob" {
       path = "${path.module}/../calcloud"
       prefix_in_zip = "calcloud"
       pip_requirements = false
-    }
+    },
+    {
+      # pip dependencies defined for calcloud package in requirements.txt
+      path = "${path.module}/../calcloud"
+      pip_requirements = true
+    },
   ]
 
   store_on_s3 = true
@@ -42,6 +47,7 @@ module "calcloud_lambda_rescueJob" {
   environment_variables = merge(local.common_env_vars, {
       JOBPREDICTLAMBDA = module.lambda_function_container_image.this_lambda_function_arn,
       SUBMIT_TIMEOUT = 14*60,  # leave some room for polling jitter, 14 min vs  15 min above
+      DDBTABLE = "${aws_dynamodb_table.calcloud_model_db.name}"
   })   
 
   tags = {

@@ -99,8 +99,8 @@ variable crds_context {
   default = {
     "-sb" = "hst_0866.pmap"
     "-dev" = "hst_0866.pmap"
-    "-test" = "hst_0943.pmap"
-    "-ops" = "hst_0943.pmap"
+    "-test" = "hst_0968.pmap"
+    "-ops" = "hst_0968.pmap"
   }
 }
 
@@ -112,4 +112,12 @@ variable crds_bucket {
     "-test" = "ops"
     "-ops" = "ops"
   }
+}
+
+variable ci_ami {
+  type = string
+}
+
+variable ecs_ami {
+  type = string
 }
