@@ -1,8 +1,1 @@
-- readme updates regarding modeling of job resource requirements
-- automated AMI rotation via lambda launching EC2 with user-data that runs terraform
-- messages can now contain payloads to override certain job params
-- various cert fixes (order of some installations in docker and user-data had to be moved around)
-- job predict lambda now uses data from dynamodb for an ipppssoot, if it is present already from a previous processing run
-- tensorflow update to 2.6.2
-- various bugfixes for the ML model in the lambda and training (feature params were not guaranteed to be in the same order)
-- re-introduced tainting off JobPredict lambda, which uses docker backend, to prevent cached image being used by lambda
+- base image update to CALDP_20211129_CAL_final
