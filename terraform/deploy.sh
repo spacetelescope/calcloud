@@ -3,9 +3,9 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="v0.4.30"
-CALDP_VER="v0.2.15"
-CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20211119_CAL_final"
+CALCLOUD_VER="v0.4.31"
+CALDP_VER="v0.2.16"
+CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20211129_CAL_final"
 
 # this is the tag that the image will have in AWS ECR
 CALDP_IMAGE_TAG="latest"
