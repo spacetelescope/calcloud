@@ -3,6 +3,7 @@ FROM amazon/aws-lambda-python:3.7
 COPY requirements.txt predict_handler.py ./
 # SSL/TLS cert setup for STScI AWS firewalling
 USER root
+# temporary. remove when nss in the base amazon image is secure again
 RUN yum update nss -y
 ENV REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
 ENV CURL_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
