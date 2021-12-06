@@ -1,1 +1,1 @@
-- base image update to CALDP_20211129_CAL_final
+- force update of nss due to critical security vulnerability
