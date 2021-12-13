@@ -4,53 +4,7 @@
 
 source deploy_vars.sh
 
-# variables that will be changed less-frequently
-TMP_INSTALL_DIR="/tmp/calcloud_install"
-
-# setting up the calcloud source dir if it needs downloaded
-# equivalent to "if len($var) == 0"
-if [ -z "${CALCLOUD_BUILD_DIR}" ]
-then
-    mkdir -p $TMP_INSTALL_DIR
-    CALCLOUD_BUILD_DIR="${TMP_INSTALL_DIR}/calcloud"
-    # calcloud source download/unpack
-    cd $TMP_INSTALL_DIR
-    git clone https://github.com/spacetelescope/calcloud.git
-    cd calcloud && git fetch --all --tags && git checkout tags/v${CALCLOUD_VER} && cd ..
-    git_exit_status=$?
-    if [[ $git_exit_status -ne 0 ]]; then
-        # try without the v
-        cd calcloud && git fetch --all --tags && git checkout tags/${CALCLOUD_VER} && cd ..
-        git_exit_status=$?
-    fi
-    if [[ $git_exit_status -ne 0 ]]; then
-        echo "could not checkout ${CALCLOUD_VER}; exiting"
-        exit 1
-    fi
-fi
-
-# setting up the caldp source dir if it needs downloaded
-# equivalent to "if len($var) == 0"
-if [ -z "${CALDP_BUILD_DIR}" ]
-then
-    mkdir -p $TMP_INSTALL_DIR
-    CALDP_BUILD_DIR="${TMP_INSTALL_DIR}/caldp"
-    cd $TMP_INSTALL_DIR
-    # caldp source download/unpack
-    # github's tarballs don't work with pip install, so we have to clone and checkout the tag
-    git clone https://github.com/spacetelescope/caldp.git
-    cd caldp && git fetch --all --tags && git checkout tags/v${CALDP_VER} && cd ..
-    git_exit_status=$?
-    if [[ $git_exit_status -ne 0 ]]; then
-        # try without the v
-        cd caldp && git fetch --all --tags && git checkout tags/${CALDP_VER} && cd ..
-        git_exit_status=$?
-    fi
-    if [[ $git_exit_status -ne 0 ]]; then
-        echo "could not checkout ${CALDP_VER}; exiting"
-        exit 1
-    fi
-fi
+source deploy_checkout_repos.sh
 
 # the tf state bucket name
 aws_tfstate_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/s3/tfstate" | grep "Value"`
@@ -96,8 +50,6 @@ repo_url=${repo_url_response##*=}
 repo_url=`echo $repo_url | tr -d '"'`
 export repo_url=${repo_url}
 
-# need to "log in" to ecr to push or pull the images
-awsudo $ADMIN_ARN aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $repo_url
 
 # temporary docker builds here until central ecr refactor
 # script will not exist for calcloud version <= 0.4.31.
@@ -141,6 +93,5 @@ awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key blackboard/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key crds_env_vars/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key crds_env_vars/${crds_context}
 
-
-cd $HOME
-rm -rf $TMP_INSTALL_DIR
+cd ${CALCLOUD_BUILD_DIR}/terraform
+source deploy_cleanup.sh
