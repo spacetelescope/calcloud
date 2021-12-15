@@ -51,3 +51,7 @@ output crds_context {
 output common_env_vars {
   value = local.common_env_vars
 }
+
+output common_image_tag {
+  value = local.common_image_tag
+}

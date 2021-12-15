@@ -41,21 +41,21 @@ cd ${CALCLOUD_BUILD_DIR}/terraform
 # terraform init and s3 state backend config
 awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
 # deploy ecr
-awsudo $ADMIN_ARN terraform plan -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}" -out base.out -target aws_ecr_repository.caldp_ecr
-awsudo $ADMIN_ARN terraform apply -auto-approve "base.out"
-# get repository url from tf state for use in caldp docker install
-repo_url_response=`awsudo $ADMIN_ARN terraform state show aws_ecr_repository.caldp_ecr | grep "repository_url"`
-repo_url=${repo_url_response##*=}
-# removes double quotes from variable
-repo_url=`echo $repo_url | tr -d '"'`
-export repo_url=${repo_url}
+# awsudo $ADMIN_ARN terraform plan -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}" -out base.out -target aws_ecr_repository.caldp_ecr
+# awsudo $ADMIN_ARN terraform apply -auto-approve "base.out"
+# # get repository url from tf state for use in caldp docker install
+# repo_url_response=`awsudo $ADMIN_ARN terraform state show aws_ecr_repository.caldp_ecr | grep "repository_url"`
+# repo_url=${repo_url_response##*=}
+# # removes double quotes from variable
+# repo_url=`echo $repo_url | tr -d '"'`
+# export repo_url=${repo_url}
 
 
 # temporary docker builds here until central ecr refactor
 # script will not exist for calcloud version <= 0.4.31.
 # will need to either set a custom build dir or use a later version of calcloud
-cd ${CALCLOUD_BUILD_DIR}/terraform
-bash deploy_docker_builds.sh
+# cd ${CALCLOUD_BUILD_DIR}/terraform
+# bash deploy_docker_builds.sh
 
 #### PRIMARY TERRAFORM BUILD #####
 cd ${CALCLOUD_BUILD_DIR}/terraform
@@ -69,7 +69,7 @@ awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_en
 awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
 
 # manual confirmation required
-awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}"
+awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}" -var "full_base_image=${BASE_IMAGE_TAG}"
 
 # make sure needed prefixes exist in primary s3 bucket
 # pulls the bucket name in from a tag called Name

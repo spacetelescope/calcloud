@@ -33,10 +33,16 @@ variable csys_ver {
   default = "undefined"
 }
 
+variable full_base_image {
+  description = "full name of base image, for ecr tag pulling for Batch jobs"
+  type = string
+  default = "undefined"
+}
+
 variable pinned_tf_ver {
   description = "the intended value of the terraform installation in the environment"
   type = string
-  default = "0.15.4"
+  default = "1.0.11"
 }
 
 # valid combos
