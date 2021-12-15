@@ -10,9 +10,9 @@ source deploy_checkout_repos.sh
 # and it will be set in the deploy_vars.sh script
 # if you want to run this script independently of deploy.sh, you'll need to set repo_url in the env manually
 ##### DOCKER IMAGE BUILDING #########
-CALDP_DOCKER_IMAGE="${repo_url}:batch-${COMMON_IMAGE_TAG}_dev"
-PREDICT_DOCKER_IMAGE="${repo_url}:unscanned-predict-${COMMON_IMAGE_TAG}_dev"
-TRAINING_DOCKER_IMAGE="${repo_url}:unscanned-training-${COMMON_IMAGE_TAG}_dev"
+CALDP_DOCKER_IMAGE="${repo_url}:batch-${COMMON_IMAGE_TAG}-dev"
+PREDICT_DOCKER_IMAGE="${repo_url}:unscanned-predict-${COMMON_IMAGE_TAG}-dev"
+TRAINING_DOCKER_IMAGE="${repo_url}:unscanned-training-${COMMON_IMAGE_TAG}-dev"
 
 # naming is confusing here but "modeling" directory plus "training" image is correct
 cd ${CALCLOUD_BUILD_DIR}/modeling
