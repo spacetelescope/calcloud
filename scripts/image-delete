@@ -5,31 +5,24 @@ set -eu
 IMAGES=$*
 
 if [[ "$#" == "0" ]]; then
-    echo "usage: image-delete  <tag-or-docker-hash-or-ecr-digest>..."
+    echo "usage: image-delete  <tag-or-ecr-digest>..."
     echo
-    echo "Removes the specified tags, Docker hashes, or digests from ECR.  Deletes the corresponding image from"
-    echo "ECR when the last reference to the image is removed.  If used, Docker hash must be present in local"
-    echo "image store for translation to sha256 digest used on AWS."
+    echo "Removes the specified tags or sha256 digests from ECR."
+    echo "Deleting a tag leaves all other references intact.  The image is only deleted when the last tag on"
+    echo "  that digest is deleted."
+    echo "Deleting a sha256 digest deletes the image and EVERY tag referring to it."
     echo
     echo "e.g. image-delete latest                                                                   # tag"
-    echo "e.g. image-delete cfe5610e4209                                                             # Docker hash"
     echo "e.g. image-delete sha256:684afe25b7a68e83c7c3758533020ea6736a0e11d63f1dedcf4b761faeca99ab  # sha256 digest"
     exit 2
 fi
 
 # SSM /ecr/SharedServices  =  378083651696.dkr.ecr.us-east-1.amazonaws.com/hst-repro
 SSM_PARAM=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/ecr/SharedServices" --query "Parameter.Value" --output text`
-ECR_ACCOUNT_ID=`echo $SSM_PARAM | cut -d '.' -f1`
-IMAGE_REPO=`echo $SSM_PARAM | cut -d '/' -f2`
-
-echo $ECR_ACCOUNT_ID   $IMAGE_REPO
+ECR_ACCOUNT_ID=`echo $SSM_PARAM | cut -d '.' -f1`    # 378083651696
+IMAGE_REPO=`echo $SSM_PARAM | cut -d '/' -f2`        # hst-repro
 
 for image in ${IMAGES}; do
-    # Convert Docker short form digest into long sha256 form used by AWS.  Tags will be empty string
-    candidate=`docker image ls --digests | awk '{print $3, $4}' | tail -n+2 | grep $image | head -1 | awk '{print $1}'`
-    if [[ ${candidate} != "" ]]; then
-	image=$candidate
-    fi
     if [[ `echo $image | cut -d':' -f1` == "sha256" ]]; then
        QUALIFIER=imageDigest
     else
@@ -37,5 +30,4 @@ for image in ${IMAGES}; do
     fi
     awsudo ${ADMIN_ARN} aws ecr batch-delete-image --registry-id ${ECR_ACCOUNT_ID} --repository-name ${IMAGE_REPO} --image-ids ${QUALIFIER}=${image}
 done
-
 
