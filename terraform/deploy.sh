@@ -3,7 +3,7 @@
 # ADMIN_ARN is set in the ci node env and should not be included in this deploy script
 
 # variables that will likely be changed frequently
-CALCLOUD_VER="v0.4.32"
+CALCLOUD_VER="v0.4.33-rc1"
 CALDP_VER="v0.2.16"
 CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20211129_CAL_final"
 
