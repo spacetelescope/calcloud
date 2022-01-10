@@ -1,5 +1,8 @@
+#! /bin/bash
+
 source deploy_vars.sh
 
+cwd=`pwd`
 # setting up the calcloud source dir if it needs downloaded
 # equivalent to "if len($var) == 0"
 if [ -z "${CALCLOUD_BUILD_DIR}" ]
@@ -46,3 +49,5 @@ then
         exit 1
     fi
 fi
+
+cd $cwd
