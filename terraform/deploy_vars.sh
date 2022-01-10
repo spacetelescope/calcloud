@@ -1,3 +1,5 @@
+#! /bin/bash
+
 export CALCLOUD_VER="v0.4.31"
 export CALDP_VER="v0.2.16"
 export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20211129_CAL_final"
@@ -13,7 +15,6 @@ export CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-""}
 export CALDP_BUILD_DIR=${CALDP_BUILD_DIR:-""}
 
 export TMP_INSTALL_DIR="/tmp/calcloud_install"
-rm -rf $TMP_INSTALL_DIR
 
 # get a couple of things from AWS ssm
 # the env, i.e. sb,dev,test,prod
@@ -35,6 +36,18 @@ then
     repo_url=`echo $repo_url | tr -d '",'`
 fi
 export repo_url=${repo_url}
+export ECR_ACCOUNT_ID=`echo $repo_url | cut -d '.' -f1`    # 378083651696
+export IMAGE_REPO=`echo $repo_url | cut -d '/' -f2`        # hst-repro
+
+##### DOCKER IMAGE BUILDING #########
+# tags are exported individually for some ecr api call convenience in other scripts
+export CALDP_ECR_TAG="batch-${COMMON_IMAGE_TAG}-${aws_env}"
+export PREDICT_ECR_TAG="unscanned-predict-${COMMON_IMAGE_TAG}-${aws_env}"
+export TRAINING_ECR_TAG="unscanned-training-${COMMON_IMAGE_TAG}-${aws_env}"
+
+export CALDP_DOCKER_IMAGE="${repo_url}:${CALDP_ECR_TAG}"
+export PREDICT_DOCKER_IMAGE="${repo_url}:${PREDICT_ECR_TAG}"
+export TRAINING_DOCKER_IMAGE="${repo_url}:${TRAINING_ECR_TAG}"
 
 # turn CAL_BASE_IMAGE into CSYS_VER by splitting at the :, splitting again by underscore and keeping the
 # first two fields, and then converting to lowercase

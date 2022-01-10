@@ -1,18 +1,23 @@
+#! /bin/bash
+
 source deploy_vars.sh
 
 source deploy_checkout_repos.sh
 
-# this is the tag that the image will have in AWS ECR
-# CALDP_IMAGE_TAG="latest"
+# imageTags are constructed in deploy_vars.sh
 
-# currently, this script gets repo_url from the main deploy script.
-# when we refactor to use the central ecr, we'll get the repo_url from ssm
-# and it will be set in the deploy_vars.sh script
-# if you want to run this script independently of deploy.sh, you'll need to set repo_url in the env manually
-##### DOCKER IMAGE BUILDING #########
-CALDP_DOCKER_IMAGE="${repo_url}:batch-${COMMON_IMAGE_TAG}-dev"
-PREDICT_DOCKER_IMAGE="${repo_url}:unscanned-predict-${COMMON_IMAGE_TAG}-dev"
-TRAINING_DOCKER_IMAGE="${repo_url}:unscanned-training-${COMMON_IMAGE_TAG}-dev"
+# check if the tag(s) we're building for exist already; if so, we'll stop and warn the user
+/bin/bash deploy_existing_imageTag_check.sh ${CALDP_ECR_TAG//unscanned-/} ${PREDICT_ECR_TAG//unscanned-/} ${TRAINING_ECR_TAG//unscanned-/}
+existingImage=$?
+
+if [[ $existingImage -eq 1 ]]; then
+    echo "At least one image is already tagged." 
+    echo "Use deploy_ecr_image_delete.sh to remove the image if you really want to push to the same tag."
+    echo "use deploy_print_central_images.sh to get a list of central ECR images, with SHA256 and tags"
+    cd ${CALCLOUD_BUILD_DIR}/terraform
+    source deploy_cleanup.sh
+    exit 1
+fi
 
 # naming is confusing here but "modeling" directory plus "training" image is correct
 cd ${CALCLOUD_BUILD_DIR}/modeling
