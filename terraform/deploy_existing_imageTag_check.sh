@@ -1,6 +1,7 @@
-#! /bin/bash
+#! /bin/bash -xu
 
-# checks if an image tag exists; exit 1 if so
+# checks if image tag(s) exist; exit 1 if so
+# used in deploy.sh to avoid accidentally re-pushing an image that already exists.
 
 source deploy_vars.sh
 

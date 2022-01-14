@@ -12,7 +12,7 @@ aws_tfstate=${aws_tfstate_response##*:}
 aws_tfstate=`echo $aws_tfstate | tr -d '",'`
 echo $aws_tfstate
 
-# get AMI id
+# get AMI id(s)
 cd $CALCLOUD_BUILD_DIR/ami_rotation
 ami_json=$(echo $(awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 --executable-users self))
 ci_ami=`python3 parse_image_json.py "${ami_json}" STSCI-AWS-Linux-2`
@@ -35,27 +35,16 @@ fi
 # initial terraform setup
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
-#### this section is temporary until we start using the central ecr. It will need to be revised at that point to
-# remove terraforming the ecr. Logging in will still be required.
-# we'll pull the ecr from ssm, where it's populated by IT's CF templates.
-# terraform init and s3 state backend config
 awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
-# deploy ecr
-# awsudo $ADMIN_ARN terraform plan -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}" -out base.out -target aws_ecr_repository.caldp_ecr
-# awsudo $ADMIN_ARN terraform apply -auto-approve "base.out"
-# # get repository url from tf state for use in caldp docker install
-# repo_url_response=`awsudo $ADMIN_ARN terraform state show aws_ecr_repository.caldp_ecr | grep "repository_url"`
-# repo_url=${repo_url_response##*=}
-# # removes double quotes from variable
-# repo_url=`echo $repo_url | tr -d '"'`
-# export repo_url=${repo_url}
 
+# we need to get the tags on the existing ecr images so that once we deploy, we can remove the env-specific tag (i.e. dev, test, ops, sb-bhayden, etc). 
+# that env-specific tag lets deployers (who may be inclined to delete an old image) and scripts know that an image is in use in an environment
+# when upgrading from a version of the terraform that didn't have this output, the response is an empty string
+# caldp_existing_ecr_image=`awsudo $ADMIN_ARN terraform output ecr_caldp_batch_image`
+# predict_existing_ecr_image=`awsudo $ADMIN_ARN terraform output ecr_predict_lambda_image`
+# training_existing_ecr_image=`awsudo $ADMIN_ARN terraform output ecr_model_training_image`
 
-# temporary docker builds here until central ecr refactor
-# script will not exist for calcloud version <= 0.4.31.
-# will need to either set a custom build dir or use a later version of calcloud
-# cd ${CALCLOUD_BUILD_DIR}/terraform
-# bash deploy_docker_builds.sh
+# exit 1
 
 #### PRIMARY TERRAFORM BUILD #####
 cd ${CALCLOUD_BUILD_DIR}/terraform
@@ -70,6 +59,13 @@ awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lam
 
 # manual confirmation required
 awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}" -var "full_base_image=${BASE_IMAGE_TAG}"
+
+# brief testing indicates that terraform apply exits with 0 status only if you say yes and the apply succeeds
+apply_status=$?
+if [[ $apply_status -ne 0 ]]; then
+    echo "terraform apply cancelled or failed; exiting deploy"
+    exit 1
+fi
 
 # make sure needed prefixes exist in primary s3 bucket
 # pulls the bucket name in from a tag called Name
@@ -92,6 +88,15 @@ awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key control/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key blackboard/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key crds_env_vars/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key crds_env_vars/${crds_context}
+
+# tag images as in-use by this environment
+cd $CALCLOUD_BUILD_DIR/terraform 
+# this script doesn't replace "old-tag", it just takes that image, and adds this tag to it. 
+# And in fact, if another image exists with this tag, it's removed from that one; so this is image promotion all-in-one
+echo ${aws_env}
+./deploy_image_promote.sh --old-tag $CALDP_ECR_TAG batch-${aws_env}
+./deploy_image_promote.sh --old-tag $PREDICT_ECR_TAG predict-${aws_env}
+./deploy_image_promote.sh --old-tag $TRAINING_ECR_TAG training-${aws_env}
 
 cd ${CALCLOUD_BUILD_DIR}/terraform
 source deploy_cleanup.sh

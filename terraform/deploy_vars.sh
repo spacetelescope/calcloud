@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/bash -xu
 
 export CALCLOUD_VER="v0.4.31"
 export CALDP_VER="v0.2.16"
@@ -41,9 +41,9 @@ export IMAGE_REPO=`echo $repo_url | cut -d '/' -f2`        # hst-repro
 
 ##### DOCKER IMAGE BUILDING #########
 # tags are exported individually for some ecr api call convenience in other scripts
-export CALDP_ECR_TAG="batch-${COMMON_IMAGE_TAG}-${aws_env}"
-export PREDICT_ECR_TAG="unscanned-predict-${COMMON_IMAGE_TAG}-${aws_env}"
-export TRAINING_ECR_TAG="unscanned-training-${COMMON_IMAGE_TAG}-${aws_env}"
+export CALDP_ECR_TAG="batch-${COMMON_IMAGE_TAG}"
+export PREDICT_ECR_TAG="predict-${COMMON_IMAGE_TAG}"
+export TRAINING_ECR_TAG="training-${COMMON_IMAGE_TAG}"
 
 export CALDP_DOCKER_IMAGE="${repo_url}:${CALDP_ECR_TAG}"
 export PREDICT_DOCKER_IMAGE="${repo_url}:${PREDICT_ECR_TAG}"
