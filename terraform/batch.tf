@@ -132,42 +132,6 @@ resource "aws_batch_compute_environment" "compute_env" {
   }
 }
 
-# resource "aws_ecr_repository" "caldp_ecr" {
-#   name                 = "caldp${local.environment}"
-#   image_scanning_configuration {
-#     scan_on_push = true
-#   }
-# }
-
-# resource "aws_ecr_lifecycle_policy" "ecr_lifecycle" {
-#   repository = aws_ecr_repository.caldp_ecr.name
-
-#   policy = <<EOF
-# {
-#     "rules": [
-#         {
-#             "rulePriority": 1,
-#             "description": "Expire untagged images older than 7 days",
-#             "selection": {
-#                 "tagStatus": "untagged",
-#                 "countType": "sinceImagePushed",
-#                 "countUnit": "days",
-#                 "countNumber": 7
-#             },
-#             "action": {
-#                 "type": "expire"
-#             }
-#         }
-#     ]
-# }
-# EOF
-# }
-
-# data "aws_ecr_image" "caldp_batch" {
-#   repository_name = data.aws_ssm_parameter.central_ecr
-#   image_tag = "batch-${locals.common_image_tag}"
-# }
-
 # ------------------------------------------------------------------------------------------
 
 # Env setting to simulate caught errors:
