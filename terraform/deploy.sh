@@ -37,15 +37,6 @@ cd ${CALCLOUD_BUILD_DIR}/terraform
 
 awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
 
-# we need to get the tags on the existing ecr images so that once we deploy, we can remove the env-specific tag (i.e. dev, test, ops, sb-bhayden, etc). 
-# that env-specific tag lets deployers (who may be inclined to delete an old image) and scripts know that an image is in use in an environment
-# when upgrading from a version of the terraform that didn't have this output, the response is an empty string
-# caldp_existing_ecr_image=`awsudo $ADMIN_ARN terraform output ecr_caldp_batch_image`
-# predict_existing_ecr_image=`awsudo $ADMIN_ARN terraform output ecr_predict_lambda_image`
-# training_existing_ecr_image=`awsudo $ADMIN_ARN terraform output ecr_model_training_image`
-
-# exit 1
-
 #### PRIMARY TERRAFORM BUILD #####
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
