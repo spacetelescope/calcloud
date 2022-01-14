@@ -132,42 +132,6 @@ resource "aws_batch_compute_environment" "compute_env" {
   }
 }
 
-resource "aws_ecr_repository" "caldp_ecr" {
-  name                 = "caldp${local.environment}"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-}
-
-resource "aws_ecr_lifecycle_policy" "ecr_lifecycle" {
-  repository = aws_ecr_repository.caldp_ecr.name
-
-  policy = <<EOF
-{
-    "rules": [
-        {
-            "rulePriority": 1,
-            "description": "Expire untagged images older than 7 days",
-            "selection": {
-                "tagStatus": "untagged",
-                "countType": "sinceImagePushed",
-                "countUnit": "days",
-                "countNumber": 7
-            },
-            "action": {
-                "type": "expire"
-            }
-        }
-    ]
-}
-EOF
-}
-
-data "aws_ecr_image" "caldp_latest" {
-  repository_name = aws_ecr_repository.caldp_ecr.name
-  image_tag = var.image_tag
-}
-
 # ------------------------------------------------------------------------------------------
 
 # Env setting to simulate caught errors:
@@ -186,7 +150,7 @@ resource "aws_batch_job_definition" "job_def" {
       {"name": "CSYS_VER", "value": "${var.csys_ver}"},
       {"name": "CRDSBUCKET", "value": "${local.crds_bucket}"}
     ],
-    "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
+    "image": "${local.ecr_caldp_batch_image}",
     "jobRoleArn": "${nonsensitive(data.aws_ssm_parameter.batch_job_role.value)}",
     "executionRoleArn": "${nonsensitive(data.aws_ssm_parameter.batch_exec.value)}",
     "user": "developer",

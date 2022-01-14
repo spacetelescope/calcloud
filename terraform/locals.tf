@@ -80,9 +80,21 @@ locals {
               },
        ]
 
-       ecr_address = format("%v.dkr.ecr.%v.amazonaws.com", data.aws_caller_identity.this.account_id, data.aws_region.current.name)
-       ecr_predict_lambda_image   = format("%v/%v:predict", local.ecr_address, aws_ecr_repository.caldp_ecr.name)
-       ecr_model_training_image = format("%v/%v:training", local.ecr_address, aws_ecr_repository.caldp_ecr.name)
+       # should be kept in sync with the string in deploy_vars.sh
+       common_image_spec = "CALCLOUD_%s-CALDP_%s-BASE_%s"
+       common_image_tag = format(
+         local.common_image_spec,
+         var.awsysver,
+         var.awsdpver,
+         var.full_base_image,
+       )
+
+       # this ssm param can cause issues if there are spaces
+       ecr_address = trim(nonsensitive(data.aws_ssm_parameter.central_ecr.value), " ")
+       ecr_predict_lambda_image = "${local.ecr_address}:predict-${local.common_image_tag}"
+       ecr_model_training_image = "${local.ecr_address}:training-${local.common_image_tag}"
+       ecr_caldp_batch_image = "${local.ecr_address}:batch-${local.common_image_tag}"
+
 
        # because we cannot reference ssm params in variables, we have to set the crds bucket here by looking up the desired bucket through a string
        # set in var.crds_bucket. We then use this map to convert that string to the correct ssm param here
