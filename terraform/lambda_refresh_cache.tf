@@ -60,8 +60,8 @@ module "calcloud_lambda_refresh_cache_submit" {
 
 resource "aws_cloudwatch_event_rule" "refresh_cache_schedule" {
   name                = "refresh-cache-scheduler${local.environment}"
-  description         = "Fires every five minutes"
-  schedule_expression = "rate(5 minutes)"
+  description         = "refreshes all file share caches"
+  schedule_expression = "rate(575 seconds)"
 }
 
 resource "aws_cloudwatch_event_target" "refresh_cache_submit" {
