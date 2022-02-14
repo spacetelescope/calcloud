@@ -43,7 +43,7 @@ MESSAGE_TYPES = [
     "clean",
 ]
 
-MAX_BROADCAST_MSGS = 10 ** 6  # safety
+MAX_BROADCAST_MSGS = 10**6  # safety
 
 # -------------------------------------------------------------
 
