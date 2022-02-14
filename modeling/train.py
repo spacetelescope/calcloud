@@ -273,7 +273,7 @@ def evaluate_regressor(model, target_col, X_train, y_train, X_test, y_test, verb
 
 def train_memory_classifier(df, clf, bucket_mod, data_path, verbose):
     target_col = "mem_bin"
-    X_train, y_train, X_test, y_test = prep.prep_data(df, target_col, tensors=True)
+    X_train, y_train, X_test, y_test, test_idx = prep.prep_data(df, target_col, tensors=True)
     if clf is None:
         clf = memory_classifier()
     results_keys = evaluate_classifier(clf, target_col, X_train, y_train, X_test, y_test, verbose)
@@ -291,7 +291,7 @@ def train_memory_classifier(df, clf, bucket_mod, data_path, verbose):
 
 def train_memory_regressor(df, mem_reg, bucket_mod, data_path, verbose):
     target_col = "memory"
-    X_train, y_train, X_test, y_test = prep.prep_data(df, target_col, tensors=True)
+    X_train, y_train, X_test, y_test, test_idx = prep.prep_data(df, target_col, tensors=True)
     if mem_reg is None:
         mem_reg = memory_regressor()
     results_keys = evaluate_regressor(mem_reg, target_col, X_train, y_train, X_test, y_test, verbose)
@@ -308,7 +308,7 @@ def train_memory_regressor(df, mem_reg, bucket_mod, data_path, verbose):
 
 def train_wallclock_regressor(df, wall_reg, bucket_mod, data_path, verbose):
     target_col = "wallclock"
-    X_train, y_train, X_test, y_test = prep.prep_data(df, target_col, tensors=True)
+    X_train, y_train, X_test, y_test, test_idx = prep.prep_data(df, target_col, tensors=True)
     if wall_reg is None:
         wall_reg = wallclock_regressor()
     results_keys = evaluate_regressor(wall_reg, target_col, X_train, y_train, X_test, y_test, verbose)

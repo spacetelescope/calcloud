@@ -167,28 +167,18 @@ def make_tensors(X_train, y_train, X_test, y_test):
     return X_train, y_train, X_test, y_test
 
 
-def split_Xy(df, target_col, keep_index=False):
-    targets = df[target_col]
-    input_cols = ["x_files", "x_size", "drizcorr", "pctecorr", "crsplit", "subarray", "detector", "dtype", "instr"]
-    features = df[input_cols]
-    if keep_index is False:
-        X = features.values
-        y = targets.values
-    else:
-        X, y = features, targets
-    return X, y
-
-
 def prep_data(df, target_col, tensors=True):
-    # split
-    X, y = split_Xy(df, target_col)
-    # encode if classifier
+    y = df[target_col]
+    input_cols = ["x_files", "x_size", "drizcorr", "pctecorr", "crsplit", "subarray", "detector", "dtype", "instr"]
+    X = df[input_cols]
     if target_col == "mem_bin":
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+        test_idx = pd.DataFrame(y_test, index=y_test.index, columns={'mem_bin'})
         y_train, y_test = encode_target_data(y_train, y_test)
     else:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+        test_idx = pd.DataFrame(y_test, index=y_test.index, columns={'mem_bin'})
     if tensors is True:
         # convert arrays into tensors (better performance for tensorflow)
         X_train, y_train, X_test, y_test = make_tensors(X_train, y_train, X_test, y_test)
-    return X_train, y_train, X_test, y_test
+    return X_train, y_train, X_test, y_test, test_idx
