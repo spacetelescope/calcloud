@@ -1,8 +1,8 @@
 #! /bin/bash -xu
 
-export CALCLOUD_VER="v0.4.34-rc2"
-export CALDP_VER="v0.2.17-rc1"
-export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_mvmalpha_CAL_rc2"
+export CALCLOUD_VER="v0.4.34-rc3"
+export CALDP_VER="v0.2.17-rc2"
+export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_mvmalpha_CAL_rc3"
 
 export BASE_IMAGE_TAG=`cut -d ":" -f2- <<< ${CAL_BASE_IMAGE} `
 
