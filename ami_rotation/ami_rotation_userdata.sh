@@ -84,7 +84,6 @@ pwd
 date '+%Y-%m-%d %H:%M:%S'
 
 yum install -y -q gcc libpng-devel libjpeg-devel unzip yum-utils
-yum update -y -q && yum upgrade -q
 cd /home/ec2-user
 curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip -qq awscliv2.zip
