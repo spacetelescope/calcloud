@@ -1,1 +1,10 @@
-- force update of nss due to critical security vulnerability
+- pytest via moto (no need for aws creds)
+- fix ami-rotation issues caused by yum
+- updated memory model training
+- bugfix; blackboard 'createdAt' default value supplied
+- significantly reduce frequency of blackboard lambda to avoid problems with the file in the storage gateway
+- refactor terraform for ami rotation user-data
+- terraform package version bumps
+- remove terraformed ecr repo in each account; use central ecr via ssm param instead
+- significant refactor of deployment scripts to handle central ecr and image promotion/deletion that goes with it
+- cache refresh period increased to 9 minutes from 5 (continued gateway tweaks)
