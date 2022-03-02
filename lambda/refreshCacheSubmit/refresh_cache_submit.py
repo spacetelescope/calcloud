@@ -15,7 +15,6 @@ def lambda_handler(event, context):
     # run every time
     rapid_fileshares = OrderedDict(
         [
-            ("blackboard", os.environ["FS_BLACKBOARD"]),
             ("crds", os.environ["FS_CRDS"]),
             ("messages", os.environ["FS_MESSAGES"]),
             ("outputs", os.environ["FS_OUTPUTS"]),
@@ -26,7 +25,13 @@ def lambda_handler(event, context):
     # inputs is never written from the cloud
     # the only file someone may want quickly on-prem is the memModel features,
     # but that one is written on-prem so doesn't need a refresh to be visible
-    infrequent_fileshares = OrderedDict([("inputs", os.environ["FS_INPUTS"]), ("control", os.environ["FS_CONTROL"])])
+    infrequent_fileshares = OrderedDict(
+        [
+            ("inputs", os.environ["FS_INPUTS"]),
+            ("control", os.environ["FS_CONTROL"]),
+            ("blackboard", os.environ["FS_BLACKBOARD"]),
+        ]
+    )
 
     for fs_name in rapid_fileshares.keys():
         print(f"{'*'*10} refreshing cache for {fs_name} {'*'*10}")

@@ -118,6 +118,10 @@ data aws_ssm_parameter ci_instance_role {
   name = "/iam/roles/ci_instance_role"
 }
 
+data aws_ssm_parameter central_ecr {
+  name = "/ecr/SharedServices"
+}
+
 resource "aws_ssm_parameter" "awsysver" {
   name  = "/tf/env/awsysver${local.environment}"
   type  = "String"

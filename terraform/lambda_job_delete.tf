@@ -1,6 +1,6 @@
 module "calcloud_lambda_deleteJob" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 1.43.0"
+  version = "~> 2.26.0"
 
   function_name = "calcloud-job-delete${local.environment}"
   description   = "accepts messages from s3 event and deletes either individual jobs by ipppssoot, or all active jobs"
@@ -56,7 +56,7 @@ module "calcloud_lambda_deleteJob" {
 resource "aws_lambda_permission" "allow_bucket_deleteLambda" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_lambda_deleteJob.this_lambda_function_arn
+  function_name = module.calcloud_lambda_deleteJob.lambda_function_arn
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.calcloud.arn
   source_account = data.aws_caller_identity.this.account_id

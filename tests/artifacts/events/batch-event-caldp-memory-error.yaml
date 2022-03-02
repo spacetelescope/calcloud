@@ -1,0 +1,80 @@
+account: xxxxxxxxxxxx
+detail:
+  attempts:
+  - container:
+      containerInstanceArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:container-instance/calcloud-hst-02g-sb-jmiller20211112162339974300000002_Batch_7bed070e-07d8-379f-bf1d-38956208e9cf/168f36b6d0ce450db3cd9ac147fabf0f
+      exitCode: 32
+      logStreamName: calcloud-jobdef-02g-sb-jmiller/default/cbc000750b8e43cebdf9448d710b85e5
+      networkInterfaces: []
+      taskArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:task/calcloud-hst-02g-sb-jmiller20211112162339974300000002_Batch_7bed070e-07d8-379f-bf1d-38956208e9cf/cbc000750b8e43cebdf9448d710b85e5
+    startedAt: 1636734636122
+    statusReason: Essential container in task exited
+    stoppedAt: 1636734644520
+  container:
+    command:
+    - caldp-process
+    - iabs02uaq
+    - s3://calcloud-processing-moto/inputs
+    - s3://calcloud-processing-moto/outputs/iabs02uaq
+    - caldp-config-aws
+    containerInstanceArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:container-instance/calcloud-hst-02g-sb-jmiller20211112162339974300000002_Batch_7bed070e-07d8-379f-bf1d-38956208e9cf/168f36b6d0ce450db3cd9ac147fabf0f
+    environment:
+    - name: AWSYSVER
+      value: v0.4.30-rc14
+    - name: AWSDPVER
+      value: v0.2.15-rc4
+    - name: CALDP_SIMULATE_ERROR
+      value: '32'
+    - name: CRDSBUCKET
+      value: s3://hst-crds-cache-test
+    - name: CSYS_VER
+      value: caldp_drizzlecats
+    executionRoleArn: arn:aws:iam::xxxxxxxxxxxx:role/batch_exec
+    exitCode: 32
+    image: xxxxxxxxxxxx.dkr.ecr.us-east-1.amazonaws.com/caldp-sb-jmiller:latest
+    jobRoleArn: arn:aws:iam::xxxxxxxxxxxx:role/HSTDP-BatchJobRole
+    logStreamName: calcloud-jobdef-02g-sb-jmiller/default/cbc000750b8e43cebdf9448d710b85e5
+    mountPoints: []
+    networkInterfaces: []
+    privileged: false
+    resourceRequirements:
+    - type: MEMORY
+      value: '1792'
+    - type: VCPU
+      value: '1'
+    secrets: []
+    taskArn: arn:aws:ecs:us-east-1:xxxxxxxxxxxx:task/calcloud-hst-02g-sb-jmiller20211112162339974300000002_Batch_7bed070e-07d8-379f-bf1d-38956208e9cf/cbc000750b8e43cebdf9448d710b85e5
+    ulimits: []
+    user: developer
+    volumes: []
+  createdAt: 1636734467217
+  dependsOn: []
+  jobArn: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/cfec40dd-dcd4-4b65-aab8-d237a8a18214
+  jobDefinition: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job-definition/calcloud-jobdef-02g-sb-jmiller:21
+  jobId: cfec40dd-dcd4-4b65-aab8-d237a8a18214
+  jobName: iabs02uaq
+  jobQueue: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job-queue/calcloud-hst-queue-02g-sb-jmiller
+  parameters:
+    command: caldp-process
+    crds_config: caldp-config-offsite
+    dataset: j8cb010b0
+    input_path: 'astroquery:'
+    s3_output_path: s3://calcloud-processing-moto/outputs
+  platformCapabilities: []
+  propagateTags: false
+  startedAt: 1636734636122
+  status: FAILED
+  statusReason: Essential container in task exited
+  stoppedAt: 1636734644520
+  tags:
+    resourceArn: arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/cfec40dd-dcd4-4b65-aab8-d237a8a18214
+  timeout:
+    attemptDurationSeconds: 7086
+detail-type: Batch Job State Change
+id: 2a1120b0-909f-8d0b-ade5-70373d9a5fa5
+region: us-east-1
+resources:
+- arn:aws:batch:us-east-1:xxxxxxxxxxxx:job/cfec40dd-dcd4-4b65-aab8-d237a8a18214
+source: aws.batch
+time: '2021-11-12T16:30:46Z'
+version: '0'

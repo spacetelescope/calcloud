@@ -1,6 +1,6 @@
 module "calcloud_lambda_blackboard" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 1.43.0"
+  version = "~> 2.26.0"
 
   function_name = "calcloud-job-blackboard${local.environment}"
   description   = "scrapes the Batch console for job metadata and posts to S3 bucket for on-premise poller"
@@ -57,20 +57,20 @@ module "calcloud_lambda_blackboard" {
 # it can be a pain to deal with renaming resources in the tf state
 resource "aws_cloudwatch_event_rule" "every_five_minutes" {
   name                = "every-seven-minutes${local.environment}"
-  description         = "Fires every seven minutes"
-  schedule_expression = "rate(7 minutes)"
+  description         = "For blackboard lambda function scheduling"
+  schedule_expression = "rate(59 minutes)"
 }
 
 resource "aws_cloudwatch_event_target" "every_five_minutes" {
   rule      = aws_cloudwatch_event_rule.every_five_minutes.name
   target_id = "lambda"
-  arn       = module.calcloud_lambda_blackboard.this_lambda_function_arn
+  arn       = module.calcloud_lambda_blackboard.lambda_function_arn
 }
 
 resource "aws_lambda_permission" "allow_lambda_exec" {
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_lambda_blackboard.this_lambda_function_name
+  function_name = module.calcloud_lambda_blackboard.lambda_function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.every_five_minutes.arn
 }

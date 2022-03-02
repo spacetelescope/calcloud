@@ -1,6 +1,6 @@
 module "calcloud_lambda_broadcast" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 1.43.0"
+  version = "~> 2.26.0"
 
   function_name = "calcloud-broadcast${local.environment}"
   description   = "Broadcasts the specified message type across a list of job_ids or ippppssoots."
@@ -56,7 +56,7 @@ module "calcloud_lambda_broadcast" {
 resource "aws_lambda_permission" "allow_bucket_broadcastLambda" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_lambda_broadcast.this_lambda_function_arn
+  function_name = module.calcloud_lambda_broadcast.lambda_function_arn
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.calcloud.arn
   source_account = data.aws_caller_identity.this.account_id

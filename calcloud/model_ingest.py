@@ -227,7 +227,7 @@ class Targets(Scraper):
             kb += np.float(memstr)
             print(kb)
         targets["wallclock"] = clock + 1
-        targets["memory"] = kb / (10 ** 6)
+        targets["memory"] = kb / (10**6)
         targets["mem_bin"] = self.calculate_bin(targets["memory"])
         print("Targets:\n", targets)
         return targets

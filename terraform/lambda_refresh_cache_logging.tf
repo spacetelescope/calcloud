@@ -1,6 +1,6 @@
 module "calcloud_lambda_refresh_cache_logs" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 1.43.0"
+  version = "~> 2.26.0"
 
   function_name = "calcloud-fileshare-refresh_cache_logs${local.environment}"
   description   = "listens for refresh cache operations and logs them"
@@ -72,13 +72,13 @@ EOF
 resource "aws_cloudwatch_event_target" "refresh_cache_logs" {
   rule      = aws_cloudwatch_event_rule.refresh_cache_logs.name
   target_id = "lambda"
-  arn       = module.calcloud_lambda_refresh_cache_logs.this_lambda_function_arn
+  arn       = module.calcloud_lambda_refresh_cache_logs.lambda_function_arn
 }
 
 resource "aws_lambda_permission" "allow_lambda_exec_refresh_cache_logs" {
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_lambda_refresh_cache_logs.this_lambda_function_name
+  function_name = module.calcloud_lambda_refresh_cache_logs.lambda_function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.refresh_cache_logs.arn
 }

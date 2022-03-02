@@ -8,11 +8,7 @@ terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = "~> 3.42.0"
-    }
-    hashicorp-template = {
-      source = "hashicorp/template"
-      version = "~> 2.2.0"
+      version = "~> 3.65.0"
     }
     hashicorp-null = {
       source = "hashicorp/null"
@@ -32,17 +28,12 @@ terraform {
     }
     docker = {
       source = "kreuzwerker/docker"
-      version = "~> 2.11.0"
+      version = "~> 2.15.0"
     }
   }
 }
 
-data "template_file" "userdata" {
-  template = file("${path.module}/user_data.sh")
-  vars = {
-      // Any var you need to pass to the script
-  }
-}
+# See also lambda module version in each lambda .tf file
 
 resource "aws_launch_template" "hstdp" {
   # IF YOU CHANGE THE LAUNCH TEMPLATE YOU MUST "TAINT" THE COMPUTE ENVIRONMENT BEFORE DEPLOY
@@ -58,7 +49,7 @@ resource "aws_launch_template" "hstdp" {
     "Name"         = "calcloud-hst-worker${local.environment}"
     "calcloud-hst" = "calcloud-hst-worker${local.environment}"
   }
-  user_data               = base64encode(data.template_file.userdata.rendered)
+  user_data               = base64encode(templatefile("${path.module}/user_data.sh", {}))
 
   vpc_security_group_ids  = local.batch_sgs
 
@@ -141,42 +132,6 @@ resource "aws_batch_compute_environment" "compute_env" {
   }
 }
 
-resource "aws_ecr_repository" "caldp_ecr" {
-  name                 = "caldp${local.environment}"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-}
-
-resource "aws_ecr_lifecycle_policy" "ecr_lifecycle" {
-  repository = aws_ecr_repository.caldp_ecr.name
-
-  policy = <<EOF
-{
-    "rules": [
-        {
-            "rulePriority": 1,
-            "description": "Expire untagged images older than 7 days",
-            "selection": {
-                "tagStatus": "untagged",
-                "countType": "sinceImagePushed",
-                "countUnit": "days",
-                "countNumber": 7
-            },
-            "action": {
-                "type": "expire"
-            }
-        }
-    ]
-}
-EOF
-}
-
-data "aws_ecr_image" "caldp_latest" {
-  repository_name = aws_ecr_repository.caldp_ecr.name
-  image_tag = var.image_tag
-}
-
 # ------------------------------------------------------------------------------------------
 
 # Env setting to simulate caught errors:
@@ -195,7 +150,7 @@ resource "aws_batch_job_definition" "job_def" {
       {"name": "CSYS_VER", "value": "${var.csys_ver}"},
       {"name": "CRDSBUCKET", "value": "${local.crds_bucket}"}
     ],
-    "image": "${aws_ecr_repository.caldp_ecr.repository_url}:${data.aws_ecr_image.caldp_latest.image_tag}",
+    "image": "${local.ecr_caldp_batch_image}",
     "jobRoleArn": "${nonsensitive(data.aws_ssm_parameter.batch_job_role.value)}",
     "executionRoleArn": "${nonsensitive(data.aws_ssm_parameter.batch_exec.value)}",
     "user": "developer",
