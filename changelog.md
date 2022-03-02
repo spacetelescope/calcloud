@@ -1,7 +1,7 @@
 - pytest via moto (no need for aws creds)
 - fix ami-rotation issues caused by yum
 - updated memory model training
-- bugfix; blackboard 'createdAt' default value supplied
+- bugfix; blackboard 'createdAt' default value supplied (hotfixed previously)
 - significantly reduce frequency of blackboard lambda to avoid problems with the file in the storage gateway
 - refactor terraform for ami rotation user-data
 - terraform package version bumps
