@@ -272,7 +272,7 @@ def create_payload(job_data, timestamp):
         "mem_bin": int(targets["mem_bin"]),
     }
     ddb_payload = json.loads(json.dumps(data, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
-    pprint(ddb_payload, indent=2, sort_dicts=False)
+    pprint(ddb_payload, indent=2)
     return ddb_payload
 
 
@@ -291,7 +291,7 @@ def ddb_ingest(ipst, bucket_name, table_name):
     ddb_payload = create_payload(job_data, start_time)
     job_resp = put_job_data(ddb_payload, table_name)
     print("Put job data succeeded:")
-    pprint(job_resp, indent=2, sort_dicts=False)
+    pprint(job_resp, indent=2)
     end_time = time.time()
     print_timestamp(end_time, "SCRAPE and INGEST", 1)
     duration = proc_time(start_time, end_time)
