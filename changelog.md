@@ -1,4 +1,2 @@
 - default base docker image set to CALDP_20220527_CAL_final
 - default crds update to hst_1015.pmap
-- bugfix for processing env in base image using new conda env
-- update wcstools to 3.9.7 as the 3.9.5 download link is no longer available
