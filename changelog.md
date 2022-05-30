@@ -1,3 +1,2 @@
-- default base docker image set to CALDP_20220406_CAL_final
-- default crds update to hst_1002.pmap
-- bugfix for model ingest lambda pprint (missing optional param "sort_dicts" after downgrade to 3.7 runtime)
+- default base docker image set to CALDP_20220527_CAL_final
+- default crds update to hst_1015.pmap
