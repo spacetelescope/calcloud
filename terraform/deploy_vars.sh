@@ -1,6 +1,6 @@
 #! /bin/bash -xu
 
-export CALCLOUD_VER="v0.4.36"
+export CALCLOUD_VER="v0.4.37"
 export CALDP_VER="v0.2.19"
 export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20220527_CAL_final"
 
