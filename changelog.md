@@ -1,2 +1,1 @@
-- default base docker image set to CALDP_20220527_CAL_final
-- default crds update to hst_1015.pmap
+- hotfix for protobuf pinned to 3.20.1 to deal with dependency-related error in modeling lambda/training images
