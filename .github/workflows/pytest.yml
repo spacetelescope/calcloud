@@ -21,7 +21,6 @@ jobs:
 
       - name: run pytest code coverage check
         run: pytest \
-          --cov=calcloud \
           --cov=lambda/AmiRotation \
           --cov=lambda/batch_events \
           --cov=lambda/blackboard \
