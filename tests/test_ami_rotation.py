@@ -1,8 +1,6 @@
 """ test that the ami rotation lambda will launch an ec2 instance """
 import os
 
-from . import conftest
-
 
 def test_ami_rotation(ec2_resource, ec2_client):
     # this import has to be inside the testing function or the lambda_handler complains about aws credentials
@@ -15,7 +13,7 @@ def test_ami_rotation(ec2_resource, ec2_client):
     assert len(list(instances)) == 0
 
     # create a launch template
-    lt = ec2_client.create_launch_template(LaunchTemplateName=os.environ["LAUNCH_TEMPLATE_NAME"], LaunchTemplateData={})
+    ec2_client.create_launch_template(LaunchTemplateName=os.environ["LAUNCH_TEMPLATE_NAME"], LaunchTemplateData={})
 
     vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
 
