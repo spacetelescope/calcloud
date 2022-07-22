@@ -23,7 +23,7 @@ CENVIRONMENTS = ["calcloud-cenv-2g", "calcloud-cenv-8g", "calcloud-cenv-16g", "c
 JOBQUEUES = ["calcloud-jobqueue-2g", "calcloud-jobqueue-8g", "calcloud-jobqueue-16g", "calcloud-jobqueue-64g"]
 BUCKET = "calcloud-processing-moto"
 
-EXAMPLE_AMI_ID = 'ami-12c6146b'
+EXAMPLE_AMI_ID = "ami-12c6146b"
 
 os.environ["JOBDEFINITIONS"] = ",".join(JOBDEFINITIONS)
 os.environ["JOBQUEUES"] = ",".join(JOBQUEUES)
@@ -34,6 +34,7 @@ os.environ["MAX_DOCKER_RETRIES"] = "4"
 os.environ["LAUNCH_TEMPLATE_NAME"] = "test_launch_template"
 os.environ["SUBNET"] = "subnet-123456"
 
+
 @pytest.fixture(scope="function")
 def aws_credentials():
     """Mocked AWS Credentials for moto."""
@@ -41,7 +42,7 @@ def aws_credentials():
     os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
     os.environ["AWS_SECURITY_TOKEN"] = "testing"
     os.environ["AWS_SESSION_TOKEN"] = "testing"
-    os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+    os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 
 
 @pytest.fixture(scope="function")
@@ -63,10 +64,12 @@ def iam_client(aws_credentials):
     with mock_iam():
         yield boto3.client("iam", region_name="us-east-1")
 
+
 @pytest.fixture(scope="function")
 def ec2_client(aws_credentials):
     with mock_ec2():
         yield boto3.client("ec2", region_name="us-east-1")
+
 
 @pytest.fixture(scope="function")
 def ec2_resource(aws_credentials):
