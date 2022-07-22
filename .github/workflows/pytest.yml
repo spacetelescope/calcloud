@@ -20,7 +20,7 @@ jobs:
         run: pip install .[dev]
 
       - name: run pytest code coverage check
-        run: pytest \
+        run: python -m pytest \
           --cov=lambda/AmiRotation \
           --cov=lambda/batch_events \
           --cov=lambda/blackboard \
