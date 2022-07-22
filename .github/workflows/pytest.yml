@@ -35,8 +35,9 @@ jobs:
           --cov=lambda/refreshCacheLogs \
           --cov=lambda/refreshCacheSubmit \
           --cov=lambda/s3_trigger \
-          --cov-fail-under 30\
-          -rP
+          --cov-fail-under 30 \
+          -rP \
+          .
 
   pytest:
     name: pytest
