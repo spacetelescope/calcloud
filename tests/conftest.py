@@ -31,6 +31,7 @@ os.environ["MAX_MEMORY_RETRIES"] = "4"
 os.environ["MAX_DOCKER_RETRIES"] = "4"
 os.environ["LAUNCH_TEMPLATE_NAME"] = "test_launch_template"
 
+
 @pytest.fixture(scope="function")
 def aws_credentials():
     """Mocked AWS Credentials for moto."""
