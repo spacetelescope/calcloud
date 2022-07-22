@@ -23,8 +23,6 @@ CENVIRONMENTS = ["calcloud-cenv-2g", "calcloud-cenv-8g", "calcloud-cenv-16g", "c
 JOBQUEUES = ["calcloud-jobqueue-2g", "calcloud-jobqueue-8g", "calcloud-jobqueue-16g", "calcloud-jobqueue-64g"]
 BUCKET = "calcloud-processing-moto"
 
-EXAMPLE_AMI_ID = "ami-12c6146b"
-
 os.environ["JOBDEFINITIONS"] = ",".join(JOBDEFINITIONS)
 os.environ["JOBQUEUES"] = ",".join(JOBQUEUES)
 os.environ["BUCKET"] = BUCKET
@@ -32,8 +30,6 @@ os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 os.environ["MAX_MEMORY_RETRIES"] = "4"
 os.environ["MAX_DOCKER_RETRIES"] = "4"
 os.environ["LAUNCH_TEMPLATE_NAME"] = "test_launch_template"
-os.environ["SUBNET"] = "subnet-123456"
-
 
 @pytest.fixture(scope="function")
 def aws_credentials():
