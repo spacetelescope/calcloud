@@ -1,0 +1,26 @@
+Records:
+- awsRegion: us-east-1
+  eventName: ObjectCreated:Put
+  eventSource: aws:s3
+  eventTime: '2022-07-25T15:51:12.813Z'
+  eventVersion: '2.1'
+  requestParameters:
+    sourceIPAddress: xxxxxxxxxxx
+  responseElements:
+    x-amz-id-2: xxxxxxxxxxx
+    x-amz-request-id: xxxxxxxxxxx
+  s3:
+    bucket:
+      arn: xxxxxxxxxxx
+      name: calcloud-processing-unittest
+      ownerIdentity:
+        principalId: xxxxxxxxxxx
+    configurationId: xxxxxxxxxxx
+    object:
+      eTag: xxxxxxxxxxx
+      key: messages/clean-ipppssoot
+      sequencer: xxxxxxxxxxx
+      size: 0
+    s3SchemaVersion: '1.0'
+  userIdentity:
+    principalId: xxxxxxxxxxx

@@ -15,6 +15,8 @@ boto3.set_stream_logger("botocore.credentials", logging.DEBUG)
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/blackboard"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/batch_events"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/AmiRotation"))
+sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobClean"))
+
 
 EVENT_DIR = str(Path(__file__).resolve().parent / "artifacts/events")
 
