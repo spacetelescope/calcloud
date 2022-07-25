@@ -1,11 +1,8 @@
-from email import message
-import os
 import copy
 import pytest
 
 from . import conftest
 
-from calcloud import s3
 from calcloud import io
 
 import clean_handler
