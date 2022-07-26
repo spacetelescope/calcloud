@@ -200,7 +200,7 @@ def test_cancel_ipst(batch_client, s3_client, iam_client):
 def test_bad_ipst(s3_client):
     # modify generic event to a bogus ipst
     event = conftest.load_event("generic-message-event.yaml")
-    event = conftest.modify_generic_message(event, f"cancel-345")
+    event = conftest.modify_generic_message(event, "cancel-345")
 
     with pytest.raises(ValueError):
         delete_handler.lambda_handler(event, {})
