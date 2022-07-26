@@ -243,5 +243,3 @@ def test_clean_single_ipst(s3_client):
         clean_handler.lambda_handler(ipst_event, {})
         assertion_ipppssoots.remove(ipst)
         assert_all_artifacts(comm, assertion_ipppssoots)
-
-    assert False
