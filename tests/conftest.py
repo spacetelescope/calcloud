@@ -16,6 +16,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/blackboard"
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/batch_events"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/AmiRotation"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobClean"))
+sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobDelete"))
 
 
 EVENT_DIR = str(Path(__file__).resolve().parent / "artifacts/events")
@@ -79,3 +80,49 @@ def ec2_resource(aws_credentials):
 def load_event(basename):
     with open(f"{EVENT_DIR}/{basename}") as file:
         return yaml.safe_load(file)
+
+
+def setup_batch(iam_client, batch_client):
+    # we'll need a mock iam role to pass to the mock batch client
+    iams = iam_client.create_role(
+        RoleName="test_batch_client",
+        AssumeRolePolicyDocument="string",
+    )
+    iam_arn = iams.get("Role").get("Arn")
+    print("iamRoleArn: " + iam_arn)
+
+    q_arns, jobdef_arns = [], []
+
+    # mocks for each job ladder step
+    for i, ce in enumerate(CENVIRONMENTS):
+        created_cenv = batch_client.create_compute_environment(
+            computeEnvironmentName=ce, type="UNMANAGED", serviceRole=iam_arn
+        )
+
+        compute_environment_arn = created_cenv.get("computeEnvironmentArn")
+
+        created_queue = batch_client.create_job_queue(
+            jobQueueName=JOBQUEUES[i],
+            state="ENABLED",
+            priority=1,
+            computeEnvironmentOrder=[
+                {"order": 1, "computeEnvironment": compute_environment_arn},
+            ],
+        )
+        job_q_arn = created_queue.get("jobQueueArn")
+        q_arns.append(job_q_arn)
+
+        created_jobdef = batch_client.register_job_definition(
+            jobDefinitionName=JOBDEFINITIONS[i],
+            type="container",
+            containerProperties={
+                "image": "busybox",
+                "vcpus": 1,
+                "memory": 128,
+                "command": ["sleep", "1"],
+            },
+        )
+        job_definition_arn = created_jobdef.get("jobDefinitionArn")
+        jobdef_arns.append(job_definition_arn)
+
+    return q_arns, jobdef_arns
