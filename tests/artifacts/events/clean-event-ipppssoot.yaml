@@ -11,8 +11,8 @@ Records:
     x-amz-request-id: xxxxxxxxxxx
   s3:
     bucket:
-      arn: xxxxxxxxxxx
-      name: calcloud-processing-unittest
+      arn: arn:aws:s3:::calcloud-processing-moto
+      name: calcloud-processing-moto
       ownerIdentity:
         principalId: xxxxxxxxxxx
     configurationId: xxxxxxxxxxx

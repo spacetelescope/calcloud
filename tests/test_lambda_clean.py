@@ -1,9 +1,12 @@
 import copy
+import os
+
 import pytest
 
 from . import conftest
 
 from calcloud import io
+from calcloud import s3
 
 import clean_handler
 
@@ -57,9 +60,32 @@ def setup_ingest_messages(comm):
     for i, m in enumerate(message_types):
         ipst = f"ipppssoo{i}"
         assert f"{m}-{ipst}" in mess
-    print(ipppssoots)
-    print(message_types)
     return ipppssoots, message_types
+
+
+def assert_all_artifacts(comm, ipppssoots):
+    """checks that all inputs/outputs/messages (ingested only) and control files exit only for the list of ipppssoots provided"""
+    # control
+    xdata = comm.xdata.listl()
+    assert sorted(xdata) == sorted(ipppssoots)
+
+    # messages
+    expected_messages = [f"ingested-{ipst}" for ipst in ipppssoots]
+    actual_messages = comm.messages.listl()
+    assert sorted(actual_messages) == sorted(expected_messages)
+
+    # inputs
+    expected_inputs = [f"{ipst}.tar.gz" for ipst in ipppssoots]
+    actual_inputs = comm.inputs.listl()
+    assert sorted(actual_inputs) == sorted(expected_inputs)
+
+    # outputs
+    actual_outputs = comm.outputs.listl()
+    expected_outputs = []
+    for ipst in ipppssoots:
+        expected_outputs.append(f"{ipst}/{ipst}.tar.gz")
+        expected_outputs.append(f"{ipst}/{ipst}.txt")
+    assert sorted(actual_outputs) == sorted(expected_outputs)
 
 
 def get_broadcast_payload(comm):
@@ -176,3 +202,46 @@ def test_clean_ingested_ipsts(s3_client):
         else:
             # since we counted the messages and the payload, there can't be spurious messages in the broadcast payload
             assert f"clean-{ipst}" not in broadcast_payload["messages"]
+
+
+def test_clean_single_ipst(s3_client):
+    """in the end, via broadcasting each ipst to be cleaned must reach this test case individually"""
+
+    comm = io.get_io_bundle()
+
+    # place control, inputs, outputs, and messages objects for each ipppssoot
+    ipppssoots = ["ipppssoo1", "ipppssoo2"]
+
+    # setup the artifacts that need to be cleaned
+    d = io.get_default_metadata()
+    for i, ipst in enumerate(ipppssoots):
+        # control metadata object
+        d["job_id"] = i
+        comm.xdata.put(ipst, d)
+
+        # empty inputs/outputs
+        inputs_s3_path = f"s3://{os.environ['BUCKET']}/inputs/{ipst}.tar.gz"
+        outputs_s3_tar = f"s3://{os.environ['BUCKET']}/outputs/{ipst}/{ipst}.tar.gz"
+        outputs_s3_log = f"s3://{os.environ['BUCKET']}/outputs/{ipst}/{ipst}.txt"
+        s = ""
+
+        s3.put_object(s, inputs_s3_path, client=s3_client)
+        s3.put_object(s, outputs_s3_tar, client=s3_client)
+        s3.put_object(s, outputs_s3_log, client=s3_client)
+
+        # messages
+        comm.messages.put(f"ingested-{ipst}")
+
+    # make sure the setup was all successful
+    assert_all_artifacts(comm, ipppssoots)
+    ipst_event = conftest.load_event("clean-event-ipppssoot.yaml")
+    # this list will be used in assert_all_artifacts
+    assertion_ipppssoots = copy.copy(ipppssoots)
+    # run the lambda on each ipppssoot, verifying the state of the bucket after each call
+    for ipst in ipppssoots:
+        ipst_event["Records"][0]["s3"]["object"]["key"] = f"messages/clean-{ipst}"
+        clean_handler.lambda_handler(ipst_event, {})
+        assertion_ipppssoots.remove(ipst)
+        assert_all_artifacts(comm, assertion_ipppssoots)
+
+    assert False
