@@ -82,7 +82,7 @@ def load_event(basename):
         return yaml.safe_load(file)
 
 
-def setup_batch(iam_client, batch_client):
+def setup_batch(iam_client, batch_client, busybox_sleep_timer=1):
     # we'll need a mock iam role to pass to the mock batch client
     iams = iam_client.create_role(
         RoleName="test_batch_client",
@@ -119,10 +119,32 @@ def setup_batch(iam_client, batch_client):
                 "image": "busybox",
                 "vcpus": 1,
                 "memory": 128,
-                "command": ["sleep", "1"],
+                "command": ["sleep", f"{busybox_sleep_timer}"],
             },
         )
         job_definition_arn = created_jobdef.get("jobDefinitionArn")
         jobdef_arns.append(job_definition_arn)
 
     return q_arns, jobdef_arns
+
+
+def modify_generic_message(event, message):
+    event["Records"][0]["s3"]["object"]["key"] = f"messages/{message}"
+    return event
+
+
+def get_broadcast(comm):
+    """from a list of messages, find the one broadcast and pull it's contents"""
+    # first find the broadcast
+    mess = comm.messages.listl()
+    found_broadcast = False
+    for i, m in enumerate(mess):
+        if "broadcast-" in m:
+            found_broadcast = True
+            break
+    # error if the broadcast message wasn't posted
+    assert found_broadcast
+
+    # pull the payload
+    broadcast = comm.messages.get(mess[i])
+    return broadcast

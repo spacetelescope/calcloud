@@ -88,23 +88,6 @@ def assert_all_artifacts(comm, ipppssoots):
     assert sorted(actual_outputs) == sorted(expected_outputs)
 
 
-def get_broadcast_payload(comm):
-    """from a list of messages, find the one broadcast and pull it's payload"""
-    # first find the broadcast
-    mess = comm.messages.listl()
-    found_broadcast = False
-    for i, m in enumerate(mess):
-        if "broadcast-" in m:
-            found_broadcast = True
-            break
-    # error if the broadcast message wasn't posted
-    assert found_broadcast
-
-    # pull the payload
-    broadcast_payload = comm.messages.get(mess[i])
-    return broadcast_payload
-
-
 def test_clean_all_empty(s3_client):
     """tests clean-all on an otherwise empty messages directory"""
     # ensure we have an empty messages directory
@@ -147,10 +130,10 @@ def test_clean_all_ipsts(s3_client):
     assert "clean-all" not in mess
 
     # there should now be a broadcast message with the clean messages as it's payload
-    broadcast_payload = get_broadcast_payload(comm)
+    broadcast = conftest.get_broadcast(comm)
     # assert that each ipppssoot has a clean-ipppssoot message in the broadcast payload
     for ipst in ipppssoots:
-        assert f"clean-{ipst}" in broadcast_payload["messages"]
+        assert f"clean-{ipst}" in broadcast["messages"]
 
 
 def test_clean_ingested_empty(s3_client):
@@ -191,17 +174,17 @@ def test_clean_ingested_ipsts(s3_client):
     clean_handler.lambda_handler(all_event, {})
 
     # there should now be a broadcast message with the clean messages as it's payload
-    broadcast_payload = get_broadcast_payload(comm)
+    broadcast = conftest.get_broadcast(comm)
     # check the number in the payload matches the number of messages we posted
-    payload_ctr = sum("clean" in mess for mess in broadcast_payload["messages"])
+    payload_ctr = sum("clean" in mess for mess in broadcast["messages"])
     assert payload_ctr == ingested_ctr
     # assert that only ingested ipppssoots are covered in the broadcast payload
     for i, ipst in enumerate(ipppssoots):
         if "ingested" in message_types[i]:
-            assert f"clean-{ipst}" in broadcast_payload["messages"]
+            assert f"clean-{ipst}" in broadcast["messages"]
         else:
             # since we counted the messages and the payload, there can't be spurious messages in the broadcast payload
-            assert f"clean-{ipst}" not in broadcast_payload["messages"]
+            assert f"clean-{ipst}" not in broadcast["messages"]
 
 
 def test_clean_single_ipst(s3_client):
@@ -234,12 +217,12 @@ def test_clean_single_ipst(s3_client):
 
     # make sure the setup was all successful
     assert_all_artifacts(comm, ipppssoots)
-    ipst_event = conftest.load_event("clean-event-ipppssoot.yaml")
+    ipst_event = conftest.load_event("generic-message-event.yaml")
     # this list will be used in assert_all_artifacts
     assertion_ipppssoots = copy.copy(ipppssoots)
     # run the lambda on each ipppssoot, verifying the state of the bucket after each call
     for ipst in ipppssoots:
-        ipst_event["Records"][0]["s3"]["object"]["key"] = f"messages/clean-{ipst}"
+        ipst_event = conftest.modify_generic_message(ipst_event, f"clean-{ipst}")
         clean_handler.lambda_handler(ipst_event, {})
         assertion_ipppssoots.remove(ipst)
         assert_all_artifacts(comm, assertion_ipppssoots)
