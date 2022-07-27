@@ -1,4 +1,4 @@
-"""test functionality of the rescue lambda 
+"""test functionality of the rescue lambda
 NOTE: since calcloud.lambda_submit.main catches timeout exceptions
 while waiting for inputs, we have to use the contents of the error
 message that is posted to catch that timeout"""

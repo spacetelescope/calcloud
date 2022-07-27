@@ -7,7 +7,7 @@ import zipfile
 
 import pytest
 import boto3
-from moto import mock_s3, mock_batch, mock_iam, mock_ec2, mock_lambda, mock_dynamodb
+from moto import mock_s3, mock_batch, mock_iam, mock_ec2, mock_lambda
 import yaml
 
 # for logging to double-check we're getting fake credentials and not real ones

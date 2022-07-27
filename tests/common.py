@@ -1,4 +1,4 @@
-"""This module exists because importing calcloud into conftest.py causes doctests to run and fail, 
+"""This module exists because importing calcloud into conftest.py causes doctests to run and fail,
 and I don't know why. But it doesn't happen with this module."""
 
 import copy
