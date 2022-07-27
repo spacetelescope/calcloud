@@ -7,7 +7,7 @@ import zipfile
 
 import pytest
 import boto3
-from moto import mock_s3, mock_batch, mock_iam, mock_ec2, mock_lambda
+from moto import mock_s3, mock_batch, mock_iam, mock_ec2, mock_lambda, mock_dynamodb
 import yaml
 
 # for logging to double-check we're getting fake credentials and not real ones
@@ -39,6 +39,7 @@ os.environ["MAX_DOCKER_RETRIES"] = "4"
 os.environ["LAUNCH_TEMPLATE_NAME"] = "test_launch_template"
 os.environ["SUBMIT_TIMEOUT"] = "10"  # for timing out waiting for inputs to submit batch jobs
 os.environ["JOBPREDICTLAMBDA"] = "job_predict_lambda"
+os.environ["DDBTABLE"] = "mock_ddb_table"
 
 
 @pytest.fixture(scope="function")
@@ -87,6 +88,11 @@ def ec2_resource(aws_credentials):
 def lambda_client(aws_credentials):
     with mock_lambda():
         yield boto3.client("lambda", region_name="us-east-1")
+
+@pytest.fixture(scope="function")
+def dynamodb_client(aws_credentials):
+    with mock_dynamodb():
+        yield boto3.client("dynamodb", region_name="us-east-1")
 
 
 def load_event(basename):
@@ -177,13 +183,13 @@ def job_predict_mock_source_code(memBin=0, clockTime=10):
     code = f"""
 import json
 def lambda_handler(event, context):
-    response = {{"memBin":{memBin}, "clockTime":{clockTime}}}
-    return json.dumps(response)
+    response = {{"memBin":{memBin}, "clockTime":{clockTime}, "memVal": 2}}
+    return response
 """
     return code
 
 
-def job_predict_zip(memBin=0, clockTime=10):
+def job_predict_zip(memBin=0, clockTime=3600):
     source_code = job_predict_mock_source_code(memBin=memBin, clockTime=clockTime)
     zip_io = io.BytesIO()
     zip_file = zipfile.ZipFile(zip_io, "w", zipfile.ZIP_DEFLATED)
@@ -210,6 +216,27 @@ def create_mock_lambda(lambda_client, iam_client, name=os.environ["JOBPREDICTLAM
         Timeout=30,
         MemorySize=128,
         Publish=True,
+    )
+
+def setup_dynamodb(ddb_client, name=os.environ["DDBTABLE"]):
+    response = ddb_client.create_table(
+        AttributeDefinitions=[
+            {
+                'AttributeName':'ipst',
+                'AttributeType':'S',
+            },
+        ],
+        KeySchema=[
+            {
+                'AttributeName':'ipst',
+                'KeyType':'HASH',
+            },
+        ],
+        ProvisionedThroughput={
+            'ReadCapacityUnits':5,
+            'WriteCapacityUnits':5,
+        },
+        TableName=name
     )
 
     print(response)

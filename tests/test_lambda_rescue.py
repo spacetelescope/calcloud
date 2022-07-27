@@ -6,6 +6,7 @@ message that is posted to catch that timeout"""
 import pytest
 
 from calcloud import io
+from calcloud import batch
 
 from . import conftest
 from . import common
@@ -141,6 +142,7 @@ def test_rescue_ipst_timeout(s3_client, batch_client, iam_client):
 
     messages = comm.messages.listl()
 
+    # asserts an error message in messages, and the exception text in the payload
     for i, (ipst, m) in enumerate(zip(ipppssoots, message_types)):
         if m == "rescue":
             text_check = f"Wait for inputs for {ipst} timeout, aborting submission."
@@ -149,13 +151,14 @@ def test_rescue_ipst_timeout(s3_client, batch_client, iam_client):
             assert text_check in payload["exception"]
 
 
-def test_rescue_ipst_no_override(s3_client, batch_client, iam_client, lambda_client):
+def test_rescue_ipst_no_override(s3_client, batch_client, iam_client, lambda_client, dynamodb_client):
     """does not post the inputs and memory features files, so the job submit should timeout"""
     import rescue_handler
 
-    # garb the usual io bundle and setup the batch processing env
     comm = io.get_io_bundle()
-    # conftest.setup_batch(iam_client, batch_client, busybox_sleep_timer=5)
+
+    # setup Batch
+    conftest.setup_batch(iam_client, batch_client, busybox_sleep_timer=5)
 
     # sets up a list of messages of nearly all types, with a few extra error- messages
     ipppssoots, message_types = common.setup_error_messages(comm)
@@ -169,19 +172,39 @@ def test_rescue_ipst_no_override(s3_client, batch_client, iam_client, lambda_cli
         comm.control.put(f"{ipst}/{ipst}_MemModelFeatures.txt")
         comm.inputs.put(f"{ipst}.tar.gz")
 
+    # dynamodb must be in place
+    conftest.setup_dynamodb(dynamodb_client)
+
+    # mock of the job predict lambda must be in place
     conftest.create_mock_lambda(lambda_client, iam_client)
-    # assert False
 
     # run the lambda for the rescue message that's naturally in the list above
+    # this will submit the jobs, but they'll fail because the busybox
+    # image won't have caldp-process in it
     for i, (ipst, m) in enumerate(zip(ipppssoots, message_types)):
         if m in rescue_handler.RESCUE_TYPES:
             comm.messages.put(f"rescue-{ipst}")
             event = conftest.get_message_event(f"rescue-{ipst}")
             rescue_handler.lambda_handler(event, {})
 
+    # assert that every job needing a rescue now has a submit- message
     messages = comm.messages.listl()
+    for i, (ipst, m) in enumerate(zip(ipppssoots, message_types)):
+        if m in rescue_handler.RESCUE_TYPES:
+            assert f'submit-{ipst}' in messages
 
-    print(messages)
 
-    # UNFINISHED
-    # assert False
+    # get the jobs from Batch and store the job names
+    jobs = batch.get_job_ids(collect_statuses=batch.JOB_STATUSES)
+    names = []
+    for j in jobs:
+        names.append(batch.get_job_name(j))
+
+    # assert that the names of the jobs from Batch match the ones needing rescue
+    counter = 0
+    for i, (ipst, m) in enumerate(zip(ipppssoots, message_types)):
+        if m in rescue_handler.RESCUE_TYPES:
+            assert ipst in names
+            counter += 1
+    assert counter == len(names)
+    
