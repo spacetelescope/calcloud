@@ -219,6 +219,8 @@ def create_mock_lambda(lambda_client, iam_client, name=os.environ["JOBPREDICTLAM
         Publish=True,
     )
 
+    return response
+
 
 def setup_dynamodb(ddb_client, name=os.environ["DDBTABLE"]):
     response = ddb_client.create_table(
