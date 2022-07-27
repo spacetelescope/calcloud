@@ -191,8 +191,7 @@ def test_rescue_ipst_no_override(s3_client, batch_client, iam_client, lambda_cli
     messages = comm.messages.listl()
     for i, (ipst, m) in enumerate(zip(ipppssoots, message_types)):
         if m in rescue_handler.RESCUE_TYPES:
-            assert f'submit-{ipst}' in messages
-
+            assert f"submit-{ipst}" in messages
 
     # get the jobs from Batch and store the job names
     jobs = batch.get_job_ids(collect_statuses=batch.JOB_STATUSES)
@@ -207,4 +206,3 @@ def test_rescue_ipst_no_override(s3_client, batch_client, iam_client, lambda_cli
             assert ipst in names
             counter += 1
     assert counter == len(names)
-    

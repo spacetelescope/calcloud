@@ -89,6 +89,7 @@ def lambda_client(aws_credentials):
     with mock_lambda():
         yield boto3.client("lambda", region_name="us-east-1")
 
+
 @pytest.fixture(scope="function")
 def dynamodb_client(aws_credentials):
     with mock_dynamodb():
@@ -218,25 +219,26 @@ def create_mock_lambda(lambda_client, iam_client, name=os.environ["JOBPREDICTLAM
         Publish=True,
     )
 
+
 def setup_dynamodb(ddb_client, name=os.environ["DDBTABLE"]):
     response = ddb_client.create_table(
         AttributeDefinitions=[
             {
-                'AttributeName':'ipst',
-                'AttributeType':'S',
+                "AttributeName": "ipst",
+                "AttributeType": "S",
             },
         ],
         KeySchema=[
             {
-                'AttributeName':'ipst',
-                'KeyType':'HASH',
+                "AttributeName": "ipst",
+                "KeyType": "HASH",
             },
         ],
         ProvisionedThroughput={
-            'ReadCapacityUnits':5,
-            'WriteCapacityUnits':5,
+            "ReadCapacityUnits": 5,
+            "WriteCapacityUnits": 5,
         },
-        TableName=name
+        TableName=name,
     )
 
     print(response)
