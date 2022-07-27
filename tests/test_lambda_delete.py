@@ -27,8 +27,7 @@ def test_cancel_all(batch_client, s3_client, iam_client):
     comm.messages.put("cancel-all")
 
     # modify generic event to cancel-all
-    event = conftest.load_event("generic-message-event.yaml")
-    event = conftest.modify_generic_message(event, "cancel-all")
+    event = conftest.get_message_event("cancel-all")
 
     # run the lambda
     delete_handler.lambda_handler(event, {})
@@ -65,8 +64,7 @@ def test_cancel_jobid_no_xdata(batch_client, s3_client, iam_client):
     comm.messages.put(f"cancel-{cancel_id}")
 
     # modify generic event to cancel-all
-    event = conftest.load_event("generic-message-event.yaml")
-    event = conftest.modify_generic_message(event, f"cancel-{cancel_id}")
+    event = conftest.get_message_event(f"cancel-{cancel_id}")
 
     delete_handler.lambda_handler(event, {})
 
@@ -110,8 +108,7 @@ def test_cancel_jobid(batch_client, s3_client, iam_client):
     comm.messages.put(f"processing-{cancel_ipst}")
 
     # modify generic event to cancel-all
-    event = conftest.load_event("generic-message-event.yaml")
-    event = conftest.modify_generic_message(event, f"cancel-{cancel_id}")
+    event = conftest.get_message_event(f"cancel-{cancel_id}")
 
     delete_handler.lambda_handler(event, {})
 
@@ -170,8 +167,7 @@ def test_cancel_ipst(batch_client, s3_client, iam_client):
     comm.messages.put(f"processing-{cancel_ipst}")
 
     # modify generic event to cancel-all
-    event = conftest.load_event("generic-message-event.yaml")
-    event = conftest.modify_generic_message(event, f"cancel-{cancel_ipst}")
+    event = conftest.get_message_event(f"cancel-{cancel_ipst}")
 
     delete_handler.lambda_handler(event, {})
 
@@ -199,8 +195,7 @@ def test_cancel_ipst(batch_client, s3_client, iam_client):
 
 def test_bad_ipst(s3_client):
     # modify generic event to a bogus ipst
-    event = conftest.load_event("generic-message-event.yaml")
-    event = conftest.modify_generic_message(event, "cancel-345")
+    event = conftest.get_message_event("cancel-345")
 
     with pytest.raises(ValueError):
         delete_handler.lambda_handler(event, {})

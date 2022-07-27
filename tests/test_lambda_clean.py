@@ -4,63 +4,12 @@ import os
 import pytest
 
 from . import conftest
+from . import common
 
 from calcloud import io
 from calcloud import s3
 
 import clean_handler
-
-
-def assert_empty_messages(comm):
-    messages = comm.messages.listl()
-    assert len(messages) == 0
-
-
-def setup_diverse_messages(comm):
-    """posts messages of most types from io.MESSAGE_TYPES
-    ignores broadcast and clean message types"""
-    assert_empty_messages(comm)
-
-    # we'll make a message of each type for a unique list of ipppssoots
-    message_types = copy.copy(io.MESSAGE_TYPES)
-    # ... except for broadcast and clean
-    message_types.remove("broadcast")
-    message_types.remove("clean")
-
-    # insert the messages
-    ipppssoots = []
-    for i, m in enumerate(message_types):
-        ipst = f"ipppssoo{i}"
-        ipppssoots.append(ipst)
-        comm.messages.put(f"{m}-{ipst}")
-
-    # read them back and assert they're there
-    mess = comm.messages.listl()
-    for i, m in enumerate(message_types):
-        ipst = f"ipppssoo{i}"
-        assert f"{m}-{ipst}" in mess
-
-    return ipppssoots, message_types
-
-
-def setup_ingest_messages(comm):
-    """adds a few extra ingested messages to the diverse messages list"""
-    ipppssoots, message_types = setup_diverse_messages(comm)
-    n = len(ipppssoots)
-
-    # insert the extra ingested messages
-    for i in range(3):
-        ipst = f"ipppssoo{i+n}"
-        comm.messages.put(f"ingested-{ipst}")
-        ipppssoots.append(ipst)
-        message_types.append("ingested")
-
-    # read all messages back and assert they match the lists
-    mess = comm.messages.listl()
-    for i, m in enumerate(message_types):
-        ipst = f"ipppssoo{i}"
-        assert f"{m}-{ipst}" in mess
-    return ipppssoots, message_types
 
 
 def assert_all_artifacts(comm, ipppssoots):
@@ -92,7 +41,7 @@ def test_clean_all_empty(s3_client):
     """tests clean-all on an otherwise empty messages directory"""
     # ensure we have an empty messages directory
     comm = io.get_io_bundle()
-    assert_empty_messages(comm)
+    common.assert_empty_messages(comm)
 
     # place a clean-all message
     comm.messages.put("clean-all")
@@ -100,13 +49,13 @@ def test_clean_all_empty(s3_client):
     assert "clean-all" in mess
 
     # check behavior of clean-all on empty messages prefix
-    all_event = conftest.load_event("clean-event-all.yaml")
+    all_event = conftest.get_message_event("clean-all")
     with pytest.raises(AssertionError):
         # broadcast assert a non-empty list
         clean_handler.lambda_handler(all_event, {})
     mess = comm.messages.listl()
     # no more messages
-    assert_empty_messages(comm)
+    common.assert_empty_messages(comm)
 
 
 def test_clean_all_ipsts(s3_client):
@@ -116,13 +65,13 @@ def test_clean_all_ipsts(s3_client):
 
     # ensure we have an empty messages directory
     comm = io.get_io_bundle()
-    ipppssoots, _ = setup_diverse_messages(comm)
+    ipppssoots, _ = common.setup_diverse_messages(comm)
 
     # insert the clean-all
     comm.messages.put("clean-all")
 
     # run the lambda
-    all_event = conftest.load_event("clean-event-all.yaml")
+    all_event = conftest.get_message_event("clean-all")
     clean_handler.lambda_handler(all_event, {})
 
     # make sure clean cleaned up after itself
@@ -140,7 +89,7 @@ def test_clean_ingested_empty(s3_client):
     """tests clean-ingested with an otherwise empty messages directory"""
     # ensure we have an empty messages directory
     comm = io.get_io_bundle()
-    assert_empty_messages(comm)
+    common.assert_empty_messages(comm)
 
     # place a clean-ingested message
     comm.messages.put("clean-ingested")
@@ -148,20 +97,20 @@ def test_clean_ingested_empty(s3_client):
     assert "clean-ingested" in mess
 
     # check behavior of clean-all on empty messages prefix
-    all_event = conftest.load_event("clean-event-ingested.yaml")
+    all_event = conftest.get_message_event("clean-ingested")
     with pytest.raises(AssertionError):
         # broadcast assert a non-empty list
         clean_handler.lambda_handler(all_event, {})
     mess = comm.messages.listl()
     # no more messages
-    assert_empty_messages(comm)
+    common.assert_empty_messages(comm)
 
 
 def test_clean_ingested_ipsts(s3_client):
     """similar to test_clean_all_ipsts but only the ingested ipppssoot should get into the broadcast payload"""
 
     comm = io.get_io_bundle()
-    ipppssoots, message_types = setup_ingest_messages(comm)
+    ipppssoots, message_types = common.setup_ingest_messages(comm)
 
     # count the ingested for validation later
     ingested_ctr = sum("ingested" in mt for mt in message_types)
@@ -170,7 +119,7 @@ def test_clean_ingested_ipsts(s3_client):
     comm.messages.put("clean-ingested")
 
     # run the lambda
-    all_event = conftest.load_event("clean-event-ingested.yaml")
+    all_event = conftest.get_message_event("clean-ingested")
     clean_handler.lambda_handler(all_event, {})
 
     # there should now be a broadcast message with the clean messages as it's payload
@@ -217,12 +166,11 @@ def test_clean_single_ipst(s3_client):
 
     # make sure the setup was all successful
     assert_all_artifacts(comm, ipppssoots)
-    ipst_event = conftest.load_event("generic-message-event.yaml")
     # this list will be used in assert_all_artifacts
     assertion_ipppssoots = copy.copy(ipppssoots)
     # run the lambda on each ipppssoot, verifying the state of the bucket after each call
     for ipst in ipppssoots:
-        ipst_event = conftest.modify_generic_message(ipst_event, f"clean-{ipst}")
+        ipst_event = conftest.get_message_event(f"clean-{ipst}")
         clean_handler.lambda_handler(ipst_event, {})
         assertion_ipppssoots.remove(ipst)
         assert_all_artifacts(comm, assertion_ipppssoots)
