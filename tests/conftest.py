@@ -108,7 +108,6 @@ def setup_batch(iam_client, batch_client, busybox_sleep_timer=1):
         AssumeRolePolicyDocument="string",
     )
     iam_arn = iams.get("Role").get("Arn")
-    print("iamRoleArn: " + iam_arn)
 
     q_arns, jobdef_arns = [], []
 
@@ -243,4 +242,4 @@ def setup_dynamodb(ddb_client, name=os.environ["DDBTABLE"]):
         TableName=name,
     )
 
-    print(response)
+    return response
