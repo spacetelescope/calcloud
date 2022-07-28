@@ -86,7 +86,6 @@ def assert_rescue_payload(comm, payload_check={}):
     for m in messages:
         if m.startswith("rescue-"):
             payload = comm.messages.get(m)
-            # print(m,payload)
             # only enter if not an empty dict
             if payload_check:
                 for k in payload_check.keys():

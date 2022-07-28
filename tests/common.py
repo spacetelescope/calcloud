@@ -26,14 +26,12 @@ def setup_diverse_messages(comm, overrides={}):
     message_types.remove("broadcast")
     message_types.remove("clean")
 
-    print(overrides)
     # insert the messages
     ipppssoots = []
     for i, m in enumerate(message_types):
         ipst = f"ipppss{str(i).zfill(2)}t"
         ipppssoots.append(ipst)
         comm.messages.put(f"{m}-{ipst}", payload=overrides)
-        print(m, ipst, comm.messages.get(f"{m}-{ipst}"))
 
     # read them back and assert they're there
     mess = comm.messages.listl()
