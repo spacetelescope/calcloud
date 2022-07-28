@@ -180,8 +180,6 @@ def test_rescue_all_no_override(s3_client):
     the rescue messages for the messages in rescue_handler.RESCUE_TYPES.
     And as usual, should delete the rescue-all message"""
 
-    import rescue_handler
-
     comm = io.get_io_bundle()
 
     # sets up a list of messages of nearly all types, with a few extra error- messages
@@ -201,8 +199,6 @@ def test_rescue_all_w_override(s3_client):
     """with actual messages, rescue-all should post a broadcast message containing
     the rescue messages for the messages in rescue_handler.RESCUE_TYPES.
     And as usual, should delete the rescue-all message"""
-
-    import rescue_handler
 
     comm = io.get_io_bundle()
 
@@ -233,7 +229,6 @@ def test_rescue_all_w_override(s3_client):
 
 def test_rescue_ipst_timeout(s3_client, batch_client, iam_client):
     """does not post the inputs and memory features files, so the job submit should timeout"""
-    import rescue_handler
 
     # grab the usual io bundle
     comm = io.get_io_bundle()
@@ -250,7 +245,6 @@ def test_rescue_ipst_timeout(s3_client, batch_client, iam_client):
 
 def test_rescue_ipst_no_override(s3_client, batch_client, iam_client, lambda_client, dynamodb_client):
     """run the actual job submits without any overrides in place"""
-    import rescue_handler
 
     comm = io.get_io_bundle()
 
@@ -286,7 +280,6 @@ def test_rescue_ipst_no_override(s3_client, batch_client, iam_client, lambda_cli
 
 def test_rescue_ipst_w_override(s3_client, batch_client, iam_client, lambda_client, dynamodb_client):
     """does not post the inputs and memory features files, so the job submit should timeout"""
-    import rescue_handler
 
     comm = io.get_io_bundle()
 
