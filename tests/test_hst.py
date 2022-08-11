@@ -6,6 +6,9 @@ INSTRUMENTS = hst.INSTRUMENTS
 
 
 def test_get_instrument_output_path():
+    """For each instrument listed in hst.IPPPSSOOT_INSTR,
+    check to make sure that the correct instrument is returned by hst.get_instrument(),
+    and that hst.get_output.path() returns the expected output paths."""
     bucket = conftest.BUCKET
     output_uri = f"s3://{bucket}"
 
