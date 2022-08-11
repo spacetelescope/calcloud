@@ -2,7 +2,7 @@ from calcloud import hst
 from . import conftest
 
 IPPPSSOOT_INSTR = hst.IPPPSSOOT_INSTR
-INSTRUMENTS = set(IPPPSSOOT_INSTR.values())
+INSTRUMENTS = hst.INSTRUMENTS
 
 
 def test_get_instrument_output_path():
