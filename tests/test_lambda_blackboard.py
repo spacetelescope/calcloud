@@ -8,51 +8,13 @@ import scrape_batch
 
 def test_blackboard(batch_client, s3_client, iam_client):
 
-    # we'll need a mock iam role to pass to the mock batch client
-    iams = iam_client.create_role(
-        RoleName="test_batch_client",
-        AssumeRolePolicyDocument="string",
-    )
-    iam_arn = iams.get("Role").get("Arn")
-    print("iamRoleArn: " + iam_arn)
+    q_arns, jobdef_arns = conftest.setup_batch(iam_client, batch_client)
 
-    # mocks for each job ladder step
-    for i, ce in enumerate(conftest.CENVIRONMENTS):
-        created_cenv = batch_client.create_compute_environment(
-            computeEnvironmentName=ce, type="UNMANAGED", serviceRole=iam_arn
-        )
-
-        compute_environment_arn = created_cenv.get("computeEnvironmentArn")
-        print("computeEnvironmentArn: " + compute_environment_arn)
-
-        created_queue = batch_client.create_job_queue(
-            jobQueueName=conftest.JOBQUEUES[i],
-            state="ENABLED",
-            priority=1,
-            computeEnvironmentOrder=[
-                {"order": 1, "computeEnvironment": compute_environment_arn},
-            ],
-        )
-        job_q_arn = created_queue.get("jobQueueArn")
-        print("jobQueueArn: " + job_q_arn)
-
-        created_jobdef = batch_client.register_job_definition(
-            jobDefinitionName=conftest.JOBDEFINITIONS[i],
-            type="container",
-            containerProperties={
-                "image": "busybox",
-                "vcpus": 1,
-                "memory": 128,
-                "command": ["sleep", "1"],
-            },
-        )
-        job_definition_arn = created_jobdef.get("jobDefinitionArn")
-        print("jobDefinitionArn: " + job_definition_arn)
-
+    for i, (job_q_arn, job_definition_arn) in enumerate(zip(q_arns, jobdef_arns)):
         # Add job
         batch_client.submit_job(jobName=f"ipst_{i}", jobQueue=job_q_arn, jobDefinition=job_definition_arn)
 
-    time.sleep(15)
+    time.sleep(5)
     scrape_batch.lambda_handler({}, {})
 
     # check the file
