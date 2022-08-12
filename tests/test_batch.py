@@ -1,7 +1,5 @@
 import time
 
-import pytest
-
 from . import conftest
 
 from calcloud import batch
@@ -77,6 +75,6 @@ def test_batch_mock(batch_client, s3_client, iam_client):
     # check that batch.terminate_job actualy terminates the job, run this last
     cancel_jobId = submitted_jobs["jobIds"][0]
     batch.terminate_job(cancel_jobId, "Operator cancelled")
-    time.sleep(5)  # wait a while for job to stop
+    time.sleep(10)  # wait a while for job to stop
     description = batch.describe_job(cancel_jobId)
     assert description["status"] == "FAILED"
