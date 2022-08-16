@@ -111,7 +111,7 @@ cd ~/tmp
 curl -s -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
 bash ~/.nvm/nvm.sh
 source ~/.bashrc
-nvm install node
+nvm install 16
 npm config set registry http://registry.npmjs.org/
 npm config set cafile /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
 npm install -g awsudo@1.5.0
