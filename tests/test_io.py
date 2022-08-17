@@ -88,10 +88,10 @@ def test_io_mock_messageio(s3_client):
     reset_prefix = prefixes[0]
     messageio.reset(
         reset_ipst
-    )  # input message ids, usually ipppssoots, or other message tails (e.g. in the case of broascast- messages)
+    )  # input message ids, usually ipppssoots, or other message tails. Must be a string here, not list, as input to trigger line 575
 
     with pytest.raises(ClientError):
-        result = messageio.get(reset_prefix)  # need a string, not list, as input to trigger line 575
+        result = messageio.get(reset_prefix)
 
 
 def test_io_mock_validate_control():
