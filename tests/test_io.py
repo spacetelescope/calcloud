@@ -221,17 +221,20 @@ def test_io_mock_iobundle(s3_client):
     # send a 'placed' message for each ipppssoot
     comm.send(msg_types[1], ipppssoots=ipsts)
 
-    # send a 'cancel' message for 'all' ipppssoot
-    comm.send(msg_types[9])
+    # send a 'processing' message for 'all' ipppssoot
+    comm.inputs.put(
+        input_msg
+    )  # have to send all ipppssoot to inputs/ first, because send() uses self.inputs.ids() to determine the existing ipppssoots
+    comm.send(msg_types[3])
 
     # test the send() result
     sent_messages = list()
-    sent_msg = [msg_types[1], msg_types[9]]
+    sent_msg = [msg_types[1], msg_types[3]]
     sent_ipsts = ipsts
     for i in range(len(sent_msg)):
         for j in range(len(sent_ipsts)):
             sent_messages.append(f"{sent_msg[i]}-{sent_ipsts[j]}")
 
     result = comm.messages.listl()
-    for i in range(len(result)):
-        assert result[i] in sent_messages
+    for i in range(len(sent_messages)):
+        assert sent_messages[i] in result
