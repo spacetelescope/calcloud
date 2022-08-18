@@ -37,8 +37,8 @@ jobs:
             --cov=lambda/refreshCacheSubmit \
             --cov=lambda/s3_trigger \
             --cov-fail-under 30 \
+            --deselect tests/test_model_ingest.py \
             -rP
-            --deselect tests/test_model_ingest.py
 
   pytest:
     name: pytest
