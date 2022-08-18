@@ -1,7 +1,5 @@
 from . import conftest
-from pprint import pprint
 import os
-import time
 
 # Parameters to create the MemModelFeatures.txt, process_metrics.txt, and preview_metrics.txt files
 metrics_text = {
