@@ -100,21 +100,13 @@ def get_mem_model_file_text(params=mem_model_default_param):
     return file_text
 
 
-def model_ingest_put_job_data(dynamodb_resource, ddb_payload, table_name):
-    """Gets (or creates) DynamoDB table and puts JSON-formatted job data into the database."""
-    # creating this to replace model_ingest.put_job_data to use the mock dynamodb_resource
-    table = dynamodb_resource.Table(table_name)
-    response = table.put_item(Item=ddb_payload)
-    return response
-
-
 def test_model_ingest_mock(s3_client, dynamodb_resource, dynamodb_client):
     from calcloud import io
     from calcloud import model_ingest
 
     bucket = conftest.BUCKET
-    conftest.setup_dynamodb(dynamodb_client)
     table_name = os.environ.get("DDBTABLE")
+    conftest.setup_dynamodb(dynamodb_client)
 
     comm = io.get_io_bundle(bucket=bucket, client=s3_client)
 
@@ -149,16 +141,4 @@ def test_model_ingest_mock(s3_client, dynamodb_resource, dynamodb_client):
     preview_metrics_file_msg = {preview_metrics_file_name: preview_metrics_file_text}
     comm.outputs.put(preview_metrics_file_msg)
 
-    # copied from model_ingest.ddb_ingest, but uses model_ingest_put_job_data defined above
-    start_time = time.time()
-    model_ingest.print_timestamp(start_time, "all", 0)
-    scraper = model_ingest.Scraper(ipst, bucket)
-    job_data = scraper.scrape_job_data()
-    ddb_payload = model_ingest.create_payload(job_data, start_time)
-    job_resp = model_ingest_put_job_data(dynamodb_resource, ddb_payload, table_name)
-    print("Put job data succeeded:")
-    pprint(job_resp, indent=2)
-    end_time = time.time()
-    model_ingest.print_timestamp(end_time, "SCRAPE and INGEST", 1)
-    duration = model_ingest.proc_time(start_time, end_time)
-    print(f"Data ingest took {duration}\n")
+    model_ingest.ddb_ingest(ipst, bucket, table_name)
