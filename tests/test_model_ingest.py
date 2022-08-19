@@ -76,6 +76,7 @@ mem_model_default_param = {
 
 
 def get_metrics_file_text(params=metrics_default_param):
+    assert sorted(metrics_text.keys()) == sorted(params.keys())
     keys = metrics_text.keys()
     lines = list()
     for key in keys:
@@ -90,6 +91,7 @@ def get_metrics_file_text(params=metrics_default_param):
 
 
 def get_mem_model_file_text(params=mem_model_default_param):
+    assert sorted(mem_model_text.keys()) == sorted(params.keys())
     keys = mem_model_text.keys()
     lines = list()
     for key in keys:
@@ -99,6 +101,7 @@ def get_mem_model_file_text(params=mem_model_default_param):
 
 
 def test_model_ingest_mock(s3_client, dynamodb_resource, dynamodb_client):
+    """Test calcloud/model_ingest.py"""
     from calcloud import io
     from calcloud import model_ingest
 
@@ -109,7 +112,7 @@ def test_model_ingest_mock(s3_client, dynamodb_resource, dynamodb_client):
     comm = io.get_io_bundle(bucket=bucket, client=s3_client)
 
     ipst = "ipppssoo0"
-    n_files = 2
+    n_files = 5
     wallclock_times = ["1:32.79", "0:30.26"]
     memory = ["423876", "236576"]
 
@@ -139,4 +142,12 @@ def test_model_ingest_mock(s3_client, dynamodb_resource, dynamodb_client):
     preview_metrics_file_msg = {preview_metrics_file_name: preview_metrics_file_text}
     comm.outputs.put(preview_metrics_file_msg)
 
+    # call model ingest to scrape the info it needs from these files and put them in dynamodb
     model_ingest.ddb_ingest(ipst, bucket, table_name)
+
+    table = dynamodb_resource.Table(table_name)
+    response = table.get_item(Key={"ipst": ipst})["Item"]
+    assert response["n_files"] == n_files
+    assert float(response["memory"]) == (float(memory[0]) + float(memory[1])) / 1.0e6
+
+    """Still missing lines 24, 26, 37, 77-79, 81-83, 109, 112, 117, 124, 127, 131, 138, 141, 143, 145, 187-189, 202-205, 207-208, 210-211, 239-246"""

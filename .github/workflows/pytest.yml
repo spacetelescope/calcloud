@@ -37,7 +37,7 @@ jobs:
             --cov=lambda/refreshCacheSubmit \
             --cov=lambda/s3_trigger \
             --cov-fail-under 30 \
-            --deselect tests/test_model_ingest.py \
+            -k 'not test_model' \
             -rP
 
   pytest:
@@ -57,10 +57,10 @@ jobs:
         run: pip install .[dev]
 
       - name: run pytest
-        run: pytest -rP --deselect tests/test_model_ingest.py
+        run: pytest -rP -k 'not test_model'
   
-  pytestmi:
-    name: pytest model ingest
+  pytestm:
+    name: pytest model
     runs-on: ubuntu-18.04
 
     steps:
@@ -75,7 +75,7 @@ jobs:
       - name: install requirements
         run: | 
           pip install .[dev]
-          pip install numpy
+          pip install numpy sklearn tensorflow
 
       - name: run pytest
-        run: pytest -rP -k 'test_model_ingest'
+        run: pytest -rP -k 'test_model'
