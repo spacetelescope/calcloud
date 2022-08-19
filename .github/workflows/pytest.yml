@@ -37,7 +37,7 @@ jobs:
             --cov=lambda/refreshCacheSubmit \
             --cov=lambda/s3_trigger \
             --cov-fail-under 30 \
-            --deselect tests/test_lambda_job_predict.py
+            --deselect tests/test_lambda_job_predict.py \
             -k 'not test_model' \
             -rP
 
