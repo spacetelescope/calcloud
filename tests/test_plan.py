@@ -1,5 +1,4 @@
 from calcloud import hst
-from . import test_model_ingest
 from . import conftest
 
 IPPPSSOOT_INSTR = hst.IPPPSSOOT_INSTR
@@ -10,7 +9,6 @@ def test_plan_mock(s3_client, lambda_client, iam_client, dynamodb_client):
     from calcloud import io
 
     bucket = conftest.BUCKET
-    comm = io.get_io_bundle(bucket=bucket, client=s3_client)
     conftest.create_mock_lambda(lambda_client, iam_client)  # create a mock job_predict lambda
     conftest.setup_dynamodb(dynamodb_client)
 

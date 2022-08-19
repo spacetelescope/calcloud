@@ -1,7 +1,6 @@
 import sys
 from . import test_model_ingest
 from . import conftest
-import numpy as np
 
 sys.path.append("lambda/")  # add the lambda directory to path
 
@@ -15,6 +14,7 @@ def mock_job_predict_lambda_handler(event, context):
     # modified to use a recognizable path for the memory models (lambda/JobPredict/models/ instead of ./models/)
 
     from JobPredict import predict_handler
+    import numpy as np
 
     bucket_name = event["Bucket"]
     # load models
