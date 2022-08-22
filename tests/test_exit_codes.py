@@ -1,6 +1,5 @@
 def test_exit_codes_mock():
-    """Doctest for io.py
-    Doctest does not cover lines 138, 187, 257, 402, 574-576, 726-742, 749, 771-781, 791-799, 805-810, 814-819, 826-829, 847, 854-856, 860-861"""
+    """Doctest for exit_codes.py"""
     import doctest
     from calcloud import exit_codes
 
