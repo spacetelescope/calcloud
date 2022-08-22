@@ -68,3 +68,6 @@ def test_model_lambda_job_predict(s3_client, dynamodb_client):
     # use mock_job_predict_lambda_handler defined above instead
     predictions = mock_job_predict_lambda_handler(event, {})
     assert predictions["memBin"] == 0
+
+    '''Still missing lines 82, 85, 90, 97, 100, 104, 111, 114, 116, 118
+    Lines 165-190 are the lambda handler copied and modified in mock_job_predict_lambda_handler above'''
