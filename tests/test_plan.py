@@ -25,4 +25,4 @@ def test_plan_mock(s3_client, lambda_client, iam_client, dynamodb_client):
     assert job_plan[1] == IPPPSSOOT_INSTR[ipst[0].upper()]
     assert job_plan[6] == 0
 
-    ''' Still missing lines 88-91, 167-176, 185-188, 195-196 '''
+    """ Still missing lines 88-91, 167-176, 185-188, 195-196 """

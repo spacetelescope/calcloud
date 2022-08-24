@@ -1,5 +1,6 @@
 from . import conftest
 import os
+import pytest
 
 # Parameters to create the MemModelFeatures.txt, process_metrics.txt, and preview_metrics.txt files
 metrics_text = {
@@ -100,6 +101,30 @@ def get_mem_model_file_text(params=mem_model_default_param):
     return file_text
 
 
+def put_preview_metrics_file(ipst, comm, fileparams=metrics_default_param.copy()):
+    # create and put the preview metrics file
+    preview_metrics_file_text = get_metrics_file_text(params=fileparams)
+    preview_metrics_file_name = f"{ipst}/preview_metrics.txt"
+    preview_metrics_file_msg = {preview_metrics_file_name: preview_metrics_file_text}
+    comm.outputs.put(preview_metrics_file_msg)
+
+
+def put_process_metrics_file(ipst, comm, fileparams=metrics_default_param.copy()):
+    # create and put the process metrics file
+    process_metrics_file_text = get_metrics_file_text(params=fileparams)
+    process_metrics_file_name = f"{ipst}/process_metrics.txt"
+    process_metrics_file_msg = {process_metrics_file_name: process_metrics_file_text}
+    comm.outputs.put(process_metrics_file_msg)
+
+
+def put_mem_model_file(ipst, comm, fileparams=mem_model_default_param.copy()):
+    # create and put the memory model file
+    mem_model_file_text = get_mem_model_file_text(params=fileparams)
+    mem_model_file_name = f"{ipst}/{ipst}_MemModelFeatures.txt"
+    mem_model_file_msg = {mem_model_file_name: mem_model_file_text}
+    comm.control.put(mem_model_file_msg)
+
+
 def test_model_ingest_mock(s3_client, dynamodb_resource, dynamodb_client):
     """Test calcloud/model_ingest.py"""
     from calcloud import io
@@ -145,9 +170,139 @@ def test_model_ingest_mock(s3_client, dynamodb_resource, dynamodb_client):
     # call model ingest to scrape the info it needs from these files and put them in dynamodb
     model_ingest.ddb_ingest(ipst, bucket, table_name)
 
+    # get the entry from dynamodb and check that the number of files and total memory is the same as the input
     table = dynamodb_resource.Table(table_name)
     response = table.get_item(Key={"ipst": ipst})["Item"]
     assert response["n_files"] == n_files
     assert float(response["memory"]) == (float(memory[0]) + float(memory[1])) / 1.0e6
 
-    """Still missing lines 24, 26, 37, 77-79, 81-83, 109, 112, 117, 124, 127, 131, 138, 141, 143, 145, 187-189, 202-205, 207-208, 210-211, 239-246"""
+
+def test_model_ingest_no_mem_features(s3_resource):
+    from calcloud import model_ingest
+
+    bucket = conftest.BUCKET
+    s3_resource.create_bucket(Bucket=bucket)
+    ipst = "ipppssoo0"
+
+    feature_scraper = model_ingest.Features(ipst, s3_resource.Bucket(bucket))
+
+    with pytest.raises(SystemExit):
+        # attempt to memory model file from an empty s3 bucket
+        # since the memory model file does not exist, it should result in an exception and cause the system to exit
+        feature_scraper.download_inputs()
+
+
+def test_model_ingest_target_data_errors(s3_client, s3_resource):
+    from calcloud import model_ingest
+    from calcloud import io
+
+    bucket = conftest.BUCKET
+    s3_resource.create_bucket(Bucket=bucket)
+    comm = io.get_io_bundle(bucket=bucket, client=s3_client)
+    ipst = "ipppssoo0"
+
+    target_scraper = model_ingest.Targets(ipst, s3_resource.Bucket(bucket))
+
+    with pytest.raises(SystemExit):
+        # attempt to retrieve metric files from an empty s3 bucket
+        # since the metric files do not exist, it should result in an exception and cause the system to exit
+        target_scraper.get_target_data()
+
+    # put metrics files with a non-zero exit status
+    preview_fileparams = metrics_default_param.copy()
+    process_fileparams = metrics_default_param.copy()
+    process_fileparams["exit_status"] = "1"
+    put_preview_metrics_file(ipst, comm, fileparams=preview_fileparams)
+    put_process_metrics_file(ipst, comm, fileparams=process_fileparams)
+
+    with pytest.raises(SystemExit):
+        # since the process metrics file has non-zero exit status, it should result in an exception and cause the system to exit
+        target_data = target_scraper.get_target_data()
+
+
+def test_model_ingest_memory_bins(s3_resource):
+
+    from calcloud import model_ingest
+
+    bucket = conftest.BUCKET
+    s3_resource.create_bucket(Bucket=bucket)
+    ipst = "ipppssoo0"
+
+    target_scraper = model_ingest.Targets(ipst, s3_resource.Bucket(bucket))
+
+    memory_bins = {"memory": [1, 5, 10, 20], "expected_mem_bin": [0, 1, 2, 3]}
+
+    for i in range(len(memory_bins["memory"])):
+        mem_bin = target_scraper.calculate_bin(memory_bins["memory"][i])
+        assert mem_bin == memory_bins["expected_mem_bin"][i]
+
+
+def test_model_ingest_feature_dict(s3_client, s3_resource):
+    from calcloud import model_ingest
+    from calcloud import io
+
+    bucket = conftest.BUCKET
+    s3_resource.create_bucket(Bucket=bucket)
+    comm = io.get_io_bundle(bucket=bucket, client=s3_client)
+
+    ipst_1 = "ipppssoo0"
+    ipst_2 = "jpppssoo1"
+
+    mem_model_param_1 = {
+        "n_files": "1",
+        "total_mb": "10.0",
+        "detector": "UVIS",
+        "subarray": "False",
+        "drizcorr": "OMIT",
+        "pctecorr": "OMIT",
+        "crsplit": "1",
+    }
+
+    mem_model_param_2 = {
+        "n_files": "5",
+        "total_mb": "50.0",
+        "detector": "CCD",
+        "subarray": "True",
+        "drizcorr": "PERFORM",
+        "pctecorr": "PERFORM",
+        "crsplit": "2",
+    }
+
+    mem_model_expected_dict_1 = {
+        "n_files": 1,
+        "total_mb": 10,
+        "detector": 1,
+        "subarray": 0,
+        "drizcorr": 0,
+        "pctecorr": 0,
+        "crsplit": 1,
+        "dtype": 1,
+        "instr": 3,
+    }
+
+    mem_model_expected_dict_2 = {
+        "n_files": 5,
+        "total_mb": 50,
+        "detector": 0,
+        "subarray": 1,
+        "drizcorr": 1,
+        "pctecorr": 1,
+        "crsplit": 2,
+        "dtype": 0,
+        "instr": 0,
+    }
+
+    put_mem_model_file(ipst_1, comm, fileparams=mem_model_param_1)
+    put_mem_model_file(ipst_2, comm, fileparams=mem_model_param_2)
+
+    feature_scraper_1 = model_ingest.Features(ipst_1, s3_resource.Bucket(bucket))
+    feature_scraper_2 = model_ingest.Features(ipst_2, s3_resource.Bucket(bucket))
+
+    mem_feature_dict_1 = feature_scraper_1.scrape_features()
+    mem_feature_dict_2 = feature_scraper_2.scrape_features()
+
+    dict_keys = list(mem_model_expected_dict_1.keys())
+
+    for i in range(len(dict_keys)):
+        assert mem_feature_dict_1[dict_keys[i]] == mem_model_expected_dict_1[dict_keys[i]]
+        assert mem_feature_dict_2[dict_keys[i]] == mem_model_expected_dict_2[dict_keys[i]]
