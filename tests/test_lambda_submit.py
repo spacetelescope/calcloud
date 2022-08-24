@@ -3,7 +3,6 @@ from . import conftest
 
 def test_lambda_submit_mock(s3_client, lambda_client, iam_client, dynamodb_client, batch_client):
     from calcloud import io
-    from calcloud import lambda_submit
 
     # set up mock environment
     bucket = conftest.BUCKET

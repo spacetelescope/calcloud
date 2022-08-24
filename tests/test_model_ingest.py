@@ -217,7 +217,7 @@ def test_model_ingest_target_data_errors(s3_client, s3_resource):
 
     with pytest.raises(SystemExit):
         # since the process metrics file has non-zero exit status, it should result in an exception and cause the system to exit
-        target_data = target_scraper.get_target_data()
+        target_scraper.get_target_data()
 
 
 def test_model_ingest_memory_bins(s3_resource):
