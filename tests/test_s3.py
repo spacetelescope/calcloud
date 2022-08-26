@@ -57,8 +57,7 @@ def test_s3_upload_download(s3_client):
         os.remove(filepath)
     os.rmdir(local_upload_path)
 
-    # download one of the tmpfiles from s3, name it tmp_download_file.txt
-    tmp_download_file = "tmp_download_file.txt"
+    # download one of the tmpfiles from s3
     file_num = 0  # which file to download
     download_filepath = os.path.join(local_download_path, tmpfiles[file_num])
     s3_filepath = os.path.join(s3_test_path, tmpfiles[file_num])

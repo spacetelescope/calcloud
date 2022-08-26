@@ -7,6 +7,8 @@ instr_keys = list(IPPPSSOOT_INSTR.keys())
 
 
 def test_submit_plans(s3_client, lambda_client, iam_client, dynamodb_client, batch_client):
+    """Test plan.submit_plans() from plan.py.
+    Creates a test plan file and submits the jobs in the file"""
     from calcloud import submit
     from calcloud import plan
     from calcloud import io
@@ -19,7 +21,8 @@ def test_submit_plans(s3_client, lambda_client, iam_client, dynamodb_client, bat
 
     # a test plan file
     test_plan_file = "test_plan_file"
-    planfilepath = os.path.join("./", test_plan_file)
+    current_directory = os.getcwd()
+    planfilepath = os.path.join(current_directory, test_plan_file)
 
     n_plans = 5  # number of lines in plan file, pick a number between 1 and 10
     ipsts = [f"{instr_keys[i].lower()}pppssoo{str(i)}" for i in range(n_plans)]

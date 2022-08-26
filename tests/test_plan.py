@@ -38,7 +38,6 @@ def test_plan_mock(s3_client, lambda_client, iam_client, dynamodb_client):
 def test_plan_query_ddb(s3_client, dynamodb_resource, dynamodb_client):
     from calcloud import plan
 
-    bucket = conftest.BUCKET
     table_name = os.environ.get("DDBTABLE")
     conftest.setup_dynamodb(dynamodb_client)
 
