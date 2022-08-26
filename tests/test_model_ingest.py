@@ -144,28 +144,19 @@ def test_model_ingest_mock(s3_client, dynamodb_resource, dynamodb_client):
     # create and put the memory model file
     mem_model_params = mem_model_default_param.copy()
     mem_model_params["n_files"] = n_files
-    mem_model_file_text = get_mem_model_file_text(params=mem_model_params)
-    mem_model_file_name = f"{ipst}/{ipst}_MemModelFeatures.txt"
-    mem_model_file_msg = {mem_model_file_name: mem_model_file_text}
-    comm.control.put(mem_model_file_msg)
+    put_mem_model_file(ipst, comm, fileparams=mem_model_params)
 
     # create and put the process metrics file
     process_metrics_params = metrics_default_param.copy()
     process_metrics_params["elapsed_time"] = wallclock_times[0]
     process_metrics_params["max_resident_set_size"] = memory[0]
-    process_metrics_file_text = get_metrics_file_text(params=process_metrics_params)
-    process_metrics_file_name = f"{ipst}/process_metrics.txt"
-    process_metrics_file_msg = {process_metrics_file_name: process_metrics_file_text}
-    comm.outputs.put(process_metrics_file_msg)
+    put_process_metrics_file(ipst, comm, fileparams=process_metrics_params)
 
     # create and put the preview metrics file
     preview_metrics_params = metrics_default_param.copy()
     preview_metrics_params["elapsed_time"] = wallclock_times[1]
     preview_metrics_params["max_resident_set_size"] = memory[1]
-    preview_metrics_file_text = get_metrics_file_text(params=preview_metrics_params)
-    preview_metrics_file_name = f"{ipst}/preview_metrics.txt"
-    preview_metrics_file_msg = {preview_metrics_file_name: preview_metrics_file_text}
-    comm.outputs.put(preview_metrics_file_msg)
+    put_preview_metrics_file(ipst, comm, fileparams=preview_metrics_params)
 
     # call model ingest to scrape the info it needs from these files and put them in dynamodb
     model_ingest.ddb_ingest(ipst, bucket, table_name)
