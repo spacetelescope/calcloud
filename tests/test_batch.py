@@ -8,9 +8,7 @@ jobStatuses = batch.JOB_STATUSES
 
 
 def test_batch_mock(batch_client, s3_client, iam_client):
-    """Tests the functions in calcloud/batch.py
-    Still missing lines 89, 130-137, 154-186, 190 as of 08/12/22
-    To do: consider breaking this into smaller functions??"""
+    """Tests the functions in calcloud/batch.py"""
 
     # setup batch and submit a job to each queue
     q_arns, jobdef_arns = conftest.setup_batch(iam_client, batch_client, busybox_sleep_timer=30)
