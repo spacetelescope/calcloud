@@ -16,6 +16,7 @@ put_preview_metrics_file = test_model_ingest.put_preview_metrics_file
 
 
 def test_model_lambda_scrape(s3_client, dynamodb_client, dynamodb_resource):
+    """Test the lambda handler for ModelIngest"""
 
     from calcloud import io
     from ModelIngest import lambda_scrape

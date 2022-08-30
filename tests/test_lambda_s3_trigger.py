@@ -7,7 +7,6 @@ def test_lambda_s3_trigger(s3_client, lambda_client, iam_client, dynamodb_client
     from s3_trigger import s3_trigger_handler
 
     # set up mock environment
-    bucket = conftest.BUCKET
     conftest.create_mock_lambda(lambda_client, iam_client)
     conftest.setup_dynamodb(dynamodb_client)
     conftest.setup_batch(iam_client, batch_client, busybox_sleep_timer=5)

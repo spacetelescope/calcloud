@@ -4,8 +4,7 @@ from botocore.exceptions import ClientError
 
 
 def test_io_mock(s3_client):
-    """Doctest for io.py
-    Doctest does not cover lines 138, 187, 257, 402, 574-576, 726-742, 749, 771-781, 791-799, 805-810, 814-819, 826-829, 847, 854-856, 860-861"""
+    """Doctest for io.py"""
     import doctest
     from calcloud import io
 
@@ -70,12 +69,12 @@ def test_io_mock_messageio(s3_client):
     payloads = ["test_payload1", "test_payload2", "test_payload3"]
     msg = dict(zip(prefixes, payloads))
 
-    # test line 402
+    # test bad prefix exception
     bad_prefix = "put-ipppssoot"
     with pytest.raises(ValueError):
         result = messageio.path(bad_prefix)
 
-    # test lines 574-576
+    # test MessageIo.reset()
     messageio.put(msg)
     result = messageio.get(prefixes)
     assert len(result) == len(msg)
@@ -93,7 +92,7 @@ def test_io_mock_messageio(s3_client):
 def test_io_mock_validate_control():
     from calcloud import io
 
-    # test lines 736-741
+    # test validate_control() exceptions
     CONTROL_KEYWORDS = io.CONTROL_KEYWORDS
     print(sorted(list(CONTROL_KEYWORDS)))
 
@@ -155,9 +154,8 @@ def test_io_mock_reject_cross_env():
 def test_io_mock_iobundle(s3_client):
     from calcloud import io
 
+    # test IoBundle
     bucket = conftest.BUCKET
-
-    # test lines 755 - 829
     comm = io.get_io_bundle(bucket=bucket, client=s3_client)
 
     # test inputs, three ipppssoots for each Io object in the bundle

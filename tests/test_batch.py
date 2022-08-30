@@ -25,7 +25,7 @@ def test_batch_mock(batch_client, s3_client, iam_client):
         ipppssoots.append(ipst)
         queues.append(queue)
 
-    # create a dict of submitted jobs to make variable names easier to interpret
+    # create a dict of submitted jobs
     submitted_jobs = {"jobNames": ipppssoots, "jobIds": jobIds, "queues": queues}
 
     # check that the queues from batch.get_queues is the same as those set up by conftest.setup_batch

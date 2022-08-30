@@ -46,6 +46,7 @@ def mock_job_predict_lambda_handler(event, context):
 
 
 def test_model_lambda_job_predict(s3_client, dynamodb_client):
+    """Test the lambda handler for JobPredict"""
     from calcloud import io
 
     bucket = conftest.BUCKET
