@@ -17,7 +17,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: install requirements
-        run: pip install .[dev]
+        run: | 
+          pip install .[dev]
+          pip install numpy sklearn tensorflow --upgrade-strategy only-if-needed
 
       - name: run pytest code coverage check
         run: | 
@@ -37,9 +39,6 @@ jobs:
             --cov=lambda/refreshCacheSubmit \
             --cov=lambda/s3_trigger \
             --cov-fail-under 30 \
-            --deselect tests/test_lambda_job_predict.py \
-            -k 'not test_model' \
-            -rP
 
   pytest:
     name: pytest
@@ -55,28 +54,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: install requirements
-        run: pip install .[dev]
-
-      - name: run pytest
-        run: pytest -rP -k 'not test_model' --deselect tests/test_lambda_job_predict.py
-  
-  pytestm:
-    name: pytest model
-    runs-on: ubuntu-18.04
-
-    steps:
-      - name: set up python 3.7.12
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7.12
-
-      - name: checkout code
-        uses: actions/checkout@v2
-
-      - name: install requirements
         run: | 
           pip install .[dev]
-          pip install numpy sklearn tensorflow
+          pip install numpy sklearn tensorflow --upgrade-strategy only-if-needed
 
       - name: run pytest
-        run: pytest -rP -k 'test_model'
+        run: pytest -rP
