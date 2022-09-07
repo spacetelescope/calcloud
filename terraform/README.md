@@ -1,3 +1,5 @@
+NOTE: This README is quite out of date with the current terraform scripts.
+
 This set of terraform scripts will stand up an AWS Batch processing environment to process *HST* data using a docker image.
 
 ### Prerequisites
