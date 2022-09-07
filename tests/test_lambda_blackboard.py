@@ -10,9 +10,13 @@ def test_blackboard(batch_client, s3_client, iam_client):
 
     q_arns, jobdef_arns = conftest.setup_batch(iam_client, batch_client)
 
+    submitted_ipsts = list()
+
     for i, (job_q_arn, job_definition_arn) in enumerate(zip(q_arns, jobdef_arns)):
         # Add job
-        batch_client.submit_job(jobName=f"ipst_{i}", jobQueue=job_q_arn, jobDefinition=job_definition_arn)
+        ipst = f"ipst_{i}"
+        batch_client.submit_job(jobName=ipst, jobQueue=job_q_arn, jobDefinition=job_definition_arn)
+        submitted_ipsts.append(ipst)
 
     time.sleep(5)
     scrape_batch.lambda_handler({}, {})
@@ -25,7 +29,15 @@ def test_blackboard(batch_client, s3_client, iam_client):
         with open(snapshot_location, "r") as f:
             lines = f.readlines()
 
-    # header + 4 jobs submitted in this test
-    assert len(lines) == 5
+    # get a dict of blackboard jobs, with each column as a list
+    lines = [line.replace("\n", "").split("|") for line in lines]  # removes new line character
+    header_keys = lines[0]  # header line
+    blackboard_columns = list()
+    for i in range(len(header_keys)):
+        blackboard_columns.append([line[i] for line in lines[1:]])
+    blackboard_jobs = dict(zip(header_keys, blackboard_columns))
 
-    # TODO: validate contents of snapshot
+    # assert that all submitted datasets are in the list of jobs scraped from batch
+    assert sorted(blackboard_jobs["Dataset"]) == sorted(submitted_ipsts)
+
+    # TODO: validate other contents of snapshot
