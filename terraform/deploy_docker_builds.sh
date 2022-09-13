@@ -7,7 +7,7 @@ source deploy_checkout_repos.sh
 # imageTags are constructed in deploy_vars.sh
 
 # check if the tag(s) we're building for exist already; if so, we'll stop and warn the user
-/bin/bash deploy_existing_imageTag_check.sh ${CALDP_ECR_TAG//unscanned-/} ${PREDICT_ECR_TAG//unscanned-/} ${TRAINING_ECR_TAG//unscanned-/}
+/bin/bash deploy_existing_imageTag_check.sh ${CALDP_ECR_TAG//unscanned-/} ${PREDICT_ECR_TAG//unscanned-/} ${TRAINING_ECR_TAG//unscanned-/} ${AMIROTATION_ECR_TAG//unscanned-/} 
 existingImage=$?
 
 if [[ $existingImage -eq 1 ]]; then
@@ -46,12 +46,23 @@ if [[ $caldp_docker_build_status -ne 0 ]]; then
     exit 1
 fi
 
+# amirotation image
+cd ${CALDP_BUILD_DIR}/iac/codebuild
+set -o pipefail && docker build -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE} .
+amirotation_docker_build_status=$?
+if [[ $amirotation_docker_build_status -ne 0 ]]; then
+    echo "AMI Rotation docker build failed; exiting"
+    exit 1
+fi
+
+
 # need to "log in" to ecr to push or pull the images
 awsudo $ADMIN_ARN aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $repo_url
 
 docker push ${TRAINING_DOCKER_IMAGE}
 docker push ${PREDICT_DOCKER_IMAGE}
 docker push ${CALDP_DOCKER_IMAGE}
+docker push ${AMIROTATION_DOCKER_IMAGE}
 
 cd ${CALCLOUD_BUILD_DIR}/terraform
 source deploy_cleanup.sh
