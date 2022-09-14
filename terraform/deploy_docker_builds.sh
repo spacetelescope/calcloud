@@ -47,7 +47,8 @@ if [[ $caldp_docker_build_status -ne 0 ]]; then
 fi
 
 # amirotation image
-cd ${CALDP_BUILD_DIR}/iac/codebuild
+cd ${CALCLOUD_BUILD_DIR}/iac/codebuild
+pwd
 set -o pipefail && docker build -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE} .
 amirotation_docker_build_status=$?
 if [[ $amirotation_docker_build_status -ne 0 ]]; then
@@ -59,9 +60,16 @@ fi
 # need to "log in" to ecr to push or pull the images
 awsudo $ADMIN_ARN aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $repo_url
 
+echo Pushing  ${TRAINING_DOCKER_IMAGE}
 docker push ${TRAINING_DOCKER_IMAGE}
+
+echo Pushing ${PREDICT_DOCKER_IMAGE} 
 docker push ${PREDICT_DOCKER_IMAGE}
+
+echo Pushing ${CALDP_DOCKER_IMAGE}
 docker push ${CALDP_DOCKER_IMAGE}
+
+echo Pushing ${AMIROTATION_DOCKER_IMAGE}
 docker push ${AMIROTATION_DOCKER_IMAGE}
 
 cd ${CALCLOUD_BUILD_DIR}/terraform

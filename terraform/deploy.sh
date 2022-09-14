@@ -88,6 +88,7 @@ echo ${aws_env}
 ./deploy_image_promote.sh --old-tag $CALDP_ECR_TAG batch-${aws_env}
 ./deploy_image_promote.sh --old-tag $PREDICT_ECR_TAG predict-${aws_env}
 ./deploy_image_promote.sh --old-tag $TRAINING_ECR_TAG training-${aws_env}
+./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG amirotation-${aws_env}
 
 cd ${CALCLOUD_BUILD_DIR}/terraform
 source deploy_cleanup.sh
