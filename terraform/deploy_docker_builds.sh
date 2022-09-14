@@ -39,6 +39,7 @@ fi
 
 # caldp image
 cd ${CALDP_BUILD_DIR}
+cp /etc/ssl/certs/ca-bundle.crt tls-ca-bundle.pem # copy the cert from CI node AMI and replace the one hard coded in the repo
 set -o pipefail && docker build -f Dockerfile -t ${CALDP_DOCKER_IMAGE} --build-arg CAL_BASE_IMAGE="${CAL_BASE_IMAGE}"  .
 caldp_docker_build_status=$?
 if [[ $caldp_docker_build_status -ne 0 ]]; then
