@@ -70,6 +70,10 @@ data aws_ssm_parameter model_ingest_role {
   name = "/iam/roles/calcloud_model_ingest"
 }
 
+data aws_ssm_parameter codebuild_ami_rotate_arn {
+  name = "/iam/roles/calcloud_codebuild_ami_rotate_arn"
+}
+
 data aws_ssm_parameter fs_blackboard_arn {
   name = "/gateway/fileshare/blackboard"
 }
@@ -121,6 +125,12 @@ data aws_ssm_parameter ci_instance_role {
 data aws_ssm_parameter central_ecr {
   name = "/ecr/SharedServices"
 }
+
+# TODO: maybe derive this from central_ecr value (above)
+data aws_ssm_parameter ami_rotation_base_image {
+  name = "/ecr/calcloud-ami-rotation-base-image"
+}
+
 
 resource "aws_ssm_parameter" "awsysver" {
   name  = "/tf/env/awsysver${local.environment}"
