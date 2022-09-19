@@ -12,7 +12,7 @@ resource aws_codebuild_project ami_rotation {
 
     environment {
         compute_type    = "BUILD_GENERAL1_SMALL"
-        image           = "${var.ami_rotation_base_image}-${local.pre_environment}"
+        image           = "${var.ami_rotation_base_image}"
         type            = "LINUX_CONTAINER"
         privileged_mode = true
         image_pull_credentials_type = "SERVICE_ROLE"
