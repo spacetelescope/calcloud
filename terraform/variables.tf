@@ -33,6 +33,12 @@ variable csys_ver {
   default = "undefined"
 }
 
+variable ami_rotation_base_image {
+  description = "Docker image for Codebuild AMI rotation job"
+  type = string
+  default = "undefined"
+}
+
 variable full_base_image {
   description = "full name of base image, for ecr tag pulling for Batch jobs"
   type = string

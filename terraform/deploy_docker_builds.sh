@@ -49,7 +49,7 @@ fi
 # amirotation image
 cd ${CALCLOUD_BUILD_DIR}/iac/codebuild
 pwd
-set -o pipefail && docker build -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE} .
+set -o pipefail && docker build -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE} --build-arg aws_env="${aws_env}" .
 amirotation_docker_build_status=$?
 if [[ $amirotation_docker_build_status -ne 0 ]]; then
     echo "AMI Rotation docker build failed; exiting"

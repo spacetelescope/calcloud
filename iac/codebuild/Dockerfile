@@ -11,11 +11,14 @@
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:2 
 
+ENV AWS_DEFAULT_REGION="us-east-1"
+ARG aws_env
+
 # Install git, SSH, and other utilities
 RUN set -ex \
     && yum install -y  gcc libpng-devel libjpeg-devel unzip yum-utils \ 
-    && yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo \ 
-    && yum install terraform-0.15.4-1 -y  \ 
+    && yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo \
+    && yum install terraform-1.0.11 -y \
     && yum install git -y  \
     && yum install tar wget python3 which -y 
            

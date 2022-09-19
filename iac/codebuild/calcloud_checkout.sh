@@ -1,6 +1,6 @@
 #!/bin/bash
 
-calcloud_ver=v0.4.37
+calcloud_ver=$(aws ssm get-parameter --name /tf/env/awsysver-$aws_env --output text | cut -f 7)
 
 # calcloud checkout, need right tag
 mkdir -p /opt/calcloud/ami_rotate && cd /opt/calcloud/ami_rotate

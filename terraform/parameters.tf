@@ -126,9 +126,11 @@ data aws_ssm_parameter central_ecr {
   name = "/ecr/SharedServices"
 }
 
-# TODO: maybe derive this from central_ecr value (above)
-data aws_ssm_parameter ami_rotation_base_image {
-  name = "/ecr/calcloud-ami-rotation-base-image"
+resource "aws_ssm_parameter" "ami_rotation_base_image" {
+  name  = "/tf/env/calcloud-ami-rotation-base-image${local.environment}"
+  type  = "String"
+  value = "${var.ami_rotation_base_image}"
+  overwrite = true 
 }
 
 
