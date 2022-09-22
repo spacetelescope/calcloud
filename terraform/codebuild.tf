@@ -51,3 +51,16 @@ resource aws_codebuild_project ami_rotation {
         buildspec       = file("buildspecs/ami-rotation.spec")
     }
 }
+
+resource "aws_cloudwatch_event_rule" "ami-rotate-scheduler-codebuild" {
+  name                = "ami-rotate-scheduler-codebuild${local.environment}"
+  description         = "scheduler for ami rotation with code build"
+  schedule_expression = "cron(0 9 ? * TUE,FRI *)"
+}
+
+resource "aws_cloudwatch_event_target" "ami-rotate-scheduler-codebuild" {
+  rule      = aws_cloudwatch_event_rule.ami-rotate-scheduler-codebuild.name
+  target_id = "codebuild"
+  arn       = aws_codebuild_project.ami_rotation.arn
+  role_arn  = data.aws_ssm_parameter.aws_eventbridge_invoke_codebuild.value
+}

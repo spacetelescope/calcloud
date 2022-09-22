@@ -74,6 +74,10 @@ data aws_ssm_parameter codebuild_ami_rotate_arn {
   name = "/iam/roles/calcloud_codebuild_ami_rotate_arn"
 }
 
+data aws_ssm_parameter aws_eventbridge_invoke_codebuild {
+  name = "/iam/roles/aws_eventbridge_invoke_codebuild"
+}
+
 data aws_ssm_parameter fs_blackboard_arn {
   name = "/gateway/fileshare/blackboard"
 }
