@@ -1,1 +1,5 @@
-- hotfix for protobuf pinned to 3.20.1 to deal with dependency-related error in modeling lambda/training images
+- default base docker image set to CALDP_20221010_CAL_final
+- default crds update to hst_1038.pmap
+- pull cert chain from ami where the image is built
+- significant unit test coverage additions
+- node install bugfix in ami-rotation userdata
