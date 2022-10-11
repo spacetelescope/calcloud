@@ -104,7 +104,7 @@ def invoke_lambda_predict(ipppssoot, output_bucket):
         Payload=json.dumps(inputParams),
     )
     predictions = json.load(response["Payload"])
-    print(f"Predictions for {ipppssoot}: \n {predictions}")
+    log.info(f"Predictions for {ipppssoot}: {predictions}")
     # defaults: db_clock=20 minutes, wc_std=5
     db_clock, wc_std = query_ddb(ipppssoot)
     clockTime = predictions["clockTime"] * (1 + wc_std)

@@ -49,7 +49,7 @@ def lambda_handler(event, context):
             comm.messages.put(f"terminated-{ipst}", "cancel lambda " + bucket_name)
             try:
                 metadata = comm.xdata.get(ipst)
-            except comm.xdata.client.exceptions.NoSuchKeyError:
+            except comm.xdata.client.exceptions.NoSuchKey:
                 metadata = dict(job_id=job_id, cancel_type="job_id")
             metadata["terminated"] = True
             comm.xdata.put(ipst, metadata)

@@ -17,10 +17,28 @@ jobs:
         uses: actions/checkout@v2
 
       - name: install requirements
-        run: pip install .[dev]
+        run: | 
+          pip install .[dev]
+          pip install numpy sklearn tensorflow --upgrade-strategy only-if-needed
 
       - name: run pytest code coverage check
-        run: pytest --cov=lambda --cov-fail-under 75 -rP
+        run: | 
+          pytest \
+            --verbose \
+            --cov=calcloud \
+            --cov=lambda/AmiRotation \
+            --cov=lambda/batch_events \
+            --cov=lambda/blackboard \
+            --cov=lambda/broadcast \
+            --cov=lambda/JobClean \
+            --cov=lambda/JobDelete \
+            --cov=lambda/JobPredict \
+            --cov=lambda/JobRescue \
+            --cov=lambda/ModelIngest \
+            --cov=lambda/refreshCacheLogs \
+            --cov=lambda/refreshCacheSubmit \
+            --cov=lambda/s3_trigger \
+            --cov-fail-under 30 \
 
   pytest:
     name: pytest
@@ -36,7 +54,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: install requirements
-        run: pip install .[dev]
+        run: | 
+          pip install .[dev]
+          pip install numpy sklearn tensorflow --upgrade-strategy only-if-needed
 
       - name: run pytest
         run: pytest -rP

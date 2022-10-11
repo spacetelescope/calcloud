@@ -71,4 +71,5 @@ def get_output_path(output_uri, ipppssoot):
     >>> get_output_path("s3://temp/batch-2020-02-13T10:33:00", "IC0B02020")
     's3://temp/batch-2020-02-13T10:33:00/wfc3/IC0B02020'
     """
+    # This function does not appear to be used anywhere, may have been deprecated
     return output_uri + "/" + get_instrument(ipppssoot) + "/" + ipppssoot
