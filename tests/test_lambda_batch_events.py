@@ -24,22 +24,22 @@ def setup_job(event_basename, **overrides):
     """
     event = conftest.load_event(event_basename)
     overrides = overrides or {}
-    ipppssoot = event["detail"]["container"]["command"][1]
+    dataset = event["detail"]["container"]["command"][1]
     comm = io.get_io_bundle()
     metadata = starting_metadata(overrides)
-    comm.xdata.put(ipppssoot, metadata)
-    return event, comm, ipppssoot, metadata
+    comm.xdata.put(dataset, metadata)
+    return event, comm, dataset, metadata
 
 
 def assert_final_message(msg_type, event_basename, **overrides):
     """Run a test on event file event_basename overriding values in the event using **overrides.
-    Verify that the event handler generates a message of `msg_type` for the appropriate ipppssoot.
+    Verify that the event handler generates a message of `msg_type` for the appropriate dataset.
     Return the starting and ending xdata (job metadata) dictionaries.
     """
-    event, comm, ipppssoot, starting = setup_job(event_basename, **overrides)
+    event, comm, dataset, starting = setup_job(event_basename, **overrides)
     batch_event_handler.lambda_handler(event, None)
-    ending = comm.xdata.get(ipppssoot)
-    assert comm.messages.listl(f"all-{ipppssoot}") == [f"{msg_type}-{ipppssoot}"]
+    ending = comm.xdata.get(dataset)
+    assert comm.messages.listl(f"all-{dataset}") == [f"{msg_type}-{dataset}"]
     return starting, ending
 
 

@@ -7,10 +7,10 @@ def test_broadcast_handler(s3_client):
 
     comm = io.get_io_bundle()
 
-    ipsts = ["ipppsso11", "ipppsso22", "ipppsso33"]
+    datasets = ["ipppssoo1", "ipppssoo2", "ipppssoo3"]
     msg_type = "cancel"
-    broadcasted_msg = [f"{msg_type}-{ipst}" for ipst in ipsts]
-    msg = comm.messages.broadcast(msg_type, ipsts)
+    broadcasted_msg = [f"{msg_type}-{dataset}" for dataset in datasets]
+    msg = comm.messages.broadcast(msg_type, datasets)
 
     event = conftest.get_message_event(msg)
     context = {}

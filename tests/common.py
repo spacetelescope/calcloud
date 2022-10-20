@@ -20,64 +20,64 @@ def setup_diverse_messages(comm, overrides={}):
     """
     assert_empty_messages(comm)
 
-    # we'll make a message of each type for a unique list of ipppssoots
+    # we'll make a message of each type for a unique list of datasets
     message_types = copy.copy(io.MESSAGE_TYPES)
     # ... except for broadcast and clean
     message_types.remove("broadcast")
     message_types.remove("clean")
 
     # insert the messages
-    ipppssoots = []
+    datasets = []
     for i, m in enumerate(message_types):
-        ipst = f"ipppss{str(i).zfill(2)}t"
-        ipppssoots.append(ipst)
-        comm.messages.put(f"{m}-{ipst}", payload=overrides)
+        dataset = f"ipppss{str(i).zfill(2)}t"
+        datasets.append(dataset)
+        comm.messages.put(f"{m}-{dataset}", payload=overrides)
 
     # read them back and assert they're there
     mess = comm.messages.listl()
     for i, m in enumerate(message_types):
-        ipst = f"ipppss{str(i).zfill(2)}t"
-        assert f"{m}-{ipst}" in mess
+        dataset = f"ipppss{str(i).zfill(2)}t"
+        assert f"{m}-{dataset}" in mess
 
-    return ipppssoots, message_types
+    return datasets, message_types
 
 
 def setup_ingest_messages(comm, overrides={}):
     """adds a few extra ingested messages to the diverse messages list"""
-    ipppssoots, message_types = setup_diverse_messages(comm, overrides)
-    n = len(ipppssoots)
+    datasets, message_types = setup_diverse_messages(comm, overrides)
+    n = len(datasets)
 
     # insert the extra ingested messages
     for i in range(3):
-        ipst = f"ipppss{str(i+n).zfill(2)}t"
-        comm.messages.put(f"ingested-{ipst}", payload=overrides)
-        ipppssoots.append(ipst)
+        dataset = f"ipppss{str(i+n).zfill(2)}t"
+        comm.messages.put(f"ingested-{dataset}", payload=overrides)
+        datasets.append(dataset)
         message_types.append("ingested")
 
     # read all messages back and assert they match the lists
     mess = comm.messages.listl()
     for i, m in enumerate(message_types):
-        ipst = f"ipppss{str(i).zfill(2)}t"
-        assert f"{m}-{ipst}" in mess
-    return ipppssoots, message_types
+        dataset = f"ipppss{str(i).zfill(2)}t"
+        assert f"{m}-{dataset}" in mess
+    return datasets, message_types
 
 
 def setup_error_messages(comm, overrides={}):
     """adds a few extra error messages to the diverse messages list"""
-    ipppssoots, message_types = setup_diverse_messages(comm, overrides=overrides)
-    n = len(ipppssoots)
+    datasets, message_types = setup_diverse_messages(comm, overrides=overrides)
+    n = len(datasets)
 
     # insert the extra error messages
     for i in range(3):
-        ipst = f"ipppss{str(i+n).zfill(2)}t"
-        comm.messages.put(f"error-{ipst}", payload=overrides)
-        ipppssoots.append(ipst)
+        dataset = f"ipppss{str(i+n).zfill(2)}t"
+        comm.messages.put(f"error-{dataset}", payload=overrides)
+        datasets.append(dataset)
         message_types.append("error")
-        print("error", ipst, comm.messages.get(f"{'error'}-{ipst}"))
+        print("error", dataset, comm.messages.get(f"{'error'}-{dataset}"))
 
     # read all messages back and assert they match the lists
     mess = comm.messages.listl()
     for i, m in enumerate(message_types):
-        ipst = f"ipppss{str(i).zfill(2)}t"
-        assert f"{m}-{ipst}" in mess
-    return ipppssoots, message_types
+        dataset = f"ipppss{str(i).zfill(2)}t"
+        assert f"{m}-{dataset}" in mess
+    return datasets, message_types

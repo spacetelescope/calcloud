@@ -11,13 +11,13 @@ def test_lambda_s3_trigger(s3_client, lambda_client, iam_client, dynamodb_client
     conftest.setup_dynamodb(dynamodb_client)
     conftest.setup_batch(iam_client, batch_client, busybox_sleep_timer=5)
 
-    # put a placed-ipppssoot message, and also the expected input tar and memory model feature file
+    # put a placed-dataset message, and also the expected input tar and memory model feature file
     comm = io.get_io_bundle()
-    ipst = "ipppsso42"
+    dataset = "ipppsso42"
 
-    placed_msg = f"placed-{ipst}"
-    inputs_tar = f"{ipst}.tar.gz"
-    controls_mem_model_feature = f"{ipst}/{ipst}_MemModelFeatures.txt"
+    placed_msg = f"placed-{dataset}"
+    inputs_tar = f"{dataset}.tar.gz"
+    controls_mem_model_feature = f"{dataset}/{dataset}_MemModelFeatures.txt"
 
     comm.messages.put(placed_msg)
     comm.inputs.put(inputs_tar)

@@ -4,7 +4,7 @@ module "calcloud_lambda_submit" {
   version = "~> 2.26.0"
 
   function_name = "calcloud-job-submit${local.environment}"
-  description   = "looks for placed-ipppssoot messages and submits jobs to Batch"
+  description   = "looks for placed-dataset messages and submits jobs to Batch"
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "s3_trigger_handler.lambda_handler"
   runtime       = "python3.7"

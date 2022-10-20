@@ -3,7 +3,7 @@ module "calcloud_lambda_rescueJob" {
   version = "~> 2.26.0"
 
   function_name = "calcloud-job-rescue${local.environment}"
-  description   = "Rescues the specified ipppssoot (must be in error state) by deleting all outputs and messages and re-placing."
+  description   = "Rescues the specified dataset (must be in error state) by deleting all outputs and messages and re-placing."
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "rescue_handler.lambda_handler"
   runtime       = "python3.7"

@@ -3,7 +3,7 @@ module "calcloud_lambda_cleanJob" {
   version = "~> 2.26.0"
 
   function_name = "calcloud-job-clean${local.environment}"
-  description   = "accepts messages from s3 event and cleans either individual jobs by ipppssoot, or all active jobs"
+  description   = "accepts messages from s3 event and cleans either individual jobs by dataset, or all active jobs"
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "clean_handler.lambda_handler"
   runtime       = "python3.7"

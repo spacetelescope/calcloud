@@ -19,8 +19,8 @@ def test_io_mock_s3io(s3_client):
     bucket = conftest.BUCKET
     s3io = io.S3Io(bucket, client=s3_client)
 
-    ipsts = ["ipppssoo1", "ipppssoo2", "ipppssoo3"]
-    prefixes = ipsts
+    datasets = ["dataset1", "dataset2", "dataset3"]
+    prefixes = datasets
     payloads = ["test_payload1", "test_payload2", "test_payload3"]
     msg = dict(zip(prefixes, payloads))
 
@@ -46,8 +46,8 @@ def test_io_mock_payloadio(s3_client):
         bucket, client=s3_client
     )  # need to use JsonIo becuase PayloadIo's dumper and loader is set to None
 
-    ipsts = ["ipppssoo1", "ipppssoo2", "ipppssoo3"]
-    prefixes = ipsts
+    datasets = ["ipppssoo1", "ipppssoo2", "ipppssoo3"]
+    prefixes = datasets
     payloads = ["test_payload1", "test_payload2", "test_payload3"]
     msg = dict(zip(prefixes, payloads))
 
@@ -63,9 +63,9 @@ def test_io_mock_messageio(s3_client):
     bucket = conftest.BUCKET
     messageio = io.MessageIo(bucket, client=s3_client)
 
-    ipsts = ["ipppssoo1", "ipppssoo2", "ipppssoo3"]
+    datasets = ["ipppssoo1", "ipppssoo2", "ipppssoo3"]
     msg_types = io.MESSAGE_TYPES
-    prefixes = [f"{msg_types[1]}-{ipst}" for ipst in ipsts]  # use 'placed' for all ipsts
+    prefixes = [f"{msg_types[1]}-{dataset}" for dataset in datasets]  # use 'placed' for all datasets
     payloads = ["test_payload1", "test_payload2", "test_payload3"]
     msg = dict(zip(prefixes, payloads))
 
@@ -79,11 +79,11 @@ def test_io_mock_messageio(s3_client):
     result = messageio.get(prefixes)
     assert len(result) == len(msg)
 
-    reset_ipst = ipsts[0]
+    reset_dataset = datasets[0]
     reset_prefix = prefixes[0]
     messageio.reset(
-        reset_ipst
-    )  # input message ids, usually ipppssoots, or other message tails. Must be a string here, not list, as input to trigger line 575
+        reset_dataset
+    )  # input message ids, usually datasets (e.g. ipppssoot), or other message tails. Must be a string here, not list, as input to trigger line 575
 
     with pytest.raises(ClientError):
         result = messageio.get(reset_prefix)
@@ -114,12 +114,12 @@ def test_io_mock_validate_control():
         validate_control(bad_metadata_keyword)
 
     # test good metadata
-    cancel_type = "ipppssoot"
+    cancel_type = "dataset"
     job_id = "ipppssoo1"
     memory_bin = 0
     terminated = True
     timeout_scale = 1.0
-    ipppssoot = "ipppssoo1"
+    dataset = "ipppssoo1"
     bucket = conftest.BUCKET
     job_name = "ipppssoo1"
     good_meta_data = {
@@ -128,7 +128,7 @@ def test_io_mock_validate_control():
         "memory_bin": memory_bin,
         "terminated": terminated,
         "timeout_scale": timeout_scale,
-        "ipppssoot": ipppssoot,
+        "dataset": dataset,
         "bucket": bucket,
         "job_name": job_name,
     }
@@ -158,28 +158,28 @@ def test_io_mock_iobundle(s3_client):
     bucket = conftest.BUCKET
     comm = io.get_io_bundle(bucket=bucket, client=s3_client)
 
-    # test inputs, three ipppssoots for each Io object in the bundle
-    ipsts = ["ipppssoo1", "ipppssoo2", "ipppssoo3"]
+    # test inputs, three datasets for each Io object in the bundle
+    datasets = ["dataset1", "dataset2", "dataset3"]
 
     msg_types = io.MESSAGE_TYPES
-    msg_prefixes = [f"{msg_types[1]}-{ipst}" for ipst in ipsts]  # use 'placed' for all ipsts
+    msg_prefixes = [f"{msg_types[1]}-{dataset}" for dataset in datasets]  # use 'placed' for all datasets
     payloads = ["test_payload1", "test_payload2", "test_payload3"]
     msg = dict(zip(msg_prefixes, payloads))
 
     input_files = ["fake_input_file1", "fake_input_file2", "fake_input_file3"]
-    input_msg = dict(zip(ipsts, input_files))
+    input_msg = dict(zip(datasets, input_files))
 
     output_files = ["fake_output_file1", "fake_output_file2", "fake_output_file3"]
-    output_msg = dict(zip(ipsts, output_files))
+    output_msg = dict(zip(datasets, output_files))
 
-    controls = [f"{ipst}/env" for ipst in ipsts]
+    controls = [f"{dataset}/env" for dataset in datasets]
 
     metadata_objs = list()
-    for i in range(len(ipsts)):
+    for i in range(len(datasets)):
         tmp_metadata = io.get_default_metadata()
-        tmp_metadata["job_id"] = ipsts[i]
+        tmp_metadata["job_id"] = datasets[i]
         metadata_objs.append(tmp_metadata)
-    metadata_msg = dict(zip(ipsts, metadata_objs))
+    metadata_msg = dict(zip(datasets, metadata_objs))
 
     # "put" everything
     comm.messages.put(msg)
@@ -191,20 +191,20 @@ def test_io_mock_iobundle(s3_client):
     # test list_s3
     assert (
         len(comm.list_s3()) == 15
-    )  # there are three ipppssoots for each of the five Io objects, so this should return 3 x 5 = 15 items
+    )  # there are three datasets for each of the five Io objects, so this should return 3 x 5 = 15 items
 
     # test retrieving ids
-    assert len(comm.ids()) == 3  # three ipsts submitted, therefore there should be three ids
+    assert len(comm.ids()) == 3  # three datasets submitted, therefore there should be three ids
 
-    # reset one ipppssoot
-    comm.reset(ipsts[0])
+    # reset one dataset
+    comm.reset(datasets[0])
     assert (
         len(comm.list_s3()) == 12
-    )  # resetting one ipppssoot takes out three items (one each for outputs, messages, and xdata), leaving 12
+    )  # resetting one dataset takes out three items (one each for outputs, messages, and xdata), leaving 12
 
-    # clean one ipppssoot
-    comm.clean(ipsts[0])
-    assert len(comm.list_s3()) == 10  # this should leave only 2 x 5 items left for the second and third ipppssoot
+    # clean one dataset
+    comm.clean(datasets[0])
+    assert len(comm.list_s3()) == 10  # this should leave only 2 x 5 items left for the second and third dataset
 
     # reset "all"
     comm.reset()
@@ -216,22 +216,22 @@ def test_io_mock_iobundle(s3_client):
     comm.clean()
     assert len(comm.list_s3()) == 0  # there should be nothing left after cleaning everything
 
-    # send a 'placed' message for each ipppssoot
-    comm.send(msg_types[1], ipppssoots=ipsts)
+    # send a 'placed' message for each dataset
+    comm.send(msg_types[1], datasets=datasets)
 
-    # send a 'processing' message for 'all' ipppssoot
+    # send a 'processing' message for 'all' dataset
     comm.inputs.put(
         input_msg
-    )  # have to send all ipppssoot to inputs/ first, because send() uses self.inputs.ids() to determine the existing ipppssoots
+    )  # have to send all dataset to inputs/ first, because send() uses self.inputs.ids() to determine the existing datasets
     comm.send(msg_types[3])
 
     # test the send() result
     sent_messages = list()
     sent_msg = [msg_types[1], msg_types[3]]
-    sent_ipsts = ipsts
+    sent_datasets = datasets
     for i in range(len(sent_msg)):
-        for j in range(len(sent_ipsts)):
-            sent_messages.append(f"{sent_msg[i]}-{sent_ipsts[j]}")
+        for j in range(len(sent_datasets)):
+            sent_messages.append(f"{sent_msg[i]}-{sent_datasets[j]}")
 
     result = comm.messages.listl()
     for i in range(len(sent_messages)):
