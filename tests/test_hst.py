@@ -1,5 +1,6 @@
 from calcloud import hst
-from . import conftest
+
+# from . import conftest
 
 IPPPSSOOT_INSTR = hst.IPPPSSOOT_INSTR
 INSTRUMENTS = hst.INSTRUMENTS
