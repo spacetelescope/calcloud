@@ -558,7 +558,9 @@ class MessageIo(YamlIo):
 
         >>> comm.messages.delete("all")
         """
-        return list(set(msg.split("-")[1] for msg in self.list(message_types)))
+        return list(
+            set("-".join(msg.split("-")[1:]) for msg in self.list(message_types))
+        )  # need to use "-".join() to ensure that MVM dataset names (e.g. skycell-p0797x14y06) stay intact
 
     def list(self, prefix, max_objects=s3.MAX_LIST_OBJECTS):
         """List all objects related to `prefix,  removing any .trigger suffix."""
@@ -683,7 +685,12 @@ class MetadataIo(JsonIo):
                 yield dataset
 
     def path(self, dataset):
-        # assert hst.IPPPSSOOT_RE.match(ipppssoot) or ipppssoot in ["all", ""], f"Bad ipppssoot {ipppssoot}"
+        assert (
+            hst.IPPPSSOOT_RE.match(dataset)
+            or hst.SVM_RE.match(dataset)
+            or hst.MVM_RE.match(dataset)
+            or dataset in ["all", ""]
+        ), f"Bad dataset name {dataset}"
         prefix = f"{dataset}/job.json" if dataset not in ["all", ""] else ""
         return super().path(prefix)
 

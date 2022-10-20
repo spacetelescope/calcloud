@@ -159,7 +159,7 @@ def test_io_mock_iobundle(s3_client):
     comm = io.get_io_bundle(bucket=bucket, client=s3_client)
 
     # test inputs, three datasets for each Io object in the bundle
-    datasets = ["dataset1", "dataset2", "dataset3"]
+    datasets = ["ipppssoo1", "acs_abc_01", "skycell-p1234x01y01"]
 
     msg_types = io.MESSAGE_TYPES
     msg_prefixes = [f"{msg_types[1]}-{dataset}" for dataset in datasets]  # use 'placed' for all datasets

@@ -1,4 +1,3 @@
-from calcloud import hst
 from . import conftest
 import os
 
