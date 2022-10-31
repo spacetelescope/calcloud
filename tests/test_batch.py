@@ -14,19 +14,19 @@ def test_batch_mock(batch_client, s3_client, iam_client):
     q_arns, jobdef_arns = conftest.setup_batch(iam_client, batch_client, busybox_sleep_timer=30)
 
     jobIds = []
-    ipppssoots = []
+    datasets = []
     queues = []
     for i, (job_q_arn, job_definition_arn) in enumerate(zip(q_arns, jobdef_arns)):
-        ipst = f"ipppssoo{i}"
-        response = batch_client.submit_job(jobName=ipst, jobQueue=job_q_arn, jobDefinition=job_definition_arn)
+        dataset = f"ipppssoo{i}"
+        response = batch_client.submit_job(jobName=dataset, jobQueue=job_q_arn, jobDefinition=job_definition_arn)
         job_id = response["jobId"]
         queue = job_q_arn.split("/")[1]
         jobIds.append(job_id)
-        ipppssoots.append(ipst)
+        datasets.append(dataset)
         queues.append(queue)
 
     # create a dict of submitted jobs
-    submitted_jobs = {"jobNames": ipppssoots, "jobIds": jobIds, "queues": queues}
+    submitted_jobs = {"jobNames": datasets, "jobIds": jobIds, "queues": queues}
 
     # check that the queues from batch.get_queues is the same as those set up by conftest.setup_batch
     returned_queues = batch.get_queues()

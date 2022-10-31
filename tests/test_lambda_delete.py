@@ -20,7 +20,7 @@ def test_cancel_all(batch_client, s3_client, iam_client):
 
     jobIds = []
     for i, (job_q_arn, job_definition_arn) in enumerate(zip(q_arns, jobdef_arns)):
-        response = batch_client.submit_job(jobName=f"ipst_{i}", jobQueue=job_q_arn, jobDefinition=job_definition_arn)
+        response = batch_client.submit_job(jobName=f"ipppssoo{i}", jobQueue=job_q_arn, jobDefinition=job_definition_arn)
         jobIds.append(response["jobId"].replace("-", "_"))
 
     # post the message (to ensure the message is removed by the lambda)
@@ -85,27 +85,27 @@ def test_cancel_jobid(batch_client, s3_client, iam_client):
 
     # submit a job to each queue and make a general control entry
     jobIds = []
-    ipppssoots = []
+    datasets = []
     d = io.get_default_metadata()
     for i, (job_q_arn, job_definition_arn) in enumerate(zip(q_arns, jobdef_arns)):
-        ipst = f"ipppssoo{i}"
-        response = batch_client.submit_job(jobName=ipst, jobQueue=job_q_arn, jobDefinition=job_definition_arn)
+        dataset = f"ipppssoo{i}"
+        response = batch_client.submit_job(jobName=dataset, jobQueue=job_q_arn, jobDefinition=job_definition_arn)
         job_id = response["jobId"].replace("-", "_")
         jobIds.append(job_id)
-        ipppssoots.append(ipst)
+        datasets.append(dataset)
 
         d["job_id"] = job_id
-        comm.xdata.put(ipst, d)
+        comm.xdata.put(dataset, d)
 
     # pick out the first job to cancel
     cancel_id = jobIds[0]
-    cancel_ipst = ipppssoots[0]
+    cancel_dataset = datasets[0]
     jobIds.remove(cancel_id)
-    ipppssoots.remove(cancel_ipst)
+    datasets.remove(cancel_dataset)
 
     # post the message, and another to ensure deletion of all messages is working
     comm.messages.put(f"cancel-{cancel_id}")
-    comm.messages.put(f"processing-{cancel_ipst}")
+    comm.messages.put(f"processing-{cancel_dataset}")
 
     # modify generic event to cancel-all
     event = conftest.get_message_event(f"cancel-{cancel_id}")
@@ -115,16 +115,16 @@ def test_cancel_jobid(batch_client, s3_client, iam_client):
     # make sure the two messages are gone, and a terminated message appeared
     messages = comm.messages.listl()
     assert f"cancel-{cancel_id}" not in messages
-    assert f"processing-{cancel_ipst}" not in messages
-    assert f"terminated-{cancel_ipst}" in messages
+    assert f"processing-{cancel_dataset}" not in messages
+    assert f"terminated-{cancel_dataset}" in messages
 
     # check the control metadata for the terminated value
-    cancelled_xdata = comm.xdata.get(cancel_ipst)
+    cancelled_xdata = comm.xdata.get(cancel_dataset)
     assert cancelled_xdata["terminated"]
 
     # check the non-terminated jobs to ensure they're untouched
-    for ipst in ipppssoots:
-        xdata = comm.xdata.get(ipst)
+    for dataset in datasets:
+        xdata = comm.xdata.get(dataset)
         assert not xdata["terminated"]
 
     # have to wait a short time for the job to actually stop
@@ -134,8 +134,8 @@ def test_cancel_jobid(batch_client, s3_client, iam_client):
     assert cancel_id not in job_ids
 
 
-def test_cancel_ipst(batch_client, s3_client, iam_client):
-    """cancel-ipppssoot actually terminates the job. This test includes metadata and other checks"""
+def test_cancel_dataset(batch_client, s3_client, iam_client):
+    """cancel-dataset actually terminates the job. This test includes metadata and other checks"""
 
     comm = io.get_io_bundle()
 
@@ -144,46 +144,51 @@ def test_cancel_ipst(batch_client, s3_client, iam_client):
 
     # submit a job to each queue and make a general control entry
     jobIds = []
-    ipppssoots = []
+    datasets = list()
+    ipsts = [f"ipppssoo{i}" for i in range(len(q_arns) - 2)]
+    svm = ["wfc3_cnk_20"]
+    mvm = ["skycell-p0797x14y06"]
+    datasets.extend(ipsts)
+    datasets.extend(svm)
+    datasets.extend(mvm)
     d = io.get_default_metadata()
     for i, (job_q_arn, job_definition_arn) in enumerate(zip(q_arns, jobdef_arns)):
-        ipst = f"ipppssoo{i}"
-        response = batch_client.submit_job(jobName=ipst, jobQueue=job_q_arn, jobDefinition=job_definition_arn)
+        dataset = datasets[i]
+        response = batch_client.submit_job(jobName=dataset, jobQueue=job_q_arn, jobDefinition=job_definition_arn)
         job_id = response["jobId"].replace("-", "_")
         jobIds.append(job_id)
-        ipppssoots.append(ipst)
 
         d["job_id"] = job_id
-        comm.xdata.put(ipst, d)
+        comm.xdata.put(dataset, d)
 
     # pick out the first job to cancel
     cancel_id = jobIds[0]
-    cancel_ipst = ipppssoots[0]
+    cancel_dataset = datasets[0]
     jobIds.remove(cancel_id)
-    ipppssoots.remove(cancel_ipst)
+    datasets.remove(cancel_dataset)
 
     # post the message, and another to ensure deletion of all messages is working
-    comm.messages.put(f"cancel-{cancel_ipst}")
-    comm.messages.put(f"processing-{cancel_ipst}")
+    comm.messages.put(f"cancel-{cancel_dataset}")
+    comm.messages.put(f"processing-{cancel_dataset}")
 
     # modify generic event to cancel-all
-    event = conftest.get_message_event(f"cancel-{cancel_ipst}")
+    event = conftest.get_message_event(f"cancel-{cancel_dataset}")
 
     delete_handler.lambda_handler(event, {})
 
     # make sure the two messages are gone, and a terminated message appeared
     messages = comm.messages.listl()
     assert f"cancel-{cancel_id}" not in messages
-    assert f"processing-{cancel_ipst}" not in messages
-    assert f"terminated-{cancel_ipst}" in messages
+    assert f"processing-{cancel_dataset}" not in messages
+    assert f"terminated-{cancel_dataset}" in messages
 
     # check the control metadata for the terminated value
-    cancelled_xdata = comm.xdata.get(cancel_ipst)
+    cancelled_xdata = comm.xdata.get(cancel_dataset)
     assert cancelled_xdata["terminated"]
 
     # check the non-terminated jobs to ensure they're untouched
-    for ipst in ipppssoots:
-        xdata = comm.xdata.get(ipst)
+    for dataset in datasets:
+        xdata = comm.xdata.get(dataset)
         assert not xdata["terminated"]
 
     # have to wait a short time for the job to actually stop
@@ -193,8 +198,8 @@ def test_cancel_ipst(batch_client, s3_client, iam_client):
     assert cancel_id not in job_ids
 
 
-def test_bad_ipst(s3_client):
-    # modify generic event to a bogus ipst
+def test_bad_dataset(s3_client):
+    # modify generic event to a bogus dataset
     event = conftest.get_message_event("cancel-345")
 
     with pytest.raises(ValueError):

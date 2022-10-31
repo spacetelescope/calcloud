@@ -2,7 +2,7 @@
 and outputs.
 
 For the rescue-all form of trigger,  all error and terminated messages are
-used to identify the set of ipppssoots to rescue.
+used to identify the set of datasets to rescue.
 
 A key feature of "rescuing" is the deletion of prior job outputs,  if any.
 """
@@ -18,21 +18,21 @@ MAX_PER_LAMBDA = 100
 
 def lambda_handler(event, context):
 
-    bucket_name, ipst = s3.parse_s3_event(event)
+    bucket_name, dataset = s3.parse_s3_event(event)
 
     comm = io.get_io_bundle(bucket_name)
 
-    overrides = comm.messages.get(f"rescue-{ipst}")
+    overrides = comm.messages.get(f"rescue-{dataset}")
 
-    if ipst == "all":
+    if dataset == "all":
         print("Rescuing all")
 
-        comm.messages.delete_literal("rescue-all")  # don't interpret all as existing ipppssoots
+        comm.messages.delete_literal("rescue-all")  # don't interpret all as existing datasets
 
         rescues = comm.messages.ids(RESCUE_TYPES)
 
         comm.messages.broadcast("rescue", rescues, overrides)
     else:
-        print("Rescuing", ipst)
-        # comm.outputs.delete(ipst)
-        lambda_submit.main(comm, ipst, bucket_name, overrides)
+        print("Rescuing", dataset)
+        # comm.outputs.delete(dataset)
+        lambda_submit.main(comm, dataset, bucket_name, overrides)

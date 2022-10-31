@@ -191,10 +191,10 @@ class S3Io:
         """Given typical *message* prefixes, locate and delete the corresponding objects,
         which are nominally S3 files of some kind.
 
-        If check_exists is True and an expanded prefix looks like type-ipppssoot, then
+        If check_exists is True and an expanded prefix looks like type-dataset, then
         check to see if that message exists with s3.get() before trying
-        s3.delete().  When most expansions of all-ipppssoot don't exist,  they only pay
-        1/12 the cost of an unneeded delete making it reasonably cheap to use all-ipppssoot
+        s3.delete().  When most expansions of all-dataset don't exist,  they only pay
+        1/12 the cost of an unneeded delete making it reasonably cheap to use all-dataset
         even when most types don't exist.
 
         If it's expected that most expansions do exist,  then set check_exists=False to avoid
@@ -232,7 +232,7 @@ class S3Io:
         return msg
 
     def ids(self, prefixes="all"):
-        """Return the list of unique ipppssoot/id directories associated with `prefixes`."""
+        """Return the list of unique dataset/id directories associated with `prefixes`."""
         return list(set(obj.split("/")[0] for obj in self.list(prefixes) if obj))
 
 
@@ -299,24 +299,24 @@ class MessageIo(YamlIo):
     processing.
 
     It can operate on a particular message type for a paritcular
-    ipppssoot, e.g.  'error-lcw303cjq'.
+    dataset, e.g.  'error-lcw303cjq'.
 
-    It can operate on all message types for a particular ipppssoot,
+    It can operate on all message types for a particular dataset,
     e.g. 'all-lcw303cj'
 
-    It can operate on a particular message type for all ipppssoots,
+    It can operate on a particular message type for all datasets,
     e.g. 'error' or 'error-all'.
 
-    It can operate on all types of messages for all ipppssoots,
+    It can operate on all types of messages for all datasets,
     e.g. 'all'.
 
     A special case exists for 'clean-ingested' where 'ingested' corresponds to every
-    ipppssoot which already as an 'ingested-<ipppssoot>' message.
+    dataset which already as an 'ingested-<dataset>' message.
 
     >>> comm = get_io_bundle()
 
     put() enables sending a message or sequence of messages which should be fully specified
-    including the full ipppssoot.   Specified as a string or list the message payload(s) are
+    including the full dataset.   Specified as a string or list the message payload(s) are
     defaulted to the empty string:
 
     >>> comm.messages.put(['cancel-lcw303cjq', 'error-lcw303cjq', 'processed-lcw303cjq', 'rescue-lcw303cjq']);
@@ -344,7 +344,7 @@ class MessageIo(YamlIo):
     >>> comm.messages.delete("all");
 
     A special case exists for 'clean-ingested' where 'ingested' corresponds to every
-    ipppssoot which already as an 'ingested-<ipppssoot>' message.  This is a limited
+    dataset which already as an 'ingested-<dataset>' message.  This is a limited
     special case which may not support all methods and use cases.
 
     >>> comm.messages.put("clean-ingested")
@@ -355,13 +355,13 @@ class MessageIo(YamlIo):
     >>> comm.messages.listl()
     []
 
-    The all-ipppssoot message is expanded to every type-ipppssoot:
+    The all-dataset message is expanded to every type-dataset:
 
     >>> comm.messages.put(['cancel-lcw303cjq', 'error-lcw303cjq', 'rescue-lcw304cjq']);
     >>> comm.messages.delete('all-lcw303cjq'); comm.messages.listl()
     ['rescue-lcw304cjq']
 
-    The type-all message is expanded into every type-ipppssoot combination and is really
+    The type-all message is expanded into every type-dataset combination and is really
     equivalent to searching for S3 prefix "type".
 
     >>> comm.messages.put(['error-lcw303cjq', 'error-lcw304cjq', 'error-lcw305cjq']);  comm.messages.listl()
@@ -374,7 +374,7 @@ class MessageIo(YamlIo):
     >>> comm.messages.move('rescue-lcw304cjq', 'processed-lcw304cjq'); comm.messages.listl();
     ['processed-lcw304cjq']
 
-    On S3,  .trigger is appended to the 'processed-ipppssoot' message:
+    On S3,  .trigger is appended to the 'processed-dataset' message:
 
     >>> list(comm.messages.list_s3('processed-lcw304cjq')) #doctest: +ELLIPSIS
     ['s3://.../messages/processed-lcw304cjq.trigger']
@@ -387,11 +387,11 @@ class MessageIo(YamlIo):
 
     def path(self, prefix):
         """Converts `prefix` to an appropriate fully specified S3 path, which
-        may designate an individual type-ipppssoot message or a more ambiguous
+        may designate an individual type-dataset message or a more ambiguous
         partial key.
 
         Message `prefix` should always start with at least the `type` aspect of
-        a type-ipppssoot message id,  or 'all'.
+        a type-dataset message id,  or 'all'.
 
         >>> comm = get_io_bundle()
         >>> comm.messages.path('rescue-lcw304cjq')  #doctest: +ELLIPSIS
@@ -410,19 +410,19 @@ class MessageIo(YamlIo):
         sequence of partial S3 keys which correspond to:
 
         1. "all messages of all types"    when prefix="all"
-        2. "all types for one ipppssoot"  when prefix="all-{ipst}"
-        3. "one type for one ipppssoot"   when prefix="{type}-{ipst}"
-        4. "all ipppssoots of one type"   when prefix="{type}-{all}" also equivalent to "{type}"
+        2. "all types for one dataset"  when prefix="all-{dataset}"
+        3. "one type for one dataset"   when prefix="{type}-{dataset}"
+        4. "all datasets of one type"   when prefix="{type}-{all}" also equivalent to "{type}"
 
         >>> comm = get_io_bundle()
 
-        Used w/o -ipppssoot,  "all" expands into the all message types, which when used as S3 object
-        key prefixes, match all ipppssoots of each type:
+        Used w/o -dataset,  "all" expands into the all message types, which when used as S3 object
+        key prefixes, match all datasets of each type:
 
         >>> list(comm.messages.expand_all('all'))
         ['broadcast', 'placed', 'submit', 'processing', 'processed', 'error', 'ingesterror', 'ingested', 'terminated', 'cancel', 'rescue', 'clean']
 
-        The message 'all-ipppssoot' expands into a sequence of type-ipppssoot messages for each
+        The message 'all-dataset' expands into a sequence of type-dataset messages for each
         type in MESSAGE_TYPES:
 
         >>> list(comm.messages.expand_all('all-lcw303cjq'))
@@ -445,9 +445,9 @@ class MessageIo(YamlIo):
         if prefix.endswith("-all"):
             prefix = prefix[: -len("-all")]
         if prefix == "all" or prefix.startswith("all-"):
-            ipppssoot = prefix[len("all-") :]
+            dataset = prefix[len("all-") :]
             for type in MESSAGE_TYPES:
-                yield f"{type}-{ipppssoot}" if ipppssoot else type
+                yield f"{type}-{dataset}" if dataset else type
         else:
             yield prefix
 
@@ -455,8 +455,8 @@ class MessageIo(YamlIo):
         """Return a unique message ID,  nominally for broadcast messages."""
         return str(uuid.uuid4()).replace("-", "_")
 
-    def broadcast(self, type, ipppssoots, payload=None):
-        """Output a `type` message for each dataset in `ipppssoots`.  This
+    def broadcast(self, type, datasets, payload=None):
+        """Output a `type` message for each dataset in `datasets`.  This
         is nominally done by sending a list of messages to the broadcast lambda
         which then sends them using a divide-and-conquer approach.
 
@@ -465,7 +465,7 @@ class MessageIo(YamlIo):
         >>> comm = get_io_bundle()
 
         Calling the broadcast method writes a single broadcast message containing a payload of messages to send.
-        Broadcast messages are named using a random id instead of ipppssoot, a uuid with _ replacing -.
+        Broadcast messages are named using a random id instead of dataset, a uuid with _ replacing -.
 
         >>> msg = comm.messages.broadcast("cancel", ["lcw303cjq", "lcw304cjq", "lcw305cjq"]);
         >>> comm.messages.listl() #doctest: +ELLIPSIS
@@ -506,13 +506,13 @@ class MessageIo(YamlIo):
         """
         assert type in MESSAGE_TYPES
         assert type != "broadcast"  # don't broadcast broadcasts....
-        assert isinstance(ipppssoots, list)
-        assert len(ipppssoots)
-        assert isinstance(ipppssoots[0], str)
-        assert "all" not in ipppssoots  # don't broadcast message tails of "all"
-        assert len(ipppssoots) < MAX_BROADCAST_MSGS
+        assert isinstance(datasets, list)
+        assert len(datasets)
+        assert isinstance(datasets[0], str)
+        assert "all" not in datasets  # don't broadcast message tails of "all"
+        assert len(datasets) < MAX_BROADCAST_MSGS
         msg = f"broadcast-{self.get_id()}"
-        self.put(msg, dict(messages=[f"{type}-{ipst}" for ipst in ipppssoots], payload=payload))
+        self.put(msg, dict(messages=[f"{type}-{dataset}" for dataset in datasets], payload=payload))
         return msg
 
     def bifurcate_broadcast(self, messages, payload):
@@ -541,7 +541,7 @@ class MessageIo(YamlIo):
 
     def ids(self, message_types="all"):
         """Given a list of `message_types`, return the list of unique
-        ipppssoots such that each ipppssoot has at least one message
+        datasets such that each dataset has at least one message
         of those types.
 
         >>> comm = get_io_bundle()
@@ -558,7 +558,9 @@ class MessageIo(YamlIo):
 
         >>> comm.messages.delete("all")
         """
-        return list(set(msg.split("-")[1] for msg in self.list(message_types)))
+        return list(
+            set("-".join(msg.split("-")[1:]) for msg in self.list(message_types))
+        )  # need to use "-".join() to ensure that MVM dataset names (e.g. skycell-p0797x14y06) stay intact
 
     def list(self, prefix, max_objects=s3.MAX_LIST_OBJECTS):
         """List all objects related to `prefix,  removing any .trigger suffix."""
@@ -569,7 +571,7 @@ class MessageIo(YamlIo):
 
     def reset(self, ids):
         """Delete all messages associated with `ids` which are nominally
-        ipppssoots or other message tails.
+        datasets or other message tails.
         """
         if isinstance(ids, str):
             ids = [ids]
@@ -586,7 +588,7 @@ class InputsIo(S3Io):
     """
 
     def ids(self, prefixes="all"):
-        """Return the ipppssoots associated with every input tarball.
+        """Return the datasets associated with every input tarball.
 
         >>> comm = get_io_bundle()
 
@@ -647,7 +649,7 @@ class MetadataIo(JsonIo):
     """Provides simple standard operations on the processing job control metadata,
     transparently serializing/de-serializing Python objects as a JSON encoded payload.
 
-    Metadata is stored in the ipppssoot control folder as s3://.../control/ipppssoot/job.json
+    Metadata is stored in the dataset control folder as s3://.../control/dataset/job.json
 
     >>> comm = get_io_bundle()
 
@@ -675,28 +677,33 @@ class MetadataIo(JsonIo):
         sequence of listed objects and yield only the final prefix
         component of each listed object.
 
-        Yield the ipppssoot folder name of each listed metadata file.
+        Yield the dataset folder name of each listed metadata file.
         """
         for s3_path in self.list_s3(prefixes, max_objects=max_objects):
-            ipppssoot = s3_path.split("/")[-2]  # return ipppssoot folder
-            if ipppssoot != "control":
-                yield ipppssoot
+            dataset = s3_path.split("/")[-2]  # return dataset folder
+            if dataset != "control":
+                yield dataset
 
-    def path(self, ipppssoot):
-        assert hst.IPPPSSOOT_RE.match(ipppssoot) or ipppssoot in ["all", ""], f"Bad ipppssoot {ipppssoot}"
-        prefix = f"{ipppssoot}/job.json" if ipppssoot not in ["all", ""] else ""
+    def path(self, dataset):
+        assert (
+            hst.IPPPSSOOT_RE.match(dataset)
+            or hst.SVM_RE.match(dataset)
+            or hst.MVM_RE.match(dataset)
+            or dataset in ["all", ""]
+        ), f"Bad dataset name {dataset}"
+        prefix = f"{dataset}/job.json" if dataset not in ["all", ""] else ""
         return super().path(prefix)
 
 
 # Control values can be sent as part of message override payloads or can be recorded in comm.xdata.
 # XXXX NOTE: value checks are not currently active,  only field name and type.
 CONTROL_KEYWORDS = {
-    "cancel_type": ((str,), lambda x: x in ("job_id", "ipppssoot")),
+    "cancel_type": ((str,), lambda x: x in ("job_id", "dataset")),
     "job_id": ((str,), batch.JOB_ID_RE.match),
     "memory_bin": ((int, type(None)), lambda x: x in (0, 1, 2, 3, None)),
     "terminated": ((bool,), lambda x: True),
     "timeout_scale": ((int, float), lambda x: x > 0),
-    "ipppssoot": ((str,), hst.IPPPSSOOT_RE.match),
+    "dataset": ((str,)),
     "bucket": ((str,), lambda x: True),
     "job_name": ((str,), lambda x: True),
     "exit_code": ((int, str), lambda x: True),
@@ -760,7 +767,7 @@ class IoBundle:
         self.client = client or s3.get_default_client()
         self.messages = MessageIo(
             self.bucket + "/messages", self.client
-        )  # i/o to message files of the form type-ipppssoot + all
+        )  # i/o to message files of the form type-dataset + all
         self.inputs = InputsIo(self.bucket + "/inputs", self.client)  # simple text inputs i/o, abitrary file prefix
         self.outputs = OutputsIo(self.bucket + "/outputs", self.client)  # simple text outputs i/o, abitrary file prefix
         self.control = ControlIo(self.bucket + "/control", self.client)  # simple text control i/o, abitrary file prefix
@@ -776,15 +783,15 @@ class IoBundle:
             with log.trap_exception():
                 self.outputs.delete(tail)
             with log.trap_exception():
-                self.messages.reset(tail)  # messages.delete() doesn't handle "ipppssoot", only "type-ipppssoot".
+                self.messages.reset(tail)  # messages.delete() doesn't handle "dataset", only "type-dataset".
             with log.trap_exception():
-                self.xdata.delete(tail)  # IPPPSSOOT control metadata / retry status
+                self.xdata.delete(tail)  # dataset control metadata / retry status
 
     def clean(self, ids="all"):
         """Delete every S3 file associated with `ids` which specifies one of:
 
-        1. ipppssoot  -  clean one ipppssoot
-        2. [ipppssoot, ...]
+        1. dataset  -  clean one dataset
+        2. [dataset, ...]
         3. "all"
 
         """
@@ -804,9 +811,9 @@ class IoBundle:
         """
         ids = set()
         ids = ids | set(self.inputs.ids(prefixes))  # tarball root
-        ids = ids | set(self.outputs.ids(prefixes))  # ipppssoot directory
-        ids = ids | set(self.control.ids(prefixes))  # ipppssoot directory
-        ids = ids | set(self.messages.ids(prefixes))  # ipppssoots / message tails
+        ids = ids | set(self.outputs.ids(prefixes))  # dataset directory
+        ids = ids | set(self.control.ids(prefixes))  # dataset directory
+        ids = ids | set(self.messages.ids(prefixes))  # datasets / message tails
         return list(ids)
 
     def list_s3(self, prefixes="all"):
@@ -818,15 +825,15 @@ class IoBundle:
         items.extend(list(self.outputs.list_s3(prefixes)))
         return items
 
-    def send(self, msg_type, ipppssoots="all"):
-        """Send the message `msg_type` to every ipppssoot in `ipppssoots`.
+    def send(self, msg_type, datasets="all"):
+        """Send the message `msg_type` to every dataset in `datasets`.
 
-        If ipppssoots="all", define ipppssoots using self.messsages.ids()
+        If datasets="all", define datasets using self.messsages.ids()
         """
-        if ipppssoots == "all":
-            ipppssoots = self.inputs.ids()
+        if datasets == "all":
+            datasets = self.inputs.ids()
         assert msg_type in MESSAGE_TYPES
-        self.messages.put([msg_type + "-" + ipppssoot for ipppssoot in ipppssoots])
+        self.messages.put([msg_type + "-" + dataset for dataset in datasets])
 
 
 def get_io_bundle(bucket=s3.DEFAULT_BUCKET, client=None):
