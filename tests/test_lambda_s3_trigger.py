@@ -1,5 +1,4 @@
 from . import conftest
-import time
 
 
 def test_lambda_s3_trigger(s3_client, lambda_client, iam_client, dynamodb_client, batch_client):

@@ -36,10 +36,10 @@ def test_hst_is_dataset_name():
     good_dataset_names = conftest.TEST_DATASET_NAMES
     for dataset in good_dataset_names:
         is_dataset = hst.is_dataset_name(dataset)
-        assert is_dataset == True
+        assert is_dataset is True
 
     bad_dataset_name = "nothstdataset"
-    assert hst.is_dataset_name(bad_dataset_name) == False
+    assert hst.is_dataset_name(bad_dataset_name) is False
 
 
 def test_hst_get_dataset_type():
