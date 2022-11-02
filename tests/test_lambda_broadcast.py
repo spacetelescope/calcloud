@@ -7,7 +7,7 @@ def test_broadcast_handler(s3_client):
 
     comm = io.get_io_bundle()
 
-    datasets = ["ipppssoo1", "ipppssoo2", "ipppssoo3"]
+    datasets = conftest.TEST_DATASET_NAMES
     msg_type = "cancel"
     broadcasted_msg = [f"{msg_type}-{dataset}" for dataset in datasets]
     msg = comm.messages.broadcast(msg_type, datasets)
@@ -17,6 +17,7 @@ def test_broadcast_handler(s3_client):
 
     # do a normal broadcast and assert that the messages put by the braodcast handler matches the expected broadcasted message
     broadcast_handler.lambda_handler(event, context)
+    print(sorted(comm.messages.listl()))
     assert sorted(comm.messages.listl()) == sorted(broadcasted_msg)
 
     # test check_for_kill(), this should prevent broadcasted messages from being put

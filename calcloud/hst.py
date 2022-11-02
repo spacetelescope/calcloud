@@ -79,6 +79,28 @@ def get_instrument(ipppssoot):
         return IPPPSSOOT_INSTR.get(ipppssoot.upper()[0])
 
 
+def is_dataset_name(dataset):
+    """Given a dataset name, determine if it's an HST dataset name (ipppssoot, SVM, or MVM dataset).
+
+    Parameters
+    ----------
+    dataset : str
+
+    Returns
+    -------
+    is_dataset_name : bool
+    """
+    if (
+        IPPPSSOOT_RE.match(dataset)
+        or (SVM_RE.match(dataset) and dataset.split("_")[0] in SVM_INSTRUMENTS)
+        or MVM_RE.match(dataset)
+    ):
+        is_dataset_name = True
+    else:
+        is_dataset_name = False
+    return is_dataset_name
+
+
 # -----------------------------------------------------------------------------
 # 10/12/2022 - Removed get_output_path since it is not used anywhere and appear to be deprecated
 

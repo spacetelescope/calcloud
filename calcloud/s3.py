@@ -339,7 +339,7 @@ def parse_s3_event(event):
 
     message = event["Records"][0]["s3"]["object"]["key"]
     bucket_name = event["Records"][0]["s3"]["bucket"]["name"]
-    dataset = message.split("-")[-1]
+    dataset = "-".join(message.split("-")[1:])
 
     log.info(f"received {message} : bucket = {bucket_name}, dataset = {dataset}")
 
