@@ -31,12 +31,17 @@ JOBQUEUES = ["calcloud-jobqueue-2g", "calcloud-jobqueue-8g", "calcloud-jobqueue-
 BUCKET = "calcloud-processing-moto"
 TEST_DATASET_NAMES = [
     "ieloc4yzq",
-    "jeex6a010",
     "wfc3_epo_2h",
-    "acs_ez4_11",
     "skycell-p0115x10y10",
-    "skycell-p2634x07y08",
 ]
+# TEST_DATASET_NAMES = [
+#     "ieloc4yzq",
+#     "jeex6a010",
+#     "wfc3_epo_2h",
+#     "acs_ez4_11",
+#     "skycell-p0115x10y10",
+#     "skycell-p2634x07y08",
+# ]
 
 os.environ["JOBDEFINITIONS"] = ",".join(JOBDEFINITIONS)
 os.environ["JOBQUEUES"] = ",".join(JOBQUEUES)

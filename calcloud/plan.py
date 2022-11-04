@@ -54,7 +54,7 @@ class AllBinsTriedQuit(Exception):
 # It returns a Plan() tuple which is passed to the submit function.
 
 
-def get_plan(dataset, output_bucket, input_path, metadata):
+def get_plan(dataset, dataset_type, output_bucket, input_path, metadata):
     """Given the resource requirements for a job,  map them onto appropriate
     requirements and Batch infrastructure needed to process the job.
 
@@ -74,7 +74,7 @@ def get_plan(dataset, output_bucket, input_path, metadata):
     timeout_scale = metadata["timeout_scale"]
     memory_retries = metadata["memory_retries"]
     memory_bin = metadata["memory_bin"]
-    job_resources = _get_resources(dataset, output_bucket, input_path, timeout_scale)
+    job_resources = _get_resources(dataset, dataset_type, output_bucket, input_path, timeout_scale)
     env = _get_environment(job_resources, memory_retries, memory_bin)
     return Plan(*(job_resources + env))
 
@@ -92,7 +92,7 @@ def query_ddb(dataset):
     return db_clock, wc_std
 
 
-def invoke_lambda_predict(dataset, output_bucket, dataset_type):
+def invoke_lambda_predict(dataset, dataset_type, output_bucket):
     """Invoke calcloud-ai lambda to compute baseline memory bin and kill time."""
     bucket = output_bucket.replace("s3://", "")
     key = f"control/{dataset}/{dataset}_MemModelFeatures.txt"
@@ -117,7 +117,7 @@ def invoke_lambda_predict(dataset, output_bucket, dataset_type):
     return clockTime, db_clock, predictions["memBin"]
 
 
-def _get_resources(dataset, output_bucket, input_path, timeout_scale):
+def _get_resources(dataset, dataset_type, output_bucket, input_path, timeout_scale):
     """Given an HST dataset ID,  return information used to schedule it as a batch job.
 
     Conceptually resource requirements can be tailored to individual datasets.
@@ -129,7 +129,6 @@ def _get_resources(dataset, output_bucket, input_path, timeout_scale):
     """
     dataset = dataset.lower()
     s3_output_uri = f"{output_bucket}/outputs/{dataset}"
-    dataset_type = hst.get_dataset_type(dataset)
     if dataset_type == "ipst":
         instr = hst.get_instrument(dataset)
     else:
@@ -138,7 +137,7 @@ def _get_resources(dataset, output_bucket, input_path, timeout_scale):
     input_path = input_path
     crds_config = "caldp-config-aws"
     # default: predicted time * 6 or * 1+std_err
-    clockTime, db_clock, initial_bin = invoke_lambda_predict(dataset, output_bucket, dataset_type)
+    clockTime, db_clock, initial_bin = invoke_lambda_predict(dataset, dataset_type, output_bucket)
     # clip between 20 minutes and 2 days, * timeout_scale
     kill_time = int(min(max(clockTime, db_clock), 48 * 60 * 60) * timeout_scale)
     # minimum Batch requirement 60 seconds
