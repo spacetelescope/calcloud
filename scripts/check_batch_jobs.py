@@ -25,6 +25,7 @@ for queue in queues["jobQueues"]:
     name = queue["jobQueueName"]
     for status in statuses:
         cmd = f"awsudo $ADMIN_ARN aws batch list-jobs --job-queue {name} --job-status {status} > {name}_{status}.json"
+        print(cmd)
         os.system(cmd)
         with open(f"{name}_{status}.json", "r") as f:
             jobs = json.load(f)

@@ -1,7 +1,6 @@
 #! /bin/bash -xu
-
-export CALCLOUD_VER="v0.4.37"
-export CALDP_VER="v0.2.19"
+export CALCLOUD_VER="sb-pipeline"
+export CALDP_VER="sb-pipeline"
 export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20220527_CAL_final"
 
 export BASE_IMAGE_TAG=`cut -d ":" -f2- <<< ${CAL_BASE_IMAGE} `
@@ -11,21 +10,14 @@ export COMMON_IMAGE_TAG="CALCLOUD_${CALCLOUD_VER}-CALDP_${CALDP_VER}-BASE_${BASE
 # i.e. CALCLOUD_BUILD_DIR="$HOME/deployer/calcloud"
 # these can be set as environment variables before running to avoid changing the script directly
 # (and avoid accidentally committing a custom path to the repo...)
-export CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-""} 
-export CALDP_BUILD_DIR=${CALDP_BUILD_DIR:-""}
+export CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-"/home/ec2-user/cslocum/calcloud"} 
+export CALDP_BUILD_DIR=${CALDP_BUILD_DIR:-"/home/ec2-user/cslocum/caldp"}
 
 export TMP_INSTALL_DIR="/tmp/calcloud_install"
 
 # get a couple of things from AWS ssm
 # the env, i.e. sb,dev,test,prod
-aws_env=${aws_env:-""}
-if [ -z "${aws_env}" ]
-then
-    aws_env_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "environment" | grep "Value"`
-    aws_env=${aws_env_response##*:}
-    aws_env=`echo $aws_env | tr -d '",'`
-fi
-export aws_env=${aws_env}
+aws_env=${aws_env:-"sb-pipeline"}
 
 # the central ecr url
 repo_url=${repo_url:-""}

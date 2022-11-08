@@ -32,6 +32,12 @@ else
     exit 1
 fi
 
+
+env | sort
+
+
+
+
 # initial terraform setup
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
@@ -41,12 +47,12 @@ awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backen
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
 # must taint the compute env to be safe about launch template handling. see comments in batch.tf
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[0]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[1]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[2]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[3]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
-awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
+#awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[0]
+#awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[1]
+#awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[2]
+#awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[3]
+#awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
+#awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
 
 # manual confirmation required
 awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}" -var "full_base_image=${BASE_IMAGE_TAG}" -var "ami_rotation_base_image=${AMIROTATION_DOCKER_IMAGE}"
@@ -89,6 +95,8 @@ echo ${aws_env}
 ./deploy_image_promote.sh --old-tag $PREDICT_ECR_TAG predict-${aws_env}
 ./deploy_image_promote.sh --old-tag $TRAINING_ECR_TAG training-${aws_env}
 ./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG amirotation-${aws_env}
+#./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG amirotation-CALCLOUD_v0.4.37-CALDP_v0.2.19-BASE_CALDP_20220527_CAL_final
+
 
 cd ${CALCLOUD_BUILD_DIR}/terraform
 source deploy_cleanup.sh

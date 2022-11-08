@@ -70,8 +70,12 @@ data aws_ssm_parameter model_ingest_role {
   name = "/iam/roles/calcloud_model_ingest"
 }
 
-data aws_ssm_parameter codebuild_ami_rotate_arn {
-  name = "/iam/roles/calcloud_codebuild_ami_rotate_arn"
+data aws_ssm_parameter codebuild_ami_rotate_svc_arn {
+  name = "/iam/roles/calcloud_codebuild_ami_rotate_svc_arn"
+}
+
+data aws_ssm_parameter codebuild_ami_rotate_deploy_arn {
+  name = "/iam/roles/calcloud_codebuild_ami_rotate_deploy_arn"
 }
 
 data aws_ssm_parameter aws_eventbridge_invoke_codebuild {
