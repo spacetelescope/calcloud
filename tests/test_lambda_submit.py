@@ -9,38 +9,42 @@ def test_lambda_submit_mock(s3_client, lambda_client, iam_client, dynamodb_clien
     conftest.create_mock_lambda(lambda_client, iam_client)
     conftest.setup_dynamodb(dynamodb_client)
     conftest.setup_batch(iam_client, batch_client, busybox_sleep_timer=5)
+    datasets = conftest.TEST_DATASET_NAMES
 
     comm = io.get_io_bundle()
 
-    # set up io messages
-    dataset = "acs_aaa_00"
-    placed_msg = f"placed-{dataset}"
-    submit_msg = f"submit-{dataset}"
-    terminate_msg = f"terminated-{dataset}"
-    error_msg = f"error-{dataset}"
-    inputs_tar = f"{dataset}.tar.gz"
-    controls_mem_model_feature = f"{dataset}/{dataset}_MemModelFeatures.txt"
-    overrides = {}
+    for dataset in datasets:
+        print("Testing dataset: ", dataset)
 
-    comm_messages = {
-        "dataset": dataset,
-        "placed_msg": placed_msg,
-        "submit_msg": submit_msg,
-        "terminate_msg": terminate_msg,
-        "error_msg": error_msg,
-        "inputs_tar": inputs_tar,
-        "controls_mem_model_feature": controls_mem_model_feature,
-        "overrides": overrides,
-    }
+        # set up io messages
+        # dataset = "acs_aaa_00"
+        placed_msg = f"placed-{dataset}"
+        submit_msg = f"submit-{dataset}"
+        terminate_msg = f"terminated-{dataset}"
+        error_msg = f"error-{dataset}"
+        inputs_tar = f"{dataset}.tar.gz"
+        controls_mem_model_feature = f"{dataset}/{dataset}_MemModelFeatures.txt"
+        overrides = {}
 
-    # test different submits
-    good_submit(comm, bucket, comm_messages)
+        comm_messages = {
+            "dataset": dataset,
+            "placed_msg": placed_msg,
+            "submit_msg": submit_msg,
+            "terminate_msg": terminate_msg,
+            "error_msg": error_msg,
+            "inputs_tar": inputs_tar,
+            "controls_mem_model_feature": controls_mem_model_feature,
+            "overrides": overrides,
+        }
 
-    no_placed_msg_submit(comm, bucket, comm_messages)
+        # test different submits
+        good_submit(comm, bucket, comm_messages)
 
-    no_input_submit(comm, bucket, comm_messages)
+        no_placed_msg_submit(comm, bucket, comm_messages)
 
-    terminated_submit(comm, bucket, comm_messages)
+        no_input_submit(comm, bucket, comm_messages)
+
+        terminated_submit(comm, bucket, comm_messages)
 
 
 def good_submit(comm, bucket, comm_messages):

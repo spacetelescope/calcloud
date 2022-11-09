@@ -201,8 +201,10 @@ class S3Io:
         unnecessary tests for messges known to exist,  just delete them.
         """
         for prefix in self.expand_all(prefixes):
-            parts = prefix.split("-")
-            if len(parts) == 2 and parts[0] in MESSAGE_TYPES:
+
+            parts = [prefix.split("-")[0], "-".join(prefix.split("-")[1:])]
+
+            if hst.is_dataset_name(parts[1]) and parts[0] in MESSAGE_TYPES:
                 try:
                     # these don't have self.s3_path added yet
                     s3_path = self.path(prefix)
@@ -397,10 +399,11 @@ class MessageIo(YamlIo):
         >>> comm.messages.path('rescue-lcw304cjq')  #doctest: +ELLIPSIS
         's3://.../messages/rescue-lcw304cjq'
         """
-        parts = prefix.split("-")
+        parts = [prefix.split("-")[0], "-".join(prefix.split("-")[1:])]
+
         if parts[0] not in MESSAGE_TYPES + ["all"]:
             raise ValueError("Invalid message type for prefix: " + repr(prefix))
-        if parts[0] in self.add_trigger_types and len(parts) == 2:  # XXXXX add .trigger hack!!
+        if parts[0] in self.add_trigger_types and hst.is_dataset_name(parts[1]):  # XXXXX add .trigger hack!!
             prefix += ".trigger"
         return self.s3_path + "/" + prefix
 

@@ -1,4 +1,5 @@
 from . import conftest
+from calcloud import hst
 import os
 
 
@@ -23,20 +24,20 @@ def test_submit_plans(s3_client, lambda_client, iam_client, dynamodb_client, bat
     n_plans = 5  # number of lines in plan file, pick a number between 2 and 6
     instr_keys = ["i", "j", "l", "o"]
     ipsts = [f"{instr_keys[i].lower()}pppssoo{str(i)}" for i in range(n_plans - 2)]
-    svm = ["wfc3_cnk_20"]
+    svm = ["acs_ez4_11"]
     mvm = ["skycell-p0797x14y06"]
     datasets = list()
     datasets.extend(ipsts)
     datasets.extend(svm)
     datasets.extend(mvm)
-    print(datasets)
 
     # for each dataset, get the default metadata, assign the job_id, retrieve plan and write a line to test_plan_file
     with open(planfilepath, "w") as fp:
         for dataset in datasets:
             metadata = io.get_default_metadata()
             metadata["job_id"] = dataset
-            job_plan = plan.get_plan(dataset, bucket, f"{bucket}/inputs", metadata)
+            dataset_type = hst.get_dataset_type(dataset)
+            job_plan = plan.get_plan(dataset, dataset_type, bucket, f"{bucket}/inputs", metadata)
             job_plan_list = list(job_plan)
 
             for i in range(len(job_plan_list)):

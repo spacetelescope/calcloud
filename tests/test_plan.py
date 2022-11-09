@@ -17,13 +17,14 @@ def test_plan_mock(s3_client, lambda_client, iam_client, dynamodb_client):
     conftest.setup_dynamodb(dynamodb_client)
 
     dataset = "lpppssoo0"
+    dataset_type = hst.get_dataset_type(dataset)
 
     # get the default metadata
     metadata = io.get_default_metadata()
     metadata["job_id"] = dataset
 
     # get plan
-    job_plan = plan.get_plan(dataset, bucket, f"{bucket}/inputs", metadata)
+    job_plan = plan.get_plan(dataset, dataset_type, bucket, f"{bucket}/inputs", metadata)
 
     assert job_plan[0] == dataset
     assert job_plan[1] == IPPPSSOOT_INSTR[dataset[0].upper()]
@@ -32,7 +33,7 @@ def test_plan_mock(s3_client, lambda_client, iam_client, dynamodb_client):
     # modify metadata so that the memory bin is higher than available, this should throw an AllBinsTriedQuit error
     metadata["memory_bin"] = 5
     with pytest.raises(plan.AllBinsTriedQuit):
-        job_plan = plan.get_plan(dataset, bucket, f"{bucket}/inputs", metadata)
+        job_plan = plan.get_plan(dataset, dataset_type, bucket, f"{bucket}/inputs", metadata)
 
 
 def test_plan_query_ddb(s3_client, dynamodb_resource, dynamodb_client):

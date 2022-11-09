@@ -19,6 +19,7 @@ from . import plan
 from . import submit
 from . import log
 from . import io
+from . import hst
 
 
 class CalcloudInputsFailure(RuntimeError):
@@ -60,6 +61,9 @@ def _main(comm, dataset, bucket_name, overrides):
 
     overrides = io.validate_control(overrides)
 
+    # get dataset type: ipst, svm, or mvm
+    dataset_type = hst.get_dataset_type(dataset)
+
     _wait_for_inputs(comm, dataset)
 
     comm.messages.delete(f"all-{dataset}")
@@ -74,7 +78,7 @@ def _main(comm, dataset, bucket_name, overrides):
     metadata.update(overrides)
 
     # get_plan() raises AllBinsTriedQuit when retries exhaust higher memory job definitions
-    p = plan.get_plan(dataset, bucket_name, f"{bucket_name}/inputs", metadata)
+    p = plan.get_plan(dataset, dataset_type, bucket_name, f"{bucket_name}/inputs", metadata)
 
     # Only reached if get_plan() defines a viable job plan
     log.info("Job Plan:", p)

@@ -19,19 +19,17 @@ def test_io_mock_s3io(s3_client):
     bucket = conftest.BUCKET
     s3io = io.S3Io(bucket, client=s3_client)
 
-    datasets = ["dataset1", "dataset2", "dataset3"]
+    datasets = conftest.TEST_DATASET_NAMES
     prefixes = datasets
-    payloads = ["test_payload1", "test_payload2", "test_payload3"]
+    payloads = ["test_payload" + str(i) for i in range(len(datasets))]
     msg = dict(zip(prefixes, payloads))
 
-    # test line 138
     s3io.put(msg)
     result = s3io.get(prefixes)
     for i in range(len(result)):
         assert list(result.keys())[i] == prefixes[i]
         assert list(result.values())[i] == payloads[i]
 
-    # test line 187
     bad_msg = 1234
     blank_payload = ""
     with pytest.raises(ValueError):
@@ -46,12 +44,11 @@ def test_io_mock_payloadio(s3_client):
         bucket, client=s3_client
     )  # need to use JsonIo becuase PayloadIo's dumper and loader is set to None
 
-    datasets = ["ipppssoo1", "ipppssoo2", "ipppssoo3"]
+    datasets = conftest.TEST_DATASET_NAMES
     prefixes = datasets
-    payloads = ["test_payload1", "test_payload2", "test_payload3"]
+    payloads = ["test_payload" + str(i) for i in range(len(datasets))]
     msg = dict(zip(prefixes, payloads))
 
-    # test line 257
     payloadio.put(msg)
     result = payloadio.get(prefixes)
     assert len(result) == len(msg)
@@ -63,10 +60,10 @@ def test_io_mock_messageio(s3_client):
     bucket = conftest.BUCKET
     messageio = io.MessageIo(bucket, client=s3_client)
 
-    datasets = ["ipppssoo1", "ipppssoo2", "ipppssoo3"]
+    datasets = conftest.TEST_DATASET_NAMES
     msg_types = io.MESSAGE_TYPES
     prefixes = [f"{msg_types[1]}-{dataset}" for dataset in datasets]  # use 'placed' for all datasets
-    payloads = ["test_payload1", "test_payload2", "test_payload3"]
+    payloads = ["test_payload" + str(i) for i in range(len(datasets))]
     msg = dict(zip(prefixes, payloads))
 
     # test bad prefix exception
@@ -81,9 +78,7 @@ def test_io_mock_messageio(s3_client):
 
     reset_dataset = datasets[0]
     reset_prefix = prefixes[0]
-    messageio.reset(
-        reset_dataset
-    )  # input message ids, usually datasets (e.g. ipppssoot), or other message tails. Must be a string here, not list, as input to trigger line 575
+    messageio.reset(reset_dataset)
 
     with pytest.raises(ClientError):
         result = messageio.get(reset_prefix)
@@ -158,18 +153,19 @@ def test_io_mock_iobundle(s3_client):
     bucket = conftest.BUCKET
     comm = io.get_io_bundle(bucket=bucket, client=s3_client)
 
-    # test inputs, three datasets for each Io object in the bundle
-    datasets = ["ipppssoo1", "acs_abc_01", "skycell-p1234x01y01"]
+    # test inputs
+    datasets = conftest.TEST_DATASET_NAMES
+    n_datasets = len(datasets)
 
     msg_types = io.MESSAGE_TYPES
     msg_prefixes = [f"{msg_types[1]}-{dataset}" for dataset in datasets]  # use 'placed' for all datasets
-    payloads = ["test_payload1", "test_payload2", "test_payload3"]
+    payloads = ["test_payload" + str(i) for i in range(len(datasets))]
     msg = dict(zip(msg_prefixes, payloads))
 
-    input_files = ["fake_input_file1", "fake_input_file2", "fake_input_file3"]
+    input_files = [f"{dataset}.tar.gz" for dataset in datasets]
     input_msg = dict(zip(datasets, input_files))
 
-    output_files = ["fake_output_file1", "fake_output_file2", "fake_output_file3"]
+    output_files = [f"{dataset}/process_metrix.txt" for dataset in datasets]
     output_msg = dict(zip(datasets, output_files))
 
     controls = [f"{dataset}/env" for dataset in datasets]
@@ -190,27 +186,29 @@ def test_io_mock_iobundle(s3_client):
 
     # test list_s3
     assert (
-        len(comm.list_s3()) == 15
-    )  # there are three datasets for each of the five Io objects, so this should return 3 x 5 = 15 items
+        len(comm.list_s3()) == n_datasets * 5
+    )  # there are n_datasets for each of the five Io objects, so this should return 3 x 5 = 15 items
 
     # test retrieving ids
-    assert len(comm.ids()) == 3  # three datasets submitted, therefore there should be three ids
+    assert len(comm.ids()) == n_datasets  # n_datasets submitted, therefore there should be n_datasets ids
 
     # reset one dataset
     comm.reset(datasets[0])
     assert (
-        len(comm.list_s3()) == 12
-    )  # resetting one dataset takes out three items (one each for outputs, messages, and xdata), leaving 12
+        len(comm.list_s3()) == n_datasets * 5 - 3
+    )  # resetting one dataset takes out three items (one each for outputs, messages, and xdata), leaving n_datasets * 5 - 3
 
     # clean one dataset
     comm.clean(datasets[0])
-    assert len(comm.list_s3()) == 10  # this should leave only 2 x 5 items left for the second and third dataset
+    assert (
+        len(comm.list_s3()) == (n_datasets - 1) * 5
+    )  # this should completely clean out one dataset leaving (n_datasets - 1) * 5
 
     # reset "all"
     comm.reset()
     assert (
-        len(comm.list_s3()) == 4
-    )  # this reset takes out six items (two each for outputs, messages, and xdata), leaving 4
+        len(comm.list_s3()) == (n_datasets - 1) * 2
+    )  # this reset takes out three items (one each for outputs, messages, and xdata) per dataset, leaving only two items for each remaining dataset
 
     # clean "all"
     comm.clean()
