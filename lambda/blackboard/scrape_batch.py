@@ -5,6 +5,7 @@ def lambda_handler(event, context):
     import tempfile
     from calcloud import batch
     from calcloud import common
+    from calcloud import hst
 
     # various metadata definitions
     jobStatuses = ["FAILED", "SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING", "SUCCEEDED"]
@@ -79,7 +80,19 @@ def lambda_handler(event, context):
                             exitReason = container.get("reason", j.get("statusReason", "None"))[:255]
 
                         # dataset = j["jobName"].split("-")[-1]
-                        dataset = "-".join(j["jobName"].split("-")[1:])
+                        jobname = j["jobName"]
+                        if hst.IPPPSSOOT_RE.match(jobname) or hst.SVM_RE.match(jobname) or hst.MVM_RE.match(jobname):
+                            dataset = jobname
+                        else:
+                            splitname = "-".join(jobname.split("-")[1:])
+                            if (
+                                hst.IPPPSSOOT_RE.match(splitname)
+                                or hst.SVM_RE.match(splitname)
+                                or hst.MVM_RE.match(splitname)
+                            ):
+                                dataset = splitname
+                            else:
+                                raise Exception("No valid dataset name found in jobName")
 
                         # getting the LogStream requires calling describe_jobs which is very slow.
                         # for the time being we provide a None value, in the hopes we can find
