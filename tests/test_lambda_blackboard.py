@@ -16,7 +16,7 @@ def test_blackboard(batch_client, s3_client, iam_client):
         # Add job
         try:
             dataset = conftest.TEST_DATASET_NAMES[i]
-        except:
+        except IndexError:
             dataset = f"ipppssoo{i}"
         batch_client.submit_job(jobName=dataset, jobQueue=job_q_arn, jobDefinition=job_definition_arn)
         submitted_datasets.append(dataset)
