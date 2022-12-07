@@ -78,7 +78,8 @@ def lambda_handler(event, context):
                         else:
                             exitReason = container.get("reason", j.get("statusReason", "None"))[:255]
 
-                        dataset = j["jobName"].split("-")[-1]
+                        #dataset = j["jobName"].split("-")[-1]
+                        dataset = "-".join(j["jobName"].split("-")[1:])
 
                         # getting the LogStream requires calling describe_jobs which is very slow.
                         # for the time being we provide a None value, in the hopes we can find
