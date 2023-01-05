@@ -27,7 +27,7 @@ def test_model_lambda_scrape(s3_client, dynamodb_client, dynamodb_resource):
 
     comm = io.get_io_bundle(bucket=bucket, client=s3_client)
 
-    ipst = "ipppssoo77"
+    ipst = "ipppssoo7"
     processed_msg = f"processed-{ipst}"
 
     # create and put the memory model file
