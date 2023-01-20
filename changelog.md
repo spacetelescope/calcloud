@@ -1,2 +1,4 @@
 - default base docker image set to CALDP_drizcosstis_CAL_rc2
 - default crds update to hst_1063.pmap
+- significant refactoring to generalize processing terms and support
+  HAP processing workflows
