@@ -1,5 +1,4 @@
-- default base docker image set to CALDP_20221010_CAL_final
-- default crds update to hst_1038.pmap
-- pull cert chain from ami where the image is built
-- significant unit test coverage additions
-- node install bugfix in ami-rotation userdata
+- default base docker image set to CALDP_20230208_CAL_final
+- default crds update to hst_1064.pmap
+- significant refactoring to generalize processing terms and support
+  HAP processing workflows
