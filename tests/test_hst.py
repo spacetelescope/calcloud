@@ -15,7 +15,6 @@ def test_hst_get_instrument():
     # output_uri = f"s3://{bucket}"
 
     for i in IPPPSSOOT_INSTR.keys():
-
         ipst = f"{i.lower()}pppssoot"
 
         inst = hst.get_instrument(ipst)

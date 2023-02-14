@@ -212,7 +212,6 @@ def test_model_ingest_target_data_errors(s3_client, s3_resource):
 
 
 def test_model_ingest_memory_bins(s3_resource):
-
     from calcloud import model_ingest
 
     bucket = conftest.BUCKET

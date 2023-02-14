@@ -24,7 +24,6 @@ from calcloud import exit_codes
 
 
 def lambda_handler(event, context):
-
     print(event)
 
     detail = event["detail"]

@@ -201,7 +201,6 @@ class S3Io:
         unnecessary tests for messges known to exist,  just delete them.
         """
         for prefix in self.expand_all(prefixes):
-
             parts = [prefix.split("-")[0], "-".join(prefix.split("-")[1:])]
 
             if hst.is_dataset_name(parts[1]) and parts[0] in MESSAGE_TYPES:

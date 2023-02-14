@@ -9,7 +9,6 @@ from calcloud import s3
 
 
 def lambda_handler(event, context):
-
     bucket_name, dataset = s3.parse_s3_event(event)
 
     comm = io.get_io_bundle(bucket_name)

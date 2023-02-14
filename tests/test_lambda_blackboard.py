@@ -7,7 +7,6 @@ import scrape_batch
 
 
 def test_blackboard(batch_client, s3_client, iam_client):
-
     q_arns, jobdef_arns = conftest.setup_batch(iam_client, batch_client)
 
     submitted_datasets = list()
