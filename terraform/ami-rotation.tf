@@ -118,10 +118,10 @@ resource "aws_cloudwatch_log_group" "ami-rotation" {
 #  arn       = module.calcloud_env_amiRotation.lambda_function_arn
 #}
 
-resource "aws_lambda_permission" "allow_lambda_exec_ami_rotate" {
-  statement_id  = "AllowExecutionFromCloudWatch"
-  action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_env_amiRotation.lambda_function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.ami-rotate-scheduler.arn
+#resource "aws_lambda_permission" "allow_lambda_exec_ami_rotate" {
+#  statement_id  = "AllowExecutionFromCloudWatch"
+#  action        = "lambda:InvokeFunction"
+#  function_name = module.calcloud_env_amiRotation.lambda_function_name
+#  principal     = "events.amazonaws.com"
+#  source_arn    = aws_cloudwatch_event_rule.ami-rotate-scheduler.arn
 }
