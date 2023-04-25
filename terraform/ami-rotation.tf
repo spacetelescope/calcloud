@@ -124,4 +124,4 @@ resource "aws_cloudwatch_log_group" "ami-rotation" {
 #  function_name = module.calcloud_env_amiRotation.lambda_function_name
 #  principal     = "events.amazonaws.com"
 #  source_arn    = aws_cloudwatch_event_rule.ami-rotate-scheduler.arn
-}
+#}
