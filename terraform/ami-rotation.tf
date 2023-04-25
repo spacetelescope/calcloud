@@ -108,7 +108,7 @@ resource "aws_cloudwatch_event_rule" "ami-rotate-scheduler" {
   name                = "ami-rotate-scheduler${local.environment}"
   description         = "scheduler for ami rotation"
   schedule_expression = "cron(0 8 ? * TUE,FRI *)"
-  is_enabled = False   # disable because we now have CodeBuild project for AMI rotation
+  is_enabled = "false"   # disable because we now have CodeBuild project for AMI rotation
 }
 
 resource "aws_cloudwatch_event_target" "ami-rotate-scheduler" {
