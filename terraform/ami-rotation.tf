@@ -104,24 +104,23 @@ resource "aws_cloudwatch_log_group" "ami-rotation" {
   retention_in_days = local.lambda_log_retention_in_days
 }
 
-# Remove cloudwatch trigger since we now have the codebuild project for AMI rotation
+resource "aws_cloudwatch_event_rule" "ami-rotate-scheduler" {
+  name                = "ami-rotate-scheduler${local.environment}"
+  description         = "scheduler for ami rotation"
+  schedule_expression = "cron(0 8 ? * TUE,FRI *)"
+  is_enabled = False   # disable because we now have CodeBuild project for AMI rotation
+}
 
-#resource "aws_cloudwatch_event_rule" "ami-rotate-scheduler" {
-#  name                = "ami-rotate-scheduler${local.environment}"
-#  description         = "scheduler for ami rotation"
-#  schedule_expression = "cron(0 8 ? * TUE,FRI *)"
-#}
+resource "aws_cloudwatch_event_target" "ami-rotate-scheduler" {
+  rule      = aws_cloudwatch_event_rule.ami-rotate-scheduler.name
+  target_id = "lambda"
+  arn       = module.calcloud_env_amiRotation.lambda_function_arn
+}
 
-#resource "aws_cloudwatch_event_target" "ami-rotate-scheduler" {
-#  rule      = aws_cloudwatch_event_rule.ami-rotate-scheduler.name
-#  target_id = "lambda"
-#  arn       = module.calcloud_env_amiRotation.lambda_function_arn
-#}
-
-#resource "aws_lambda_permission" "allow_lambda_exec_ami_rotate" {
-#  statement_id  = "AllowExecutionFromCloudWatch"
-#  action        = "lambda:InvokeFunction"
-#  function_name = module.calcloud_env_amiRotation.lambda_function_name
-#  principal     = "events.amazonaws.com"
-#  source_arn    = aws_cloudwatch_event_rule.ami-rotate-scheduler.arn
-#}
+resource "aws_lambda_permission" "allow_lambda_exec_ami_rotate" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = module.calcloud_env_amiRotation.lambda_function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.ami-rotate-scheduler.arn
+}
