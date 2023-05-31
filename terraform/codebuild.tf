@@ -1,6 +1,6 @@
 resource aws_codebuild_project ami_rotation {
     name         = "calcloud-ami-rotation${local.environment}"
-    service_role = data.aws_ssm_parameter.codebuild_ami_rotate_svc_arn.value
+    service_role = "arn:aws:iam::${var.account_id}:role/${data.aws_ssm_parameter.codebuild_role_name.value}"
 
     artifacts {
         type = "NO_ARTIFACTS"
@@ -19,7 +19,7 @@ resource aws_codebuild_project ami_rotation {
 
         environment_variable {
             name  = "ADMIN_ARN"
-            value = "${data.aws_ssm_parameter.codebuild_ami_rotate_deploy_arn.value}"
+            value = "${data.aws_ssm_parameter.admin_arn.value}"
         }
 
         environment_variable {
@@ -62,5 +62,5 @@ resource "aws_cloudwatch_event_target" "ami-rotate-scheduler-codebuild" {
   rule      = aws_cloudwatch_event_rule.ami-rotate-scheduler-codebuild.name
   target_id = "codebuild"
   arn       = aws_codebuild_project.ami_rotation.arn
-  role_arn  = data.aws_ssm_parameter.aws_eventbridge_invoke_codebuild.value
+  role_arn  = data.aws_ssm_parameter.admin_arn.value
 }

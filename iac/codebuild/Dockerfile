@@ -22,8 +22,24 @@ RUN set -ex \
     && yum install git -y  \
     && yum install tar wget python3 which -y 
            
+RUN mkdir -p /etc/ssl/certs && \
+    mkdir -p /etc/pki/ca-trust/source/anchors
 
-RUN curl -sL https://rpm.nodesource.com/setup_16.x | bash - && \
+COPY tls-ca-bundle.pem /etc/pki/ca-trust/source/anchors/stsci-tls-ca-bundle.pem
+
+COPY tls-ca-bundle.pem /etc/ssl/certs/stsci-tls-ca-bundle.pem
+
+RUN update-ca-trust
+
+# These should only happen once
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/stsci-tls-ca-bundle.pem
+ENV CURL_CA_BUNDLE=/etc/ssl/certs/stsci-tls-ca-bundle.pem
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/stsci-tls-ca-bundle.pem
+
+#Update Certificates
+#RUN yum update ca-certificates -y
+
+RUN curl -L https://rpm.nodesource.com/setup_16.x | bash - && \
     yum install -y nodejs
 
 ENV NODE_16_VERSION="16.15.1"

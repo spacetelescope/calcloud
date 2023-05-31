@@ -1,7 +1,7 @@
 #! /bin/bash -xu
-export CALCLOUD_VER="sb-pipeline"
-export CALDP_VER="sb-pipeline"
-export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20220527_CAL_final"
+export CALCLOUD_VER="0.4.40-rc1"
+export CALDP_VER="0.2.21"
+export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20230208_CAL_final"
 
 export BASE_IMAGE_TAG=`cut -d ":" -f2- <<< ${CAL_BASE_IMAGE} `
 
@@ -10,14 +10,18 @@ export COMMON_IMAGE_TAG="CALCLOUD_${CALCLOUD_VER}-CALDP_${CALDP_VER}-BASE_${BASE
 # i.e. CALCLOUD_BUILD_DIR="$HOME/deployer/calcloud"
 # these can be set as environment variables before running to avoid changing the script directly
 # (and avoid accidentally committing a custom path to the repo...)
-export CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-"/home/ec2-user/cslocum/calcloud"} 
-export CALDP_BUILD_DIR=${CALDP_BUILD_DIR:-"/home/ec2-user/cslocum/caldp"}
+export CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-"/home/ec2-user/deployer/calcloud"} 
+export CALDP_BUILD_DIR=${CALDP_BUILD_DIR:-""}
 
 export TMP_INSTALL_DIR="/tmp/calcloud_install"
 
+# Set account ID in env variable and for terraform
+export ACCOUNT_ID=`aws sts get-caller-identity --output=text | awk '{ print $1 }'`
+export TF_VAR_account_id=$ACCOUNT_ID
+
 # get a couple of things from AWS ssm
 # the env, i.e. sb,dev,test,prod
-aws_env=${aws_env:-"sb-pipeline"}
+aws_env=${aws_env:-"dev"}
 
 # the central ecr url
 repo_url=${repo_url:-""}

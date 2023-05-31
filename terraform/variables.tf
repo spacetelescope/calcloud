@@ -9,6 +9,11 @@ variable "environment" {
   default = null
 }
 
+variable "account_id" {
+  description = "Account ID"
+  type = string
+}
+
 variable region {
   description = "AWS region"
   type = string
