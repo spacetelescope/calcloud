@@ -1,5 +1,5 @@
 #! /bin/bash -xu
-export CALCLOUD_VER="0.4.40-rc1"
+export CALCLOUD_VER="ami-rotate-codebuild"
 export CALDP_VER="0.2.21"
 export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20230208_CAL_final"
 
