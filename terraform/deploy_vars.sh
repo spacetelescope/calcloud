@@ -10,7 +10,7 @@ export COMMON_IMAGE_TAG="CALCLOUD_${CALCLOUD_VER}-CALDP_${CALDP_VER}-BASE_${BASE
 # i.e. CALCLOUD_BUILD_DIR="$HOME/deployer/calcloud"
 # these can be set as environment variables before running to avoid changing the script directly
 # (and avoid accidentally committing a custom path to the repo...)
-export CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-"/home/ec2-user/deployer/calcloud"} 
+export CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-""} 
 export CALDP_BUILD_DIR=${CALDP_BUILD_DIR:-""}
 
 export TMP_INSTALL_DIR="/tmp/calcloud_install"
