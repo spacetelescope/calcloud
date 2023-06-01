@@ -333,14 +333,14 @@ def parse_s3_event(event):
     See S3 docs: https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-content-structure.html
     See also the callers of this function.
 
-    Returns bucket_name, ipppssoot
+    Returns bucket_name, dataset
     """
     log.verbose("S3 Event:", event)
 
     message = event["Records"][0]["s3"]["object"]["key"]
     bucket_name = event["Records"][0]["s3"]["bucket"]["name"]
-    ipst = message.split("-")[-1]
+    dataset = "-".join(message.split("-")[1:])
 
-    log.info(f"received {message} : bucket = {bucket_name}, ipppssoot = {ipst}")
+    log.info(f"received {message} : bucket = {bucket_name}, dataset = {dataset}")
 
-    return "s3://" + bucket_name, ipst
+    return "s3://" + bucket_name, dataset

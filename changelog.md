@@ -1,1 +1,2 @@
-- hotfix for protobuf pinned to 3.20.1 to deal with dependency-related error in modeling lambda/training images
+- default base docker image set to CALDP_onlywfpc2drizzle_CAL_rc3
+- default crds update to hst_1077.pmap

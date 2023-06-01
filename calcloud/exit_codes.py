@@ -55,7 +55,7 @@ _NAME_EXPLANATIONS = dict(
 _CODE_TO_NAME = dict()
 
 # Set up original module global variables / named constants
-for (name, code) in _EXIT_CODES.items():
+for name, code in _EXIT_CODES.items():
     globals()[name] = code
     _CODE_TO_NAME[code] = name
     _CODE_TO_NAME[str(code)] = name

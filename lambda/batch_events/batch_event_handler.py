@@ -11,10 +11,10 @@ memory related failures results in automatic retries if:
 Job control data is updated with a new retry count and other information from
 the Batch event.
 
-All messages for the failed ipppssoot are deleted.
+All messages for the failed dataset are deleted.
 
 A rescue message is sent to trigger the rescue lambda for qualifying
-memory related failures, otherwise an error-ipppssoot message is sent.
+memory related failures, otherwise an error-dataset message is sent.
 """
 
 import os
@@ -24,16 +24,15 @@ from calcloud import exit_codes
 
 
 def lambda_handler(event, context):
-
     print(event)
 
     detail = event["detail"]
     job_id = detail["jobId"]
-    job_name = detail["jobName"]  # appears to be ipppssoot
+    job_name = detail["jobName"]  # appears to be dataset
     status_reason = detail.get("statusReason", "undefined")
 
     container = event["detail"]["container"]
-    ipppssoot = container["command"][1]
+    dataset = container["command"][1]
     bucket = container["command"][2].split("/")[2]
     container_reason = container.get("reason", "undefined")
     exit_code = container.get("exitCode", "undefined")
@@ -41,8 +40,8 @@ def lambda_handler(event, context):
 
     comm = io.get_io_bundle(bucket)
 
-    metadata = comm.xdata.get(ipppssoot)
-    metadata["ipppssoot"] = ipppssoot
+    metadata = comm.xdata.get(dataset)
+    metadata["dataset"] = dataset
     metadata["bucket"] = bucket
     metadata["job_id"] = job_id
     metadata["job_name"] = job_name
@@ -58,37 +57,37 @@ def lambda_handler(event, context):
     else:
         combined_reason = status_reason
 
-    continuation_msg = "error-" + ipppssoot
+    continuation_msg = "error-" + dataset
 
     if exit_codes.is_memory_error(exit_code) or container_reason.startswith("OutOfMemoryError: Container killed"):
         if not metadata["terminated"] and metadata["memory_retries"] < int(os.environ["MAX_MEMORY_RETRIES"]):
             metadata["memory_retries"] += 1
-            continuation_msg = "rescue-" + ipppssoot
-            print("Automatic OutOfMemory rescue of", ipppssoot, "with memory retry count", metadata["memory_retries"])
+            continuation_msg = "rescue-" + dataset
+            print("Automatic OutOfMemory rescue of", dataset, "with memory retry count", metadata["memory_retries"])
         else:
-            print("Automatic OutOfMemory retries for", ipppssoot, "exhausted at", metadata["memory_retries"])
+            print("Automatic OutOfMemory retries for", dataset, "exhausted at", metadata["memory_retries"])
     elif container_reason.startswith("CannotInspectContainer"):
         if not metadata["terminated"] and metadata["retries"] < int(os.environ["MAX_DOCKER_RETRIES"]):
             metadata["retries"] += 1
-            continuation_msg = "rescue-" + ipppssoot
-            print("Automatic CannotInspectContainer rescue for", ipppssoot, "with retry count", metadata["retries"])
+            continuation_msg = "rescue-" + dataset
+            print("Automatic CannotInspectContainer rescue for", dataset, "with retry count", metadata["retries"])
         else:
-            print("Automatic CannotInspectContainer retries for", ipppssoot, "exhausted at", metadata["retries"])
+            print("Automatic CannotInspectContainer retries for", dataset, "exhausted at", metadata["retries"])
     elif container_reason.startswith("DockerTimeoutError"):
         if not metadata["terminated"] and metadata["retries"] < int(os.environ["MAX_DOCKER_RETRIES"]):
             metadata["retries"] += 1
-            continuation_msg = "rescue-" + ipppssoot
-            print("Automatic DockerTimeoutError rescue for", ipppssoot, "with retry count", metadata["retries"])
+            continuation_msg = "rescue-" + dataset
+            print("Automatic DockerTimeoutError rescue for", dataset, "with retry count", metadata["retries"])
         else:
-            print("Automatic DockerTimeoutError retries for", ipppssoot, "exhausted at", metadata["retries"])
+            print("Automatic DockerTimeoutError retries for", dataset, "exhausted at", metadata["retries"])
     elif status_reason.startswith("Operator cancelled"):
-        print("Operator cancelled job", job_id, "for", ipppssoot, "no automatic retry.")
-        continuation_msg = "terminated-" + ipppssoot
+        print("Operator cancelled job", job_id, "for", dataset, "no automatic retry.")
+        continuation_msg = "terminated-" + dataset
     else:
-        print("Failure for", ipppssoot, "no automatic retry for", combined_reason)
+        print("Failure for", dataset, "no automatic retry for", combined_reason)
 
     # XXXX Since retry count used in planning, control output must precede rescue message
     print(metadata)
-    comm.xdata.put(ipppssoot, metadata)
-    comm.messages.delete("all-" + ipppssoot)
+    comm.xdata.put(dataset, metadata)
+    comm.messages.delete("all-" + dataset)
     comm.messages.put(continuation_msg)
