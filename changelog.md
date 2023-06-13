@@ -1,2 +1,2 @@
-- default base docker image set to CALDP_onlywfpc2drizzle_CAL_rc3
+- default base docker image set to CALDP_20230613_CAL_final
 - default crds update to hst_1077.pmap
