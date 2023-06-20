@@ -18,8 +18,8 @@ resource aws_codebuild_project ami_rotation {
         image_pull_credentials_type = "SERVICE_ROLE"
 
         environment_variable {
-            name  = "ADMIN_ARN"
-            value = "${data.aws_ssm_parameter.admin_arn.value}"
+            name  = "TF_VAR_account_id"
+            value = "${var.account_id}"
         }
 
         environment_variable {

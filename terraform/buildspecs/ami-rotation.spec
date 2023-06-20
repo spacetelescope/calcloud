@@ -18,4 +18,4 @@ phases:
   build:
     commands:
       - cd $CALCLOUD_BUILD_DIR/terraform/
-      - ./deploy_ami_rotate.sh
+      - ./deploy_ami_rotate_codebuild_script.sh
