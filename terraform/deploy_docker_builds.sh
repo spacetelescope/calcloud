@@ -50,6 +50,7 @@ fi
 # amirotation image
 cd ${CALCLOUD_BUILD_DIR}/iac/codebuild
 pwd
+./copy-cert # copy the cert from CI node AMI and replace the cert in current dir
 set -o pipefail && docker build -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE} --build-arg aws_env="${aws_env}" .
 amirotation_docker_build_status=$?
 if [[ $amirotation_docker_build_status -ne 0 ]]; then
