@@ -29,8 +29,8 @@ def run(cmd, cwd=".", timeout=100):
 
 
 def get_cert(cert_path, local_path):
-    #run(f"cp {cert_path} {local_path}")  
-    os.system(f"cp {cert_path} {local_path}")  # Using os module temporarily
+    run(f"cp {cert_path} {local_path}")  
+    #os.system(f"cp {cert_path} {local_path}")  # Using os module temporarily
     print(f"Copied {cert_path} to {local_path}.")
 
 
