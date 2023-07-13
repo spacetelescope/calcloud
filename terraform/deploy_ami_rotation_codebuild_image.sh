@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# Script for building the AMI rotation codebuild image, called from deploy_docker_builds.sh
+
 source deploy_vars.sh
 
 source deploy_checkout_repos.sh
@@ -42,5 +44,3 @@ else
 fi
 
 ./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG_LATEST $AMIROTATION_ECR_TAG
-
-source deploy_cleanup.sh

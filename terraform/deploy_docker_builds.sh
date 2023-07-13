@@ -48,16 +48,8 @@ if [[ $caldp_docker_build_status -ne 0 ]]; then
 fi
 
 # amirotation image
-./deploy-ami-rotation-codebuild-image # build, scan, and tag AMIROTATION image
-#cd ${CALCLOUD_BUILD_DIR}/iac/codebuild
-#pwd
-#set -o pipefail && docker build -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE} --build-arg aws_env="${aws_env}" .
-#amirotation_docker_build_status=$?
-#if [[ $amirotation_docker_build_status -ne 0 ]]; then
-#    echo "AMI Rotation docker build failed; exiting"
-#    exit 1
-#fi
-
+cd ${CALCLOUD_BUILD_DIR}/terraform
+./deploy_ami_rotation_codebuild_image.sh # build, scan, and tag AMIROTATION image
 
 # need to "log in" to ecr to push or pull the images
 awsudo $ADMIN_ARN aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $repo_url
@@ -70,9 +62,6 @@ docker push ${PREDICT_DOCKER_IMAGE}
 
 echo Pushing ${CALDP_DOCKER_IMAGE}
 docker push ${CALDP_DOCKER_IMAGE}
-
-#echo Pushing ${AMIROTATION_DOCKER_IMAGE}
-#docker push ${AMIROTATION_DOCKER_IMAGE}
 
 cd ${CALCLOUD_BUILD_DIR}/terraform
 source deploy_cleanup.sh
