@@ -16,6 +16,7 @@ ARG aws_env
 
 # Install git, SSH, and other utilities
 RUN set -ex \
+    && yum update -y --security \
     && yum install -y  gcc libpng-devel libjpeg-devel unzip yum-utils \ 
     && yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo \
     && yum install terraform-1.0.11 -y \
@@ -33,8 +34,8 @@ RUN update-ca-trust
 
 # These should only happen once
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/stsci-tls-ca-bundle.pem
-ENV CURL_CA_BUNDLE=/etc/ssl/certs/stsci-tls-ca-bundle.pem
-ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/stsci-tls-ca-bundle.pem
+#ENV CURL_CA_BUNDLE=/etc/ssl/certs/stsci-tls-ca-bundle.pem
+#ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/stsci-tls-ca-bundle.pem
 
 #Update Certificates
 #RUN yum update ca-certificates -y
