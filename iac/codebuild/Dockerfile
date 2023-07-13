@@ -34,8 +34,8 @@ RUN update-ca-trust
 
 # These should only happen once
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/stsci-tls-ca-bundle.pem
-#ENV CURL_CA_BUNDLE=/etc/ssl/certs/stsci-tls-ca-bundle.pem
-#ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/stsci-tls-ca-bundle.pem
+ENV CURL_CA_BUNDLE=/etc/ssl/certs/stsci-tls-ca-bundle.pem
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/stsci-tls-ca-bundle.pem
 
 #Update Certificates
 #RUN yum update ca-certificates -y
