@@ -51,12 +51,13 @@ fi
 cd ${CALCLOUD_BUILD_DIR}/iac/codebuild
 pwd
 ./copy-cert # copy the cert from CI node AMI and replace the cert in current dir
-set -o pipefail && docker build -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE} --build-arg aws_env="${aws_env}" .
-amirotation_docker_build_status=$?
-if [[ $amirotation_docker_build_status -ne 0 ]]; then
-    echo "AMI Rotation docker build failed; exiting"
-    exit 1
-fi
+./deploy-ami-rotation-codebuild-image # build, scan, and tag AMIROTATION image
+#set -o pipefail && docker build -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE} --build-arg aws_env="${aws_env}" .
+#amirotation_docker_build_status=$?
+#if [[ $amirotation_docker_build_status -ne 0 ]]; then
+#    echo "AMI Rotation docker build failed; exiting"
+#    exit 1
+#fi
 
 
 # need to "log in" to ecr to push or pull the images
@@ -71,8 +72,8 @@ docker push ${PREDICT_DOCKER_IMAGE}
 echo Pushing ${CALDP_DOCKER_IMAGE}
 docker push ${CALDP_DOCKER_IMAGE}
 
-echo Pushing ${AMIROTATION_DOCKER_IMAGE}
-docker push ${AMIROTATION_DOCKER_IMAGE}
+#echo Pushing ${AMIROTATION_DOCKER_IMAGE}
+#docker push ${AMIROTATION_DOCKER_IMAGE}
 
 cd ${CALCLOUD_BUILD_DIR}/terraform
 source deploy_cleanup.sh
