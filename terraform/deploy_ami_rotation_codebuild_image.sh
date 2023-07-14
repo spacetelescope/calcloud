@@ -29,7 +29,7 @@ docker push ${AMIROTATION_DOCKER_IMAGE_UNSCANNED}
 cd ${CALCLOUD_BUILD_DIR}/terraform
 pwd
 
-python3 ami-rotation-image-scan
+python3 ami-rotation-image-scan.py
 amirotation_image_scan_status=$?
 
 if [ $amirotation_image_scan_status == 0 ]
