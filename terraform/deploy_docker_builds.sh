@@ -49,7 +49,7 @@ fi
 
 # amirotation image
 cd ${CALCLOUD_BUILD_DIR}/terraform
-./deploy_ami_rotation_codebuild_image.sh # build, scan, and tag AMIROTATION image
+source deploy_ami_rotation_codebuild_image.sh # build, scan, and tag AMIROTATION image
 
 # need to "log in" to ecr to push or pull the images
 awsudo $ADMIN_ARN aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $repo_url
