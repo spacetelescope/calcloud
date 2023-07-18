@@ -32,8 +32,7 @@ resource aws_codebuild_project ami_rotation {
             value = "${local.pre_environment}"
         }
 	
-        # Uncomment to use the CALCLOUD version built into the codebuild image 
-        # instead of pulling latest version from github
+        # Uncomment to use the CALCLOUD version built into the codebuild image instead of pulling latest from github
         #environment_variable {
         #     name  = "CALCLOUD_BUILD_DIR"
         #     value = "/opt/calcloud/ami_rotate/calcloud"
