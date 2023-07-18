@@ -17,5 +17,5 @@ version: 0.2
 phases:
   build:
     commands:
-      - cd $CALCLOUD_BUILD_DIR/terraform/
+      - cd /opt/calcloud/ami_rotate/calcloud/terraform/
       - ./deploy_ami_rotate_codebuild_script.sh
