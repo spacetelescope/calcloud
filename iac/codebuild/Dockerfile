@@ -13,6 +13,7 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2
 
 ENV AWS_DEFAULT_REGION="us-east-1"
 ARG aws_env
+ARG CALCLOUD_VER
 
 # Install git, SSH, and other utilities
 RUN set -ex \

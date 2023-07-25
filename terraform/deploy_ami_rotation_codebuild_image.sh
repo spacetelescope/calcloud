@@ -11,7 +11,7 @@ pwd
 
 ./copy-cert # copy the cert from CI node AMI and replace the cert in current dir
 
-set -o pipefail && docker build -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE_UNSCANNED} --build-arg aws_env="${aws_env}" .
+set -o pipefail && docker build -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE_UNSCANNED} --build-arg aws_env="${aws_env}" --build-arg CALCLOUD_VER="${CALCLOUD_VER}" .
 amirotation_docker_build_status=$?
 
 if [[ $amirotation_docker_build_status -ne 0 ]]; then
