@@ -21,7 +21,7 @@ export TF_VAR_account_id=$ACCOUNT_ID
 
 # get a couple of things from AWS ssm
 # the env, i.e. sb,dev,test,prod
-aws_env=${aws_env:-"dev"}
+aws_env=${aws_env:-""}
 
 # the central ecr url
 repo_url=${repo_url:-""}
