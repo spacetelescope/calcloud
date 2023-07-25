@@ -5,9 +5,7 @@
 aws_env=${aws_env:-""}
 
 # get the versions from ssm params
-aws ssm get-parameter --name "/tf/env/awsysver-${aws_env}"
 calcloud_ver_response=`aws ssm get-parameter --name "/tf/env/awsysver-${aws_env}" | grep "Value"`
-echo $calcloud_ver_response
 CALCLOUD_VER=${calcloud_ver_response##*:}
 CALCLOUD_VER=`echo $CALCLOUD_VER | tr -d '",'`
 

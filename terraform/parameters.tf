@@ -74,18 +74,6 @@ data aws_ssm_parameter model_ingest_role {
   name = "/iam/roles/calcloud_model_ingest"
 }
 
-#data aws_ssm_parameter codebuild_ami_rotate_svc_arn {
-#  name = "/iam/roles/calcloud_codebuild_ami_rotate_svc_arn"
-#}
-
-#data aws_ssm_parameter codebuild_ami_rotate_deploy_arn {
-#  name = "/iam/roles/calcloud_codebuild_ami_rotate_deploy_arn"
-#}
-
-#data aws_ssm_parameter aws_eventbridge_invoke_codebuild {
-#  name = "/iam/roles/aws_eventbridge_invoke_codebuild"
-#}
-
 data aws_ssm_parameter fs_blackboard_arn {
   name = "/gateway/fileshare/blackboard"
 }
@@ -144,7 +132,6 @@ resource "aws_ssm_parameter" "ami_rotation_base_image" {
   value = "${var.ami_rotation_base_image}"
   overwrite = true 
 }
-
 
 resource "aws_ssm_parameter" "awsysver" {
   name  = "/tf/env/awsysver${local.environment}"
