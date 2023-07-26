@@ -1,0 +1,48 @@
+#! /usr/bin/env python3
+
+# This script copies the most recent SSL cert from the CI-node 
+# (must be run on the CI-node with latest AMI)
+# The cert is needed for Docker builds to transit the STScI packet inspection firewall on AWS.   
+
+import sys
+import subprocess
+import os
+
+
+def run(cmd, cwd=".", timeout=100):
+    """Run subprocess `cmd` in dir `cwd` failing if not completed within `timeout` seconds
+    of if `cmd` returns a non-zero exit status.
+
+    Returns both stdout+stderr from `cmd`.  (untested, verify manually if in doubt)
+    """
+    print(cmd)
+    result = subprocess.run(
+        cmd.split(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=True,
+        cwd=cwd,
+        timeout=timeout,
+    )  # maybe succeeds
+    return result.stdout
+
+
+def get_cert(cert_path, local_path):
+    run(f"cp {cert_path} {local_path}")  
+    #os.system(f"cp {cert_path} {local_path}")  # Using os module temporarily
+    print(f"Copied {cert_path} to {local_path}.")
+
+
+def main(cert_path, local_cert_path):
+    try:
+        get_cert(cert_path, local_cert_path)
+    except:  
+        print("Skipping update of tls-ca-bundle.pem needed to build on science platforms.")
+        return 0
+    print("Cert update complete.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main("/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem", "tls-ca-bundle.pem"))
