@@ -1,8 +1,7 @@
 #! /bin/bash -xu
-export CALCLOUD_VER="ami-rotate-codebuild-v3"
-export CALDP_VER="v0.2.22-rc3"
-export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_onlywfpc2drizzle_CAL_rc3"
-
+export CALCLOUD_VER="v0.4.41-rc1"
+export CALDP_VER="v0.2.23-rc1"
+export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_cosandpin_CAL_rc1"
 export BASE_IMAGE_TAG=`cut -d ":" -f2- <<< ${CAL_BASE_IMAGE} `
 
 export COMMON_IMAGE_TAG="CALCLOUD_${CALCLOUD_VER}-CALDP_${CALDP_VER}-BASE_${BASE_IMAGE_TAG}"
@@ -10,7 +9,7 @@ export COMMON_IMAGE_TAG="CALCLOUD_${CALCLOUD_VER}-CALDP_${CALDP_VER}-BASE_${BASE
 # i.e. CALCLOUD_BUILD_DIR="$HOME/deployer/calcloud"
 # these can be set as environment variables before running to avoid changing the script directly
 # (and avoid accidentally committing a custom path to the repo...)
-export CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-""} 
+export CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-""}
 export CALDP_BUILD_DIR=${CALDP_BUILD_DIR:-""}
 
 export TMP_INSTALL_DIR="/tmp/calcloud_install"
