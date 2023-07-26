@@ -51,7 +51,6 @@ fi
 
 # check for Batch jobs and exit if any exist that are running or should be soon
 cd ${CALCLOUD_BUILD_DIR}/scripts
-#./check_batch_jobs.py
 ./check_batch_jobs_no_admin.py
 batch_jobs=$?
 if [[ $batch_jobs -ne 0 ]]; then
