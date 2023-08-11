@@ -14,6 +14,10 @@ data aws_ssm_parameter ecs_instance_role {
   name = "/iam/roles/ecs_instance_role"
 }
 
+data aws_ssm_parameter codebuild_role_name {
+  name = "/hst-repro/codebuild-role"
+}
+
 data aws_ssm_parameter batch_sgs {
   name = "/vpc/sgs/batch"
 }
@@ -120,6 +124,13 @@ data aws_ssm_parameter ci_instance_role {
 
 data aws_ssm_parameter central_ecr {
   name = "/ecr/SharedServices"
+}
+
+resource "aws_ssm_parameter" "ami_rotation_base_image" {
+  name  = "/tf/env/calcloud-ami-rotation-base-image${local.environment}"
+  type  = "String"
+  value = "${var.ami_rotation_base_image}"
+  overwrite = true 
 }
 
 resource "aws_ssm_parameter" "awsysver" {

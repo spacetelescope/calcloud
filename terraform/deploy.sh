@@ -32,6 +32,8 @@ else
     exit 1
 fi
 
+env | sort
+
 # initial terraform setup
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
@@ -49,7 +51,7 @@ awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_en
 awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
 
 # manual confirmation required
-awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}" -var "full_base_image=${BASE_IMAGE_TAG}"
+awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}" -var "full_base_image=${BASE_IMAGE_TAG}" -var "ami_rotation_base_image=${AMIROTATION_DOCKER_IMAGE}"
 
 # brief testing indicates that terraform apply exits with 0 status only if you say yes and the apply succeeds
 apply_status=$?
@@ -88,6 +90,7 @@ echo ${aws_env}
 ./deploy_image_promote.sh --old-tag $CALDP_ECR_TAG batch-${aws_env}
 ./deploy_image_promote.sh --old-tag $PREDICT_ECR_TAG predict-${aws_env}
 ./deploy_image_promote.sh --old-tag $TRAINING_ECR_TAG training-${aws_env}
+./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG amirotation-${aws_env}
 
 cd ${CALCLOUD_BUILD_DIR}/terraform
 source deploy_cleanup.sh

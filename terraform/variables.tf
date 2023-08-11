@@ -9,6 +9,11 @@ variable "environment" {
   default = null
 }
 
+variable "account_id" {
+  description = "Account ID"
+  type = string
+}
+
 variable region {
   description = "AWS region"
   type = string
@@ -29,6 +34,12 @@ variable awsysver {
 
 variable csys_ver {
   description = "HST keyword for docker base calibration image tag"
+  type = string
+  default = "undefined"
+}
+
+variable ami_rotation_base_image {
+  description = "Docker image for Codebuild AMI rotation job"
   type = string
   default = "undefined"
 }
@@ -105,8 +116,8 @@ variable crds_context {
   default = {
     "-sb" = "hst_1074.pmap"
     "-dev" = "hst_1074.pmap"
-    "-test" = "hst_1077.pmap"
-    "-ops" = "hst_1077.pmap"
+    "-test" = "hst_1089.pmap"
+    "-ops" = "hst_1089.pmap"
   }
 }
 
