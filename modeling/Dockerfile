@@ -30,7 +30,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
 && cd Python-3.11.0 \
 && ./configure --enable-optimizations \
 && make altinstall \
-&& update-alternatives --install /usr/local/bin/python python /usr/local/bin/python3.9 10 
+&& update-alternatives --install /usr/local/bin/python python /usr/local/bin/python3.11 10 
 
 RUN DEBIAN_FRONTEND=noninteractive \
 && cd ../ && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
