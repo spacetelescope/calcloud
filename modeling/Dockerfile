@@ -25,9 +25,9 @@ unzip \
 zlib1g-dev 
 
 RUN DEBIAN_FRONTEND=noninteractive \
-&& curl -o Python-3.9.5.tgz https://www.python.org/ftp/python/3.9.5/Python-3.9.5.tgz \
-&& tar -xf Python-3.9.5.tgz \
-&& cd Python-3.9.5 \
+&& curl -o Python-3.11.0.tgz https://www.python.org/ftp/python/3.11.0/Python-3.11.0.tgz \
+&& tar -xf Python-3.11.0.tgz \
+&& cd Python-3.11.0 \
 && ./configure --enable-optimizations \
 && make altinstall \
 && update-alternatives --install /usr/local/bin/python python /usr/local/bin/python3.9 10 
