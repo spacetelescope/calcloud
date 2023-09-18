@@ -1,7 +1,7 @@
 {
     "FunctionName": "calcloud-hst-trigger",
     "FunctionArn": "arn:aws:lambda:us-east-1:162808325377:function:calcloud-hst-trigger",
-    "Runtime": "python3.7",
+    "Runtime": "python3.11",
     "Role": "arn:aws:iam::162808325377:role/calcloud-hst-trigger-lambda-role",
     "Handler": "lambda_function.lambda_handler",
     "CodeSize": 1435,

@@ -22,7 +22,7 @@ module "lambda_model_ingest" {
   lambda_role = nonsensitive(data.aws_ssm_parameter.model_ingest_role.value)
   description   = "looks for processed-ipppssoot.trigger messages, scrapes and uploads completed job data to DynamoDB"
   handler       = "lambda_scrape.lambda_handler"
-  runtime       = "python3.7"
+  runtime       = "python3.11"
   publish       = false
   timeout       = 180
   memory_size   = 256

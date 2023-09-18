@@ -6,7 +6,7 @@ module "calcloud_lambda_blackboard" {
   description   = "scrapes the Batch console for job metadata and posts to S3 bucket for on-premise poller"
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "scrape_batch.lambda_handler"
-  runtime       = "python3.7"
+  runtime       = "python3.11"
   publish       = false
   timeout       = 300
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days

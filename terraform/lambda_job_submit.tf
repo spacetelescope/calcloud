@@ -7,7 +7,7 @@ module "calcloud_lambda_submit" {
   description   = "looks for placed-dataset messages and submits jobs to Batch"
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "s3_trigger_handler.lambda_handler"
-  runtime       = "python3.7"
+  runtime       = "python3.11"
   publish       = false
   timeout       = 15*60   # see also SUBMIT_TIMEOUT below;  this is the AWS timeout, calcloud error handling may not occur
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
