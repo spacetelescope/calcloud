@@ -1,7 +1,7 @@
 module "calcloud_lambda_submit" {
   source = "terraform-aws-modules/lambda/aws"
   # https://github.com/hashicorp/terraform/issues/17211
-  version = "~> 2.26.0"
+  version = "~> 6.0.0"
 
   function_name = "calcloud-job-submit${local.environment}"
   description   = "looks for placed-dataset messages and submits jobs to Batch"

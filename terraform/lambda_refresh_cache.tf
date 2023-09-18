@@ -1,6 +1,6 @@
 module "calcloud_lambda_refresh_cache_submit" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 2.26.0"
+  version = "~> 6.0.0"
 
   function_name = "calcloud-fileshare-refresh_cache_submit${local.environment}"
   description   = "submits refresh cache operations"

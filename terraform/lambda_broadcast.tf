@@ -1,6 +1,6 @@
 module "calcloud_lambda_broadcast" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 2.26.0"
+  version = "~> 6.0.0"
 
   function_name = "calcloud-broadcast${local.environment}"
   description   = "Broadcasts the specified message type across a list of job_ids or ippppssoots."

@@ -1,6 +1,6 @@
 module "calcloud_lambda_refresh_cache_logs" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 2.26.0"
+  version = "~> 6.0.0"
 
   function_name = "calcloud-fileshare-refresh_cache_logs${local.environment}"
   description   = "listens for refresh cache operations and logs them"
