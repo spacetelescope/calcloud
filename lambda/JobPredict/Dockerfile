@@ -16,6 +16,6 @@ RUN mv /etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-bundle.crt.org && ln -s /e
 RUN yum update -y java-1.8.0-openjdk
 
 #RUN python3.7 -m pip install --upgrade pip && python3.7 -m pip install -r requirements.txt && python3.7 -m pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow_cpu-2.6.2-cp37-cp37m-manylinux2010_x86_64.whl
-RUN python3.11 -m pip install --upgrade pip && python3.11 -m pip install -r requirements.txt && python3.11 -m pip install tensorflow-cpu==2.13.0
+RUN python3.11 -m pip install --upgrade pip && python3.11 -m pip install -r requirements.txt && python3.11 -m pip install tensorflow-cpu==2.12.1
 ADD  models ./models/
 CMD ["predict_handler.lambda_handler"]
