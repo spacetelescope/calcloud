@@ -1,12 +1,12 @@
 module "calcloud_lambda_broadcast" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 2.26.0"
+  version = "~> 6.0.0"
 
   function_name = "calcloud-broadcast${local.environment}"
   description   = "Broadcasts the specified message type across a list of job_ids or ippppssoots."
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "broadcast_handler.lambda_handler"
-  runtime       = "python3.7"
+  runtime       = "python3.11"
   publish       = false
   timeout       = 300
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days

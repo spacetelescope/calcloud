@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - name: set up python 3.7.12
+      - name: set up python 3.11
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7.12
+          python-version: 3.11
 
       - name: checkout code
         uses: actions/checkout@v2
@@ -45,10 +45,10 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - name: set up python 3.7.12
+      - name: set up python 3.11
         uses: actions/setup-python@v2
         with:
-          python-version: 3.7.12
+          python-version: 3.11
 
       - name: checkout code
         uses: actions/checkout@v2

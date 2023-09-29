@@ -57,13 +57,13 @@ resource "aws_launch_template" "ami_rotation" {
 
 module "calcloud_env_amiRotation" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 2.26.0"
+  version = "~> 6.0.0"
 
   function_name = "calcloud-env-AmiRotation${local.environment}"
   description   = "spawns an ec2 bi-weekly which rotates the ami for batch"
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "ami_rotation.lambda_handler"
-  runtime       = "python3.7"
+  runtime       = "python3.11"
   publish       = false
   timeout       = 60
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days

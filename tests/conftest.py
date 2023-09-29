@@ -234,7 +234,7 @@ def create_mock_lambda(lambda_client, iam_client, name=os.environ["JOBPREDICTLAM
 
     response = lambda_client.create_function(
         FunctionName=name,
-        Runtime="python3.8",
+        Runtime="python3.11",
         Role=iam_arn,
         Handler="lambda_function.lambda_handler",
         Code={"ZipFile": job_predict_zip(memBin=memBin, clockTime=clockTime)},
