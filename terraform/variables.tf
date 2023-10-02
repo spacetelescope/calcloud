@@ -110,23 +110,29 @@ variable ce_max_vcpu {
   }
 }
 
+# Temporarily set test crds_context to 1099 for test because that context has the calibration files
+# required by the WFC3 code changes. This needs to be changed back to the Ops value after testing
+# for build release/v0.4.42.
 variable crds_context {
   description = "the crds context to be the default for the environment"
   type = map(string)
   default = {
     "-sb" = "hst_1099.pmap"
     "-dev" = "hst_1099.pmap"
-    "-test" = "hst_1101.pmap"
+    "-test" = "hst_1099.pmap"
     "-ops" = "hst_1101.pmap"
   }
 }
 
+# Temporarily set test crds_bucket to 'test' for test because that instance has the calibration
+# files required by the WFC3 code changes. This needs to be changed back to Ops after testing for
+# build release/v0.4.42.
 variable crds_bucket {
   type = map(string)
   default = {
     "-sb" = "test"
     "-dev" = "test"
-    "-test" = "ops"
+    "-test" = "test"
     "-ops" = "ops"
   }
 }
