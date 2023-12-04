@@ -120,7 +120,7 @@ variable crds_context {
     "-sb" = "hst_1099.pmap"
     "-dev" = "hst_1099.pmap"
     "-test" = "hst_1099.pmap"
-    "-ops" = "hst_1101.pmap"
+    "-ops" = "hst_1123.pmap"
   }
 }
 
