@@ -224,7 +224,7 @@ class Targets(Scraper):
             clock += sum(x * int(t) for x, t in zip([1, 60, 3600], clocktime))
             print(clock)
         for memstr in self.target_data["memory"]:
-            kb += np.float(memstr)
+            kb += float(memstr)
             print(kb)
         targets["wallclock"] = clock + 1
         targets["memory"] = kb / (10**6)

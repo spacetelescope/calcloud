@@ -16,13 +16,13 @@ resource "aws_dynamodb_table" "calcloud_model_db" {
 
 module "lambda_model_ingest" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 2.26.0"
+  version = "~> 6.0.0"
 
   function_name = "calcloud-model-ingest${local.environment}"
   lambda_role = nonsensitive(data.aws_ssm_parameter.model_ingest_role.value)
   description   = "looks for processed-ipppssoot.trigger messages, scrapes and uploads completed job data to DynamoDB"
   handler       = "lambda_scrape.lambda_handler"
-  runtime       = "python3.7"
+  runtime       = "python3.11"
   publish       = false
   timeout       = 180
   memory_size   = 256
