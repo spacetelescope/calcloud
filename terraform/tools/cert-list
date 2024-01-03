@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 """This script is used to dump out cert subjects and issuers in order
 to follow the chain of certs from JH to a root authority.

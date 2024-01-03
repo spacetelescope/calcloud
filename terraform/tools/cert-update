@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 # This script downloads and cleans the SSL cert needed for Docker builds
 # to transit the STScI packet inspection firewall on AWS.   Originally

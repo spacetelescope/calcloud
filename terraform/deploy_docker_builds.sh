@@ -21,7 +21,7 @@ fi
 
 # naming is confusing here but "modeling" directory plus "training" image is correct
 cd ${CALCLOUD_BUILD_DIR}/modeling
-cert-update
+source hst_admin_role_shim.sh cert-update
 #cp /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem certs/tls-ca-bundle.pem # copy the cert from CI node AMI
 set -o pipefail && docker build -f Dockerfile -t ${TRAINING_DOCKER_IMAGE} .
 training_docker_build_status=$?
@@ -32,7 +32,7 @@ fi
 
 # jobPredict lambda env
 cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
-cert-update
+source hst_admin_role_shim.sh cert-update
 #cp /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem certs/tls-ca-bundle.pem # copy the cert from CI node AMI
 set -o pipefail && docker build -f Dockerfile -t ${PREDICT_DOCKER_IMAGE} .
 model_docker_build_status=$?
@@ -43,7 +43,7 @@ fi
 
 # caldp image
 cd ${CALDP_BUILD_DIR}
-cert-update
+source hst_admin_role_shim.sh cert-update
 #cp /etc/ssl/certs/ca-bundle.crt tls-ca-bundle.pem # copy the cert from CI node AMI
 set -o pipefail && docker build -f Dockerfile -t ${CALDP_DOCKER_IMAGE} --build-arg CAL_BASE_IMAGE="${CAL_BASE_IMAGE}"  .
 caldp_docker_build_status=$?
