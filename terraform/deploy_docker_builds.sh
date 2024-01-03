@@ -21,7 +21,8 @@ fi
 
 # naming is confusing here but "modeling" directory plus "training" image is correct
 cd ${CALCLOUD_BUILD_DIR}/modeling
-cp /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem certs/tls-ca-bundle.pem # copy the cert from CI node AMI
+cert-update
+#cp /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem certs/tls-ca-bundle.pem # copy the cert from CI node AMI
 set -o pipefail && docker build -f Dockerfile -t ${TRAINING_DOCKER_IMAGE} .
 training_docker_build_status=$?
 if [[ $training_docker_build_status -ne 0 ]]; then
@@ -31,7 +32,8 @@ fi
 
 # jobPredict lambda env
 cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
-cp /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem certs/tls-ca-bundle.pem # copy the cert from CI node AMI
+cert-update
+#cp /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem certs/tls-ca-bundle.pem # copy the cert from CI node AMI
 set -o pipefail && docker build -f Dockerfile -t ${PREDICT_DOCKER_IMAGE} .
 model_docker_build_status=$?
 if [[ $model_docker_build_status -ne 0 ]]; then
@@ -41,7 +43,8 @@ fi
 
 # caldp image
 cd ${CALDP_BUILD_DIR}
-cp /etc/ssl/certs/ca-bundle.crt tls-ca-bundle.pem # copy the cert from CI node AMI
+cert-update
+#cp /etc/ssl/certs/ca-bundle.crt tls-ca-bundle.pem # copy the cert from CI node AMI
 set -o pipefail && docker build -f Dockerfile -t ${CALDP_DOCKER_IMAGE} --build-arg CAL_BASE_IMAGE="${CAL_BASE_IMAGE}"  .
 caldp_docker_build_status=$?
 if [[ $caldp_docker_build_status -ne 0 ]]; then

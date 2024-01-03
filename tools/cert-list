@@ -1,0 +1,74 @@
+#! /usr/bin/env python
+
+"""This script is used to dump out cert subjects and issuers in order
+to follow the chain of certs from JH to a root authority.
+
+In particular, the EFS Quota software uses Python requests and a
+carefully constructed intermediate cert chain was required to keep
+requests happy.
+
+It works like on a single JH cert:
+
+$ cert-list roman.dev.pem
+subject=C = US, ST = Maryland, O = Space Telescope Science Institute, CN = dev.roman.science.stsci.edu
+issuer=C = US, ST = MI, L = Ann Arbor, O = Internet2, OU = InCommon, CN = InCommon RSA Server CA
+
+And EFS quotas includes this chain to carry trust forward all the way to the root:
+
+$ cert-list jh-intermediates.pem
+subject=C = US, ST = MI, L = Ann Arbor, O = Internet2, OU = InCommon, CN = InCommon RSA Server CA
+issuer=C = US, ST = New Jersey, L = Jersey City, O = The USERTRUST Network, CN = USERTrust RSA Certification Authority
+
+subject=C = US, ST = New Jersey, L = Jersey City, O = The USERTRUST Network, CN = USERTrust RSA Certification Authority
+issuer=C = GB, ST = Greater Manchester, L = Salford, O = Comodo CA Limited, CN = AAA Certificate Services
+
+subject=C = GB, ST = Greater Manchester, L = Salford, O = Comodo CA Limited, CN = AAA Certificate Services
+issuer=C = GB, ST = Greater Manchester, L = Salford, O = Comodo CA Limited, CN = AAA Certificate Services
+"""
+
+import sys
+import subprocess
+import tempfile
+
+
+def run(cmd, cwd=".", timeout=10):
+    """Run subprocess `cmd` in dir `cwd` failing if not completed within `timeout` seconds
+    of if `cmd` returns a non-zero exit status.
+
+    Returns both stdout+stderr from `cmd`.  (untested, verify manually if in doubt)
+    """
+    result = subprocess.run(
+        cmd.split(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=True,
+        cwd=cwd,
+        timeout=timeout,
+    )  # maybe succeeds
+    return result.stdout
+
+
+def decode(lines):
+    with tempfile.NamedTemporaryFile(mode='w+', delete=False) as tmpf:
+        tmpf.write("".join(lines))
+    return run(f"openssl x509 -subject -issuer --dates -subject_hash -issuer_hash -serial --nocert -in {tmpf.name}")
+
+
+def main():
+    with open(sys.argv[1]) as chain:
+        if not chain.readlines():
+            sys.exit(0)
+    with open(sys.argv[1]) as chain:
+        for line in chain.readlines():
+            if not line.strip() or line.startswith("#"):
+                continue
+            if "---BEGIN" in line:
+                lines = []
+            lines.append(line)
+            if "---END" in line:
+                print(decode(lines))
+
+
+if __name__ == "__main__":
+    main()

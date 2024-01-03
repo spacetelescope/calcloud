@@ -4,7 +4,11 @@ USER root
 ENV REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
 ENV CURL_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
 RUN mkdir -p /etc/ssl/certs/ && mkdir -p /etc/pki/ca-trust/extracted/pem/
-COPY certs/tls-ca-bundle.pem /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+#COPY certs/tls-ca-bundle.pem /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+COPY STSCICA.crt /etc/ssl/certs/STSCICA.crt
+COPY STSCICA.crt /usr/local/share/ca-certificates/STSCICA.crt
+RUN cat /etc/ssl/certs/ca-certificates.crt /usr/local/share/cacerts/STSCICA.crt >/etc/ssl/certs/stsci-tls-ca-bundle.pem
+RUN ln -sf /etc/ssl/certs/stsci-tls-ca-bundle.pem  /etc/pki/ca-trust/source/anchors/stsci-tls-ca-bundle.pem
 RUN ln -sf /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/certs/ca-bundle.crt \
 && ln -sf /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/certs/ca-certificates.crt \
 && mkdir -p /etc/pki/ca-trust/extracted/openssl

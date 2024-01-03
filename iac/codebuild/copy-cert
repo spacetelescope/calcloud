@@ -30,7 +30,6 @@ def run(cmd, cwd=".", timeout=100):
 
 def get_cert(cert_path, local_path):
     run(f"cp {cert_path} {local_path}")  
-    #os.system(f"cp {cert_path} {local_path}")  # Using os module temporarily
     print(f"Copied {cert_path} to {local_path}.")
 
 
@@ -38,7 +37,7 @@ def main(cert_path, local_cert_path):
     try:
         get_cert(cert_path, local_cert_path)
     except:  
-        print("Skipping update of tls-ca-bundle.pem needed to build on science platforms.")
+        print("Skipping update of tls-ca-bundle.pem.")
         return 0
     print("Cert update complete.")
     return 0

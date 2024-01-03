@@ -27,9 +27,12 @@ RUN set -ex \
 RUN mkdir -p /etc/ssl/certs && \
     mkdir -p /etc/pki/ca-trust/source/anchors
 
-COPY tls-ca-bundle.pem /etc/pki/ca-trust/source/anchors/stsci-tls-ca-bundle.pem
-
-COPY tls-ca-bundle.pem /etc/ssl/certs/stsci-tls-ca-bundle.pem
+COPY STSCICA.crt /etc/ssl/certs/STSCICA.crt
+COPY STSCICA.crt /usr/local/share/ca-certificates/STSCICA.crt
+RUN cat /etc/ssl/certs/ca-certificates.crt /usr/local/share/cacerts/STSCICA.crt >/etc/ssl/certs/stsci-tls-ca-bundle.pem
+RUN ln -fs /etc/ssl/certs/stsci-tls-ca-bundle.pem  /etc/pki/ca-trust/source/anchors/stsci-tls-ca-bundle.pem
+#COPY tls-ca-bundle.pem /etc/pki/ca-trust/source/anchors/stsci-tls-ca-bundle.pem
+#COPY tls-ca-bundle.pem /etc/ssl/certs/stsci-tls-ca-bundle.pem
 
 RUN update-ca-trust
 
