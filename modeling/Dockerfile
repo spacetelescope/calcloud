@@ -9,6 +9,7 @@ COPY STSCICA.crt /etc/ssl/certs/STSCICA.crt
 COPY STSCICA.crt /usr/local/share/ca-certificates/STSCICA.crt
 RUN apt-get update && \
     apt-get install -y ca-certificates 
+RUN update-ca-certificates
 RUN ln -sf /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-bundle.crt \
 && mkdir -p /etc/pki/ca-trust/extracted/openssl
 
