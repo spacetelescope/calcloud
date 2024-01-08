@@ -27,8 +27,6 @@ RUN set -ex \
 RUN mkdir -p /etc/ssl/certs && \
     mkdir -p /etc/pki/ca-trust/source/anchors
 
-#COPY tls-ca-bundle.pem /etc/pki/ca-trust/source/anchors/stsci-tls-ca-bundle.pem
-#COPY tls-ca-bundle.pem /etc/ssl/certs/stsci-tls-ca-bundle.pem
 COPY STSCICA.crt /etc/ssl/certs/STSCICA.crt
 COPY STSCICA.crt /etc/pki/ca-trust/source/anchors/STSCICA.crt
 
@@ -38,11 +36,6 @@ RUN update-ca-trust
 ENV REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
 ENV CURL_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
 ENV NODE_EXTRA_CA_CERTS=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-
-#RUN curl -L https://rpm.nodesource.com/setup_16.x | bash - && \
-#    yum install -y nodejs
-
-#ENV NODE_16_VERSION="16.15.1"
 
 RUN yum install https://rpm.nodesource.com/pub_16.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm -y
 RUN yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1

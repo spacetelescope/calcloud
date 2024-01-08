@@ -55,9 +55,9 @@ def check_cert(local_cert_path):
 def main(s3_cert_path, local_cert_path):
     try:
         get_cert(s3_cert_path, local_cert_path)
-    except Exception:  # noqa: E722
-        print("Skipping update of STSCICA.crt needed to build on science platforms.")
-        return 0
+    except Exception as exc:  # noqa: E722
+        print(f"Failed to obtain updated STSCICA.crt from {s3_cert_path}:", repr(exc), str(exc))
+        return 1
     try:
         clean_cert(local_cert_path)
     except Exception as exc:  # noqa: E722

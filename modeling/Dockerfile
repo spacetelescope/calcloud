@@ -4,7 +4,6 @@ USER root
 RUN mkdir -p /etc/ssl/certs/ && mkdir -p /usr/local/share/ca-certificates/ && mkdir -p /etc/pki/ca-trust/extracted/pem/
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-#COPY certs/tls-ca-bundle.pem /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
 COPY STSCICA.crt /etc/ssl/certs/STSCICA.crt
 COPY STSCICA.crt /usr/local/share/ca-certificates/STSCICA.crt
 RUN apt-get update && \
