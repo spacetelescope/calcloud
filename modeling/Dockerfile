@@ -1,12 +1,15 @@
 FROM library/ubuntu:20.04
 #SSL/TLS cert setup for STScI AWS firewalling
 USER root
-ENV REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-ENV CURL_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-RUN mkdir -p /etc/ssl/certs/ && mkdir -p /etc/pki/ca-trust/extracted/pem/
-COPY certs/tls-ca-bundle.pem /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-RUN ln -sf /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/certs/ca-bundle.crt \
-&& ln -sf /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/certs/ca-certificates.crt \
+RUN mkdir -p /etc/ssl/certs/ && mkdir -p /usr/local/share/ca-certificates/ && mkdir -p /etc/pki/ca-trust/extracted/pem/
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+COPY STSCICA.crt /etc/ssl/certs/STSCICA.crt
+COPY STSCICA.crt /usr/local/share/ca-certificates/STSCICA.crt
+RUN apt-get update && \
+    apt-get install -y ca-certificates 
+RUN update-ca-certificates
+RUN ln -sf /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-bundle.crt \
 && mkdir -p /etc/pki/ca-trust/extracted/openssl
 
 RUN DEBIAN_FRONTEND=noninteractive && apt update && apt upgrade -y && apt install -y \

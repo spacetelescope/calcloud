@@ -63,4 +63,4 @@ CSYS_VER=${CAL_BASE_IMAGE##*:}
 CSYS_VER=`echo $CSYS_VER | cut -f1,2 -d'_'` #split by underscores, keep the first two
 export CSYS_VER=`echo $CSYS_VER | awk '{print tolower($0)}'`
 
-# get repo_url here for the central ecr repo
+export PATH=`pwd`/tools:${PATH}
