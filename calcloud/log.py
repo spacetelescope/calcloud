@@ -56,6 +56,7 @@ exceptions onto HSTDP messages or adding information:
 
 >>> _ = log.set_verbose(old_verbose)
 """
+
 import sys
 import os
 import logging

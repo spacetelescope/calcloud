@@ -7,7 +7,7 @@ import zipfile
 
 import pytest
 import boto3
-from moto import mock_s3, mock_batch, mock_iam, mock_ec2, mock_lambda, mock_dynamodb
+from moto import mock_aws, mock_batch, mock_iam, mock_ec2, mock_lambda, mock_dynamodb
 import yaml
 
 # for logging to double-check we're getting fake credentials and not real ones
@@ -67,7 +67,7 @@ def aws_credentials():
 
 @pytest.fixture(scope="function")
 def s3_client(aws_credentials):
-    with mock_s3():
+    with mock_aws():
         s3_client = boto3.client("s3", region_name="us-east-1")
         s3_client.create_bucket(Bucket=os.environ["BUCKET"])
         yield s3_client
@@ -75,7 +75,7 @@ def s3_client(aws_credentials):
 
 @pytest.fixture(scope="function")
 def s3_resource(aws_credentials):
-    with mock_s3():
+    with mock_aws():
         yield boto3.resource("s3", region_name="us-east-1")
 
 

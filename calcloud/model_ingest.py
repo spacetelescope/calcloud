@@ -2,6 +2,7 @@
 
 See ModelIngest/lambda_scrape.py for more information on how model data is ingested to DDB.
 """
+
 import boto3
 import sys
 import numpy as np

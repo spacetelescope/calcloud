@@ -7,6 +7,7 @@ broken apart internally like this:
 
     bucket_name, object_path = s3_split_path(s3_path)
 """
+
 import os
 import os.path
 

@@ -9,7 +9,6 @@ Any errors not explicitly handled by CALDP are intended to be mapped to
 generic values of 0 or 1 to prevent conflicts with these codes.
 """
 
-
 _MEMORY_ERROR_NAMES = ["SUBPROCESS_MEMORY_ERROR", "CALDP_MEMORY_ERROR", "CONTAINER_MEMORY_ERROR", "OS_MEMORY_ERROR"]
 
 

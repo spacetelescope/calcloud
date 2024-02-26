@@ -1,6 +1,7 @@
 """This module provides functions and classes used to track and compute
 rate metrics.
 """
+
 from collections import Counter
 import datetime
 import os
