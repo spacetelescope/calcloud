@@ -7,7 +7,7 @@ import zipfile
 
 import pytest
 import boto3
-from moto import mock_aws, mock_batch, mock_iam, mock_ec2, mock_lambda, mock_dynamodb
+from moto import mock_aws
 import yaml
 
 # for logging to double-check we're getting fake credentials and not real ones
@@ -81,43 +81,43 @@ def s3_resource(aws_credentials):
 
 @pytest.fixture(scope="function")
 def batch_client(aws_credentials):
-    with mock_batch():
+    with mock_aws():
         yield boto3.client("batch", region_name="us-east-1")
 
 
 @pytest.fixture(scope="function")
 def iam_client(aws_credentials):
-    with mock_iam():
+    with mock_aws():
         yield boto3.client("iam", region_name="us-east-1")
 
 
 @pytest.fixture(scope="function")
 def ec2_client(aws_credentials):
-    with mock_ec2():
+    with mock_aws():
         yield boto3.client("ec2", region_name="us-east-1")
 
 
 @pytest.fixture(scope="function")
 def ec2_resource(aws_credentials):
-    with mock_ec2():
+    with mock_aws():
         yield boto3.resource("ec2", region_name="us-east-1")
 
 
 @pytest.fixture(scope="function")
 def lambda_client(aws_credentials):
-    with mock_lambda():
+    with mock_aws():
         yield boto3.client("lambda", region_name="us-east-1")
 
 
 @pytest.fixture(scope="function")
 def dynamodb_client(aws_credentials):
-    with mock_dynamodb():
+    with mock_aws():
         yield boto3.client("dynamodb", region_name="us-east-1")
 
 
 @pytest.fixture(scope="function")
 def dynamodb_resource(aws_credentials):
-    with mock_dynamodb():
+    with mock_aws():
         dynamodb_resource = boto3.resource("dynamodb", region_name="us-east-1")
         yield dynamodb_resource
 
