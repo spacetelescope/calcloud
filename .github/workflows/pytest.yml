@@ -19,7 +19,7 @@ jobs:
       - name: install requirements
         run: |
           pip install .[dev]
-          pip install numpy scikit-learn tensorflow --upgrade-strategy only-if-needed
+          pip install numpy scikit-learn==1.4.1.post1 tensorflow==2.15.0.post1 --upgrade-strategy only-if-needed
 
       - name: run pytest code coverage check
         run: |
