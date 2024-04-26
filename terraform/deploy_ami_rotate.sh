@@ -77,7 +77,7 @@ echo $aws_tfstate
 cd $CALCLOUD_BUILD_DIR/ami_rotation
 ami_json=$(echo $(awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 --executable-users self))
 ci_ami=`python3 parse_image_json.py "${ami_json}" STSCI-AWS-Linux-2`
-ecs_ami=`python3 parse_image_json.py "${ami_json}" STSCI-HST-REPRO-ECS`
+ecs_ami=`python3 parse_image_json.py "${ami_json}" STSCI-ECS-AL2023`
 
 if [[ "$ci_ami" =~ ^ami-[a-z0-9]+$ ]]; then
     echo $ci_ami
