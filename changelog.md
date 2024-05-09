@@ -1,2 +1,2 @@
-- default base docker image set to CALDP_infrastructure_CAL_rc7
+- default base docker image set to CALDP_20240509_CAL_final
 - default crds update to hst_1155.pmap
