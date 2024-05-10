@@ -2,6 +2,7 @@
 It hides the structure of the messaging system and provides a
 simple API for putting, getting, listing, and deleting messages.
 """
+
 import sys
 import os
 import doctest

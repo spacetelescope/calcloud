@@ -1,4 +1,5 @@
 """ test that the ami rotation lambda will launch an ec2 instance """
+
 import os
 
 

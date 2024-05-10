@@ -1,0 +1,76 @@
+#! /usr/bin/env python3
+
+# This script downloads and cleans the SSL cert needed for Docker builds
+# to transit the STScI packet inspection firewall on AWS.   Originally
+# shellscript,  it was easier to switch to Python than deal with variations
+# in "sed" behavior between OS-X and Linux.
+
+import sys
+import subprocess
+
+
+def run(cmd, cwd=".", timeout=10):
+    """Run subprocess `cmd` in dir `cwd` failing if not completed within `timeout` seconds
+    of if `cmd` returns a non-zero exit status.
+
+    Returns both stdout+stderr from `cmd`.  (untested, verify manually if in doubt)
+    """
+    result = subprocess.run(
+        cmd.split(),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=True,
+        cwd=cwd,
+        timeout=timeout,
+    )  # maybe succeeds
+    return result.stdout
+
+
+def get_cert(s3_path, local_path):
+    run(f"aws s3 cp {s3_path} {local_path}")
+    print(f"Copied {s3_path} to {local_path}.")
+    # run(f"echo >{local_path}")
+    # print(f"Nullified cert at {local_path}.")
+
+
+def clean_cert(fpath):
+    print(f"Conditioning cert file {fpath}")
+    cleaned = []
+    with open(fpath) as cfile:
+        for line in cfile.readlines():
+            line = line.strip()
+            if line.startswith("#") or not line:
+                continue
+            cleaned.append(line)
+    with open(fpath, "w+") as cfile:
+        cfile.write("\n".join(cleaned))
+
+
+def check_cert(local_cert_path):
+    print("Checking cert file.")
+    run(f"cert-list {local_cert_path}")
+
+
+def main(s3_cert_path, local_cert_path):
+    try:
+        get_cert(s3_cert_path, local_cert_path)
+    except Exception as exc:  # noqa: E722
+        print(f"Failed to obtain updated STSCICA.crt from {s3_cert_path}:", repr(exc), str(exc))
+        return 1
+    try:
+        clean_cert(local_cert_path)
+    except Exception as exc:  # noqa: E722
+        print(f"Conditioning cert {local_cert_path} failed:", repr(exc), str(exc))
+        return 1
+    try:
+        check_cert(local_cert_path)
+    except Exception as exc:  # noqa: E722
+        print(f"Conditioned cert {local_cert_path} was not valid:", repr(exc), str(exc))
+        return 1
+    print("Cert update complete.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main("s3://stsci-ami-installs/STSCICA.crt", "STSCICA.crt"))

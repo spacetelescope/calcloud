@@ -1,7 +1,7 @@
 #! /bin/bash -xu
-export CALCLOUD_VER="v0.4.42"
-export CALDP_VER="v0.2.24"
-export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20231201_CAL_final"
+export CALCLOUD_VER="v0.4.43"
+export CALDP_VER="v0.2.25"
+export CAL_BASE_IMAGE="stsci/hst-pipeline:CALDP_20240509_CAL_final"
 export BASE_IMAGE_TAG=`cut -d ":" -f2- <<< ${CAL_BASE_IMAGE} `
 
 export COMMON_IMAGE_TAG="CALCLOUD_${CALCLOUD_VER}-CALDP_${CALDP_VER}-BASE_${BASE_IMAGE_TAG}"
@@ -63,4 +63,4 @@ CSYS_VER=${CAL_BASE_IMAGE##*:}
 CSYS_VER=`echo $CSYS_VER | cut -f1,2 -d'_'` #split by underscores, keep the first two
 export CSYS_VER=`echo $CSYS_VER | awk '{print tolower($0)}'`
 
-# get repo_url here for the central ecr repo
+export PATH=`pwd`/tools:${PATH}

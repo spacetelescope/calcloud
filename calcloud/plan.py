@@ -8,6 +8,7 @@ Based on a memory_retries counter,  get_plan() iterates through a sequence
 of job definitions with increasing memory requirements until the job later
 succeeds with sufficient memory or exhausts all retries.
 """
+
 import sys
 import os
 from collections import namedtuple
