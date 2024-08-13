@@ -1,3 +1,2 @@
-- default base docker image set to CALDP_20240509_CAL_final
-- default crds update to hst_1155.pmap
-- SSL certificate workflow updates to pull certificates from the ITSD S3 bucket
+- default base docker image set to CALDP_20240813_CAL_final
+- default crds update to hst_1169.pmap
