@@ -29,7 +29,7 @@ docker push ${AMIROTATION_DOCKER_IMAGE_UNSCANNED}
 cd ${CALCLOUD_BUILD_DIR}/terraform
 pwd
 
-print("Sleeping for 30 seconds before scanning")
+echo "Sleeping for 30 seconds before scanning"
 sleep 30
 
 python3 ami-rotation-image-scan.py
