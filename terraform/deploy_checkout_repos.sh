@@ -50,4 +50,6 @@ then
     fi
 fi
 
+chmod -R og+r ${TMP_INSTALL_DIR}
+
 cd $cwd
