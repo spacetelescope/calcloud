@@ -1,1 +1,2 @@
 - update caldp version
+- set permissions to make files readable in AL2023
