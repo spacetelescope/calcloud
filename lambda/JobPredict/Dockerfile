@@ -23,4 +23,5 @@ RUN yum update -y java-1.8.0-openjdk
 RUN python3.11 -m pip install --upgrade pip && python3.11 -m pip install -r requirements.txt && python3.11 -m pip install tensorflow-cpu==2.12.1
 ADD  models ./models/
 RUN chmod -R ugo+r ./models/
+RUN find ./models/ -type d -exec chmod og+x {} +
 CMD ["predict_handler.lambda_handler"]
