@@ -50,4 +50,7 @@ then
     fi
 fi
 
+chmod -R og+r ${TMP_INSTALL_DIR}
+find ${TMP_INSTALL_DIR} -type d -exec chmod og+x {} +
+
 cd $cwd

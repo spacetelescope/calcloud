@@ -1,2 +1,3 @@
-- default base docker image set to CALDP_20240813_CAL_final
-- default crds update to hst_1169.pmap
+- update caldp version
+- set permissions to make files readable and dirs executable in AL2023
+- additional updates for STSCI-AMAZON-LINUX2023
