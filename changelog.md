@@ -1,3 +1,1 @@
 - update caldp version
-- set permissions to make files readable and dirs executable in AL2023
-- additional updates for STSCI-AMAZON-LINUX2023

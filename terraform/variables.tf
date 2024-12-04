@@ -117,10 +117,10 @@ variable crds_context {
   description = "the crds context to be the default for the environment"
   type = map(string)
   default = {
-    "-sb" = "hst_1165.pmap"
-    "-dev" = "hst_1165.pmap"
-    "-test" = "hst_1169.pmap"
-    "-ops" = "hst_1169.pmap"
+    "-sb" = "hst_1194.pmap"
+    "-dev" = "hst_1194.pmap"
+    "-test" = "hst_1194.pmap"
+    "-ops" = "hst_1197.pmap"
   }
 }
 
@@ -129,7 +129,7 @@ variable crds_bucket {
   default = {
     "-sb" = "test"
     "-dev" = "test"
-    "-test" = "ops"
+    "-test" = "test"
     "-ops" = "ops"
   }
 }
