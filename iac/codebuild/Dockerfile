@@ -15,6 +15,14 @@ ENV AWS_DEFAULT_REGION="us-east-1"
 ARG aws_env
 ARG CALCLOUD_VER
 
+RUN mkdir -p /etc/ssl/certs && \
+    mkdir -p /etc/pki/ca-trust/source/anchors
+
+COPY STSCICA.crt /etc/ssl/certs/STSCICA.crt
+COPY STSCICA.crt /etc/pki/ca-trust/source/anchors/STSCICA.crt
+
+RUN update-ca-trust
+
 # Install git, SSH, and other utilities
 RUN set -ex \
     && yum update -y --security \
@@ -24,14 +32,6 @@ RUN set -ex \
     && yum install git -y  \
     && yum install tar wget python3 which -y \
     && yum install python3-pip -y
-
-RUN mkdir -p /etc/ssl/certs && \
-    mkdir -p /etc/pki/ca-trust/source/anchors
-
-COPY STSCICA.crt /etc/ssl/certs/STSCICA.crt
-COPY STSCICA.crt /etc/pki/ca-trust/source/anchors/STSCICA.crt
-
-RUN update-ca-trust
 
 # These should only happen once
 ENV REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
