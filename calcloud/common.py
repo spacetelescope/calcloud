@@ -1,4 +1,4 @@
-""" a module to hold some common configuration items that various scripts may need """
+"""a module to hold some common configuration items that various scripts may need"""
 
 from botocore.config import Config
 
