@@ -1,1 +1,2 @@
 - update caldp version and changelog.md
+- update tests to use ubuntu-22.04
