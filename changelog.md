@@ -1,2 +1,1 @@
 - update caldp version and changelog.md
-- update base image in AMI rotation Dockerfile

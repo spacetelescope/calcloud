@@ -117,10 +117,10 @@ variable crds_context {
   description = "the crds context to be the default for the environment"
   type = map(string)
   default = {
-    "-sb" = "hst_1205.pmap"
-    "-dev" = "hst_1205.pmap"
-    "-test" = "hst_1211.pmap"
-    "-ops" = "hst_1211.pmap"
+    "-sb" = "hst_1225.pmap"
+    "-dev" = "hst_1225.pmap"
+    "-test" = "hst_1227.pmap"
+    "-ops" = "hst_1227.pmap"
   }
 }
 
