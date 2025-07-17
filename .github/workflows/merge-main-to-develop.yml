@@ -6,18 +6,17 @@ on:
 
 jobs:
   merge-main-to-develop:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
       - run: .github/scripts/merge-main-to-develop.sh
   tag-latest:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: merge-main-to-develop
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
       - run: .github/scripts/tag-latest.sh
-      

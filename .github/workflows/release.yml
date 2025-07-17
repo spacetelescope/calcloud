@@ -3,11 +3,11 @@ on:
   workflow_dispatch:
     inputs:
       tag_or_release:
-        description: 'must be string of either "tag" or "release"'     
+        description: 'must be string of either "tag" or "release"'
         required: true
         default: 'tag'
       name:
-        description: 'the tag or release name, i.e. v1.0.0'     
+        description: 'the tag or release name, i.e. v1.0.0'
         required: true
       source_branch:
         description: 'the branch to tag or release'
@@ -16,7 +16,7 @@ on:
 
 jobs:
   tag_or_release:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     name: tag or release the given branch with the given name
     steps:
       - name: checkout
