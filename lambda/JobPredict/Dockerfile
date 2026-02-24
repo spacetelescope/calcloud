@@ -18,7 +18,7 @@ RUN update-ca-trust
 ##log4j vuln patch
 #RUN yum update -y java-1.8.0-openjdk
 
-RUN python3.12 -m pip install --upgrade pip && python3.12 -m pip install -r requirements.txt && python3.12 -m pip install tensorflow-cpu==2.13.0
+RUN python3.12 -m pip install --upgrade pip && python3.12 -m pip install -r requirements.txt
 ADD  models ./models/
 RUN chmod -R ugo+r ./models/
 RUN find ./models/ -type d -exec chmod og+x {} +
