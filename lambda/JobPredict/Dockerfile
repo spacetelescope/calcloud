@@ -18,6 +18,8 @@ RUN update-ca-trust
 ##log4j vuln patch
 #RUN yum update -y java-1.8.0-openjdk
 
+RUN dnf install -y findutils && dnf clean all
+
 RUN python3.12 -m pip install --upgrade pip && python3.12 -m pip install -r requirements.txt
 ADD  models ./models/
 RUN chmod -R ugo+r ./models/
