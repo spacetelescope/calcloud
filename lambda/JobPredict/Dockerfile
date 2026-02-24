@@ -15,8 +15,8 @@ RUN update-ca-trust
 
 #RUN mv /etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-bundle.crt.org && ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem  /etc/ssl/certs/ca-bundle.crt && ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/certs/ca-certificates.crt && mkdir -p /etc/pki/ca-trust/extracted/openssl
 
-#log4j vuln patch
-RUN yum update -y java-1.8.0-openjdk
+##log4j vuln patch
+#RUN yum update -y java-1.8.0-openjdk
 
 RUN python3.12 -m pip install --upgrade pip && python3.12 -m pip install -r requirements.txt && python3.12 -m pip install tensorflow-cpu==2.13.0
 ADD  models ./models/
