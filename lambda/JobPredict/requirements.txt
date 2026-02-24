@@ -1,4 +1,4 @@
 scikit-learn==1.4.2
 tensorflow-cpu==2.20.0
 boto3==1.28.56
-protobuf==4.24.3
+protobuf==5.28.0
