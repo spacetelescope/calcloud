@@ -25,13 +25,51 @@ def load_pt_data(pt_file):
     return pt_data
 
 
+def _load_savedmodel_as_keras_model(model_path):
+    """Load legacy SavedModel with tags=['serve'] to avoid optimizer (add_slot) errors.
+
+    TFSMLayer loads the full graph including optimizer state, which can fail in
+    newer TF/Keras. Loading only the serving graph works for inference.
+    """
+    loaded = tf.saved_model.load(model_path, tags=["serve"])
+    if not loaded.signatures:
+        raise ValueError(f"No signatures in SavedModel at {model_path}")
+    sig = loaded.signatures.get("serving_default") or list(loaded.signatures.values())[0]
+    # Signature may expect one input by name (e.g. 'hst_jobs') or positionally
+    try:
+        args, kwargs = sig.structured_input_signature
+        input_names = list(kwargs.keys()) if kwargs and len(kwargs) == 1 else None
+    except (IndexError, TypeError):
+        input_names = None
+
+    class SavedModelLayer(tf.keras.layers.Layer):
+        def __init__(self, serve_fn, input_names, **kwargs):
+            super().__init__(**kwargs)
+            self._serve_fn = serve_fn
+            self._input_names = input_names
+
+        def call(self, inputs):
+            if self._input_names and len(self._input_names) == 1:
+                out = self._serve_fn(**{self._input_names[0]: inputs})
+            else:
+                out = self._serve_fn(inputs)
+            if isinstance(out, dict):
+                out = list(out.values())[0]
+            return out
+
+    layer = SavedModelLayer(sig, input_names)
+    inputs = tf.keras.Input(shape=(9,), dtype=tf.float32)
+    outputs = layer(inputs)
+    return tf.keras.Model(inputs, outputs)
+
+
 def get_model(model_path):
     """Loads pretrained Keras functional model.
 
     Supports both Keras 3 and legacy formats:
     - Directory (SavedModel): On Keras 3, load_model() no longer supports this;
-      we use TFSMLayer (wrapped in a Model so .predict() works). On older
-      runtimes, load_model() is tried first.
+      we load with tags=['serve'] and wrap in a Model (avoids optimizer/add_slot
+      errors). On older runtimes, load_model() is tried first.
     - File (.keras or .h5): loaded via tf.keras.models.load_model().
     """
     if os.path.isdir(model_path):
@@ -39,13 +77,7 @@ def get_model(model_path):
             return tf.keras.models.load_model(model_path)
         except ValueError as e:
             if "File format not supported" in str(e) or "SavedModel" in str(e):
-                # Keras 3: use TFSMLayer for legacy SavedModel directories
-                inputs = tf.keras.Input(shape=(9,), dtype=tf.float32)
-                layer = tf.keras.layers.TFSMLayer(
-                    model_path, call_endpoint="serving_default"
-                )
-                outputs = layer(inputs)
-                return tf.keras.Model(inputs, outputs)
+                return _load_savedmodel_as_keras_model(model_path)
             raise
     return tf.keras.models.load_model(model_path)
 
