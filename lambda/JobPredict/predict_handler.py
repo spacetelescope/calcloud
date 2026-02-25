@@ -5,6 +5,7 @@
 # 4 - return preds as json to parent lambda function
 """
 
+import os
 import boto3
 import numpy as np
 from sklearn.preprocessing import PowerTransformer
@@ -25,9 +26,28 @@ def load_pt_data(pt_file):
 
 
 def get_model(model_path):
-    """Loads pretrained Keras functional model"""
-    model = tf.keras.models.load_model(model_path)
-    return model
+    """Loads pretrained Keras functional model.
+
+    Supports both Keras 3 and legacy formats:
+    - Directory (SavedModel): On Keras 3, load_model() no longer supports this;
+      we use TFSMLayer (wrapped in a Model so .predict() works). On older
+      runtimes, load_model() is tried first.
+    - File (.keras or .h5): loaded via tf.keras.models.load_model().
+    """
+    if os.path.isdir(model_path):
+        try:
+            return tf.keras.models.load_model(model_path)
+        except ValueError as e:
+            if "File format not supported" in str(e) or "SavedModel" in str(e):
+                # Keras 3: use TFSMLayer for legacy SavedModel directories
+                inputs = tf.keras.Input(shape=(9,), dtype=tf.float32)
+                layer = tf.keras.layers.TFSMLayer(
+                    model_path, call_endpoint="serving_default"
+                )
+                outputs = layer(inputs)
+                return tf.keras.Model(inputs, outputs)
+            raise
+    return tf.keras.models.load_model(model_path)
 
 
 def classifier(model, data):
