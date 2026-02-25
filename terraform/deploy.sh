@@ -18,6 +18,21 @@ ami_json=$(echo $(awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 -
 ci_ami=`python3 parse_image_json.py "${ami_json}" STSCI-AMAZON-LINUX2023`
 ecs_ami=`python3 parse_image_json.py "${ami_json}" STSCI-EPH-ECS-AL2023`
 
+
+# get AMI id(s)
+cd $CALCLOUD_BUILD_DIR/ami_rotation
+# Limit responses to the most recent 24 images to prevent "Argument list too long"
+query='{Images: reverse(sort_by(Images, &CreationDate))[:24]}'
+ami_json="$(
+  awsudo "$ADMIN_ARN" \
+  "aws ec2 describe-images --region us-east-1 --executable-users self --query '$query' --output json"
+)"
+ci_ami=`python3 parse_image_json.py "${ami_json}" STSCI-AMAZON-LINUX2023`
+ecs_ami=`python3 parse_image_json.py "${ami_json}" STSCI-EPH-ECS-AL2023`
+
+
+
+
 if [[ "$ci_ami" =~ ^ami-[a-z0-9]+$ ]]; then
     echo $ci_ami
 else
