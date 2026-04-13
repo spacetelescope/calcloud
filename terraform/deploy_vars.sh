@@ -1,7 +1,7 @@
 #! /bin/bash -xu
-export CALCLOUD_VER="v0.4.48-rc9"
-export CALDP_VER="v0.2.30-rc2"
-export CAL_BASE_IMAGE="stsci/hst-pipeline:2026.2.1.3-arcticdrizzle-py312"
+export CALCLOUD_VER="v0.4.48-rc10"
+export CALDP_VER="v0.2.30-rc3"
+export CAL_BASE_IMAGE="stsci/hst-pipeline:2026.2.1.5-arcticdrizzle-py312"
 
 export BASE_IMAGE_TAG=`cut -d ":" -f2- <<< ${CAL_BASE_IMAGE} `
 
