@@ -20,6 +20,12 @@ variable region {
   default = "us-east-1"
 }
 
+variable "stsci_poc_email" {
+  description = "Value for mandatory AWS tag stsci-poc-email (KMS, RDS, S3, and other tagged resources in STScI SDLC accounts)."
+  type        = string
+  default     = "team-violet@stsci.edu"
+}
+
 variable awsdpver {
   description = "HST keyword for caldp repo tag version"
   type = string
