@@ -48,7 +48,8 @@ module "calcloud_lambda_blackboard" {
   })
 
   tags = {
-    Name = "calcloud-job-blackboard${local.environment}"
+    Name              = "calcloud-job-blackboard${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 

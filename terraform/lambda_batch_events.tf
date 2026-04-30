@@ -50,7 +50,8 @@ module "calcloud_lambda_batchEvents" {
   })
 
   tags = {
-    Name = "calcloud-job-events${local.environment}"
+    Name              = "calcloud-job-events${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 

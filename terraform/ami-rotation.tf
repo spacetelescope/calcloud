@@ -4,8 +4,9 @@ resource "aws_launch_template" "ami_rotation" {
   ebs_optimized           = "false"
   image_id                = nonsensitive(aws_ssm_parameter.ci_ami.value)
   update_default_version = true
-  tags                    = {
-    "Name"         = "calcloud-ami-rotation${local.environment}"
+  tags = {
+    "Name"            = "calcloud-ami-rotation${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
   user_data               = base64encode(
       templatefile("${path.module}/../ami_rotation/ami_rotation_userdata.sh", {
@@ -43,14 +44,16 @@ resource "aws_launch_template" "ami_rotation" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      "Name" = "calcloud-ami-rotation${local.environment}"
+      "Name"            = "calcloud-ami-rotation${local.environment}"
+      "stsci-poc-email" = var.stsci_poc_email
     }
   }
 
   tag_specifications {
     resource_type = "volume"
     tags = {
-      "Name" = "calcloud-ami-rotation${local.environment}"
+      "Name"            = "calcloud-ami-rotation${local.environment}"
+      "stsci-poc-email" = var.stsci_poc_email
     }
   }
 }
@@ -95,13 +98,17 @@ module "calcloud_env_amiRotation" {
   })
 
   tags = {
-    Name = "calcloud-env-AmiRotation${local.environment}"
+    Name              = "calcloud-env-AmiRotation${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 
 resource "aws_cloudwatch_log_group" "ami-rotation" {
-  name = "/tf/ec2/ami-rotation${local.environment}"
+  name              = "/tf/ec2/ami-rotation${local.environment}"
   retention_in_days = local.lambda_log_retention_in_days
+  tags = {
+    "stsci-poc-email" = var.stsci_poc_email
+  }
 }
 
 resource "aws_cloudwatch_event_rule" "ami-rotate-scheduler" {

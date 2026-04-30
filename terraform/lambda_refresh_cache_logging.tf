@@ -48,7 +48,8 @@ module "calcloud_lambda_refresh_cache_logs" {
   })
 
   tags = {
-    Name = "calcloud-fileshare-refresh_cache_logs${local.environment}"
+    Name              = "calcloud-fileshare-refresh_cache_logs${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 

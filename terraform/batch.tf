@@ -45,9 +45,10 @@ resource "aws_launch_template" "hstdp" {
   ebs_optimized           = "false"
   image_id                = nonsensitive(aws_ssm_parameter.ecs_ami.value)
   update_default_version = true
-  tags                    = {
-    "Name"         = "calcloud-hst-worker${local.environment}"
-    "calcloud-hst" = "calcloud-hst-worker${local.environment}"
+  tags = {
+    "Name"            = "calcloud-hst-worker${local.environment}"
+    "calcloud-hst"    = "calcloud-hst-worker${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
   user_data               = base64encode(templatefile("${path.module}/user_data.sh", {}))
 
@@ -80,16 +81,18 @@ resource "aws_launch_template" "hstdp" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      "Name" = "calcloud-hst-worker${local.environment}"
-      "calcloud-hst" = "calcloud-hst-worker${local.environment}"
+      "Name"            = "calcloud-hst-worker${local.environment}"
+      "calcloud-hst"    = "calcloud-hst-worker${local.environment}"
+      "stsci-poc-email" = var.stsci_poc_email
     }
   }
 
   tag_specifications {
     resource_type = "volume"
     tags = {
-      "Name" = "calcloud-hst-worker${local.environment}"
-      "calcloud-hst" = "calcloud-hst-worker${local.environment}"
+      "Name"            = "calcloud-hst-worker${local.environment}"
+      "calcloud-hst"    = "calcloud-hst-worker${local.environment}"
+      "stsci-poc-email" = var.stsci_poc_email
     }
   }
 }

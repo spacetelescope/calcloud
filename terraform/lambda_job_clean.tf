@@ -48,7 +48,8 @@ module "calcloud_lambda_cleanJob" {
   })
 
   tags = {
-    Name = "calcloud-job-clean${local.environment}"
+    Name              = "calcloud-job-clean${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 

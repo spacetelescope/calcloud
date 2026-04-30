@@ -51,7 +51,8 @@ module "calcloud_lambda_rescueJob" {
   })   
 
   tags = {
-    Name = "calcloud-job-rescue${local.environment}"
+    Name              = "calcloud-job-rescue${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 

@@ -48,7 +48,8 @@ module "calcloud_lambda_broadcast" {
   })
 
   tags = {
-    Name = "calcloud-broadcast${local.environment}"
+    Name              = "calcloud-broadcast${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 

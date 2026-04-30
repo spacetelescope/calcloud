@@ -48,7 +48,8 @@ module "calcloud_lambda_deleteJob" {
   })
 
   tags = {
-    Name = "calcloud-job-delete${local.environment}"
+    Name              = "calcloud-job-delete${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 
