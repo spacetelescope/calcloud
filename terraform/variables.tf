@@ -20,6 +20,12 @@ variable region {
   default = "us-east-1"
 }
 
+variable "stsci_poc_email" {
+  description = "Value for mandatory AWS tag stsci-poc-email for KMS, RDS, or S3 resources in STScI SDLC accounts."
+  type        = string
+  default     = "team-violet@stsci.edu"
+}
+
 variable awsdpver {
   description = "HST keyword for caldp repo tag version"
   type = string
@@ -117,10 +123,10 @@ variable crds_context {
   description = "the crds context to be the default for the environment"
   type = map(string)
   default = {
-    "-sb" = "hst_1241.pmap"
-    "-dev" = "hst_1241.pmap"
-    "-test" = "hst_1247.pmap"
-    "-ops" = "hst_1247.pmap"
+    "-sb" = "hst_1298.pmap"
+    "-dev" = "hst_1298.pmap"
+    "-test" = "hst_1323.pmap"
+    "-ops" = "hst_1323.pmap"
   }
 }
 

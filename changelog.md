@@ -1,1 +1,5 @@
 - update caldp version and changelog.md
+- add point-of-contact email tag
+- dependency updates
+- only retrieve latest 24 images
+- add EPH (ephemeral) to image names

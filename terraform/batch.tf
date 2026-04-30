@@ -1,7 +1,12 @@
 
 
 provider "aws" {
-  region  = var.region
+  region = var.region
+  default_tags {
+    tags = {
+      stsci-poc-email = var.stsci_poc_email
+    }
+  }
 }
 
 terraform {

@@ -20,7 +20,7 @@ CSYS_VER=`echo $CSYS_VER | tr -d '",'`
 # i.e. CALCLOUD_BUILD_DIR="$HOME/deployer/calcloud"
 # these can be set as environment variables before running to avoid changing the script directly
 # (and avoid accidentally committing a custom path to the repo...)
-CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-""} 
+CALCLOUD_BUILD_DIR=${CALCLOUD_BUILD_DIR:-""}
 CALDP_BUILD_DIR=${CALDP_BUILD_DIR:-""}
 
 # variables that will be changed less-frequently
@@ -50,7 +50,7 @@ fi
 
 # check for Batch jobs and exit if any exist that are running or should be soon
 cd ${CALCLOUD_BUILD_DIR}/scripts
-./check_batch_jobs.py 
+./check_batch_jobs.py
 batch_jobs=$?
 if [[ $batch_jobs -ne 0 ]]; then
     echo "there are running or submitted batch jobs; cannot rotate ami"
@@ -77,7 +77,7 @@ echo $aws_tfstate
 cd $CALCLOUD_BUILD_DIR/ami_rotation
 ami_json=$(echo $(awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 --executable-users self))
 ci_ami=`python3 parse_image_json.py "${ami_json}" STSCI-AMAZON-LINUX2023`
-ecs_ami=`python3 parse_image_json.py "${ami_json}" STSCI-ECS-AL2023`
+ecs_ami=`python3 parse_image_json.py "${ami_json}" STSCI-EPH-ECS-AL2023`
 
 if [[ "$ci_ami" =~ ^ami-[a-z0-9]+$ ]]; then
     echo $ci_ami

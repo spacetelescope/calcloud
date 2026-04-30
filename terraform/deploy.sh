@@ -14,9 +14,14 @@ echo $aws_tfstate
 
 # get AMI id(s)
 cd $CALCLOUD_BUILD_DIR/ami_rotation
-ami_json=$(echo $(awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 --executable-users self))
+# Limit responses to the most recent 24 images to prevent "Argument list too long"
+query='{Images: reverse(sort_by(Images, &CreationDate))[:24]}'
+ami_json="$(
+  awsudo "$ADMIN_ARN" \
+  "aws ec2 describe-images --region us-east-1 --executable-users self --query '$query' --output json"
+)"
 ci_ami=`python3 parse_image_json.py "${ami_json}" STSCI-AMAZON-LINUX2023`
-ecs_ami=`python3 parse_image_json.py "${ami_json}" STSCI-ECS-AL2023`
+ecs_ami=`python3 parse_image_json.py "${ami_json}" STSCI-EPH-ECS-AL2023`
 
 if [[ "$ci_ami" =~ ^ami-[a-z0-9]+$ ]]; then
     echo $ci_ami
@@ -83,8 +88,8 @@ awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key crds_env_vars/
 awsudo $ADMIN_ARN aws s3api put-object --bucket $bucket_url --key crds_env_vars/${crds_context}
 
 # tag images as in-use by this environment
-cd $CALCLOUD_BUILD_DIR/terraform 
-# this script doesn't replace "old-tag", it just takes that image, and adds this tag to it. 
+cd $CALCLOUD_BUILD_DIR/terraform
+# this script doesn't replace "old-tag", it just takes that image, and adds this tag to it.
 # And in fact, if another image exists with this tag, it's removed from that one; so this is image promotion all-in-one
 echo ${aws_env}
 ./deploy_image_promote.sh --old-tag $CALDP_ECR_TAG batch-${aws_env}
