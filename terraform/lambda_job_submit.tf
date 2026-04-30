@@ -52,7 +52,8 @@ module "calcloud_lambda_submit" {
   })                           
 
   tags = {
-    Name = "calcloud-job-submit${local.environment}"
+    Name              = "calcloud-job-submit${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 

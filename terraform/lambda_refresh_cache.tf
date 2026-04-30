@@ -54,7 +54,8 @@ module "calcloud_lambda_refresh_cache_submit" {
   })
 
   tags = {
-    Name = "calcloud-fileshare-refresh_cache_submits${local.environment}"
+    Name              = "calcloud-fileshare-refresh_cache_submits${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 

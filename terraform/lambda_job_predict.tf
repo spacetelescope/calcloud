@@ -26,6 +26,7 @@ module "lambda_function_container_image" {
   })
 
   tags = {
-    Name = "calcloud-job-predict${local.environment}"
+    Name              = "calcloud-job-predict${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }

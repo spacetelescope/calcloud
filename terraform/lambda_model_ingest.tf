@@ -9,8 +9,9 @@ resource "aws_dynamodb_table" "calcloud_model_db" {
   }
 
   tags = {
-    Name        = "calcloud-model${local.environment}"
-    Environment = "${local.environment}"
+    Name              = "calcloud-model${local.environment}"
+    Environment       = "${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 
@@ -58,7 +59,8 @@ module "lambda_model_ingest" {
   }
 
   tags = {
-    Name = "calcloud-model-ingest${local.environment}"
+    Name              = "calcloud-model-ingest${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
 }
 
