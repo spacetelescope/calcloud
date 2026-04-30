@@ -21,7 +21,7 @@ variable region {
 }
 
 variable "stsci_poc_email" {
-  description = "Value for mandatory AWS tag stsci-poc-email for KMS, RDS, or S3 resources in STScI SDLC accounts."
+  description = "Value for tag stsci-poc-email on S3 buckets in this stack only (avoids provider default_tags, which would require tagging permissions on other services such as SSM and EventBridge)."
   type        = string
   default     = "team-violet@stsci.edu"
 }

@@ -2,7 +2,8 @@
 resource "aws_s3_bucket" "calcloud_lambda_envs" {
   bucket = "calcloud-lambda-envs${local.environment}"
   tags = {
-    "Name"     = "calcloud-lambda-envs${local.environment}"
+    "Name"            = "calcloud-lambda-envs${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
   server_side_encryption_configuration {
     rule {

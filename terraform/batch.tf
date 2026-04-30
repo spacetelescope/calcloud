@@ -2,11 +2,6 @@
 
 provider "aws" {
   region = var.region
-  default_tags {
-    tags = {
-      stsci-poc-email = var.stsci_poc_email
-    }
-  }
 }
 
 terraform {
@@ -201,8 +196,9 @@ resource "aws_s3_bucket" "calcloud" {
   bucket = "calcloud-processing${local.environment}"
   force_destroy = true
   tags = {
-    "CALCLOUD" = "calcloud-processing${local.environment}"
-    "Name"     = "calcloud-processing${local.environment}"
+    "CALCLOUD"        = "calcloud-processing${local.environment}"
+    "Name"            = "calcloud-processing${local.environment}"
+    "stsci-poc-email" = var.stsci_poc_email
   }
   server_side_encryption_configuration {
     rule {
