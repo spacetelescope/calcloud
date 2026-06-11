@@ -1,32 +1,32 @@
 module "calcloud_lambda_refresh_cache_submit" {
-  source = "terraform-aws-modules/lambda/aws"
+  source  = "terraform-aws-modules/lambda/aws"
   version = "~> 6.0.0"
 
   function_name = "calcloud-fileshare-refresh_cache_submit${local.environment}"
   description   = "submits refresh cache operations"
   # the path is relative to the path inside the lambda env, not in the local filesystem.
-  handler       = "refresh_cache_submit.lambda_handler"
-  runtime       = "python3.11"
-  publish       = false
-  timeout       = 900
+  handler                           = "refresh_cache_submit.lambda_handler"
+  runtime                           = "python3.11"
+  publish                           = false
+  timeout                           = 900
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
 
   source_path = [
     {
       # this is the lambda itself. The code in path will be placed directly into the lambda execution path
-      path = "${path.module}/../lambda/refreshCacheSubmit"
+      path             = "${path.module}/../lambda/refreshCacheSubmit"
       pip_requirements = false
     },
     {
       # calcloud for the package. We don't need to install boto3 and whatnot so we leave out the pip requirements
       # in the zip it will be installed into a directory called calcloud
-      path = "${path.module}/../calcloud"
-      prefix_in_zip = "calcloud"
+      path             = "${path.module}/../calcloud"
+      prefix_in_zip    = "calcloud"
       pip_requirements = false
     },
     {
       # pip dependencies defined for calcloud package in requirements.txt
-      path = "${path.module}/../calcloud"
+      path             = "${path.module}/../calcloud"
       pip_requirements = true
     },
   ]
@@ -35,22 +35,22 @@ module "calcloud_lambda_refresh_cache_submit" {
   s3_bucket   = aws_s3_bucket.calcloud_lambda_envs.id
 
   # ensures that terraform doesn't try to mess with IAM
-  create_role = false
+  create_role                   = false
   attach_cloudwatch_logs_policy = false
-  attach_dead_letter_policy = false
-  attach_network_policy = false
-  attach_tracing_policy = false
-  attach_async_event_policy = false
+  attach_dead_letter_policy     = false
+  attach_network_policy         = false
+  attach_tracing_policy         = false
+  attach_async_event_policy     = false
 
   lambda_role = nonsensitive(data.aws_ssm_parameter.lambda_refreshCacheSubmit_role.value)
 
   environment_variables = merge(local.common_env_vars, {
     FS_BLACKBOARD = nonsensitive(data.aws_ssm_parameter.fs_blackboard_arn.value),
-    FS_CONTROL = nonsensitive(data.aws_ssm_parameter.fs_control_arn.value),
-    FS_CRDS = nonsensitive(data.aws_ssm_parameter.fs_crds_arn.value),
-    FS_INPUTS = nonsensitive(data.aws_ssm_parameter.fs_inputs_arn.value),
-    FS_MESSAGES = nonsensitive(data.aws_ssm_parameter.fs_messages_arn.value),
-    FS_OUTPUTS = nonsensitive(data.aws_ssm_parameter.fs_outputs_arn.value)
+    FS_CONTROL    = nonsensitive(data.aws_ssm_parameter.fs_control_arn.value),
+    FS_CRDS       = nonsensitive(data.aws_ssm_parameter.fs_crds_arn.value),
+    FS_INPUTS     = nonsensitive(data.aws_ssm_parameter.fs_inputs_arn.value),
+    FS_MESSAGES   = nonsensitive(data.aws_ssm_parameter.fs_messages_arn.value),
+    FS_OUTPUTS    = nonsensitive(data.aws_ssm_parameter.fs_outputs_arn.value)
   })
 
   tags = {

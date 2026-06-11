@@ -8,7 +8,7 @@ resource "aws_s3_bucket" "calcloud_lambda_envs" {
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
-        sse_algorithm     = "AES256"
+        sse_algorithm = "AES256"
       }
     }
   }
@@ -24,24 +24,24 @@ resource "aws_s3_bucket_policy" "ssl_only_lambda_envs" {
   # Terraform's "jsonencode" function converts a
   # Terraform expression's result to valid JSON syntax.
   policy = jsonencode({
-    Id = "SSLPolicy",
+    Id      = "SSLPolicy",
     Version = "2012-10-17",
     Statement = [
-        {
-            Sid = "AllowSSLRequestsOnly",
-            Action = "s3:*",
-            Effect = "Deny",
-            Principal = "*",
-            Resource = [
-                aws_s3_bucket.calcloud_lambda_envs.arn,
-                "${aws_s3_bucket.calcloud_lambda_envs.arn}/*"
-            ],
-            Condition = {
-                Bool = {
-                     "aws:SecureTransport" = "false"
-                }
-            }
+      {
+        Sid       = "AllowSSLRequestsOnly",
+        Action    = "s3:*",
+        Effect    = "Deny",
+        Principal = "*",
+        Resource = [
+          aws_s3_bucket.calcloud_lambda_envs.arn,
+          "${aws_s3_bucket.calcloud_lambda_envs.arn}/*"
+        ],
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
         }
+      }
     ]
   })
 }
@@ -50,10 +50,10 @@ resource "aws_s3_bucket_policy" "ssl_only_lambda_envs" {
 resource "aws_s3_bucket_public_access_block" "s3_lambda_public_block" {
   bucket = aws_s3_bucket.calcloud_lambda_envs.id
 
-  block_public_acls   = true
-  block_public_policy = true
+  block_public_acls       = true
+  block_public_policy     = true
   restrict_public_buckets = true
-  ignore_public_acls=true
+  ignore_public_acls      = true
 }
 
 # for s3 event trigger
@@ -95,9 +95,9 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
 
   lambda_function {
     lambda_function_arn = module.lambda_model_ingest.lambda_function_arn
-    events = ["s3:ObjectCreated:Put"]
-    filter_prefix = "messages/processed-"
-    filter_suffix = ".trigger"
+    events              = ["s3:ObjectCreated:Put"]
+    filter_prefix       = "messages/processed-"
+    filter_suffix       = ".trigger"
   }
 
   depends_on = [

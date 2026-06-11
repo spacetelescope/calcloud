@@ -1,44 +1,44 @@
 resource "aws_batch_job_queue" "model_queue" {
-  name = "calcloud-model-training-queue${local.environment}"
-  count = 1
+  name                 = "calcloud-model-training-queue${local.environment}"
+  count                = 1
   compute_environments = [aws_batch_compute_environment.model_compute_env[count.index].arn]
-  priority = 10
-  state = "ENABLED"
+  priority             = 10
+  state                = "ENABLED"
 }
 
 resource "aws_batch_compute_environment" "model_compute_env" {
-  count = 1
+  count                           = 1
   compute_environment_name_prefix = "calcloud-model-training${local.environment}"
-  type = "MANAGED"
-  service_role = data.aws_ssm_parameter.batch_service_role.value
+  type                            = "MANAGED"
+  service_role                    = data.aws_ssm_parameter.batch_service_role.value
 
   compute_resources {
     allocation_strategy = "BEST_FIT"
-    instance_role = data.aws_ssm_parameter.ecs_instance_role.value
-    type = "EC2"
-    bid_percentage = 0
-    tags = {}
+    instance_role       = data.aws_ssm_parameter.ecs_instance_role.value
+    type                = "EC2"
+    bid_percentage      = 0
+    tags                = {}
     subnets             = local.batch_subnet_ids
     security_group_ids  = local.batch_sgs
-    instance_type = ["c5a.2xlarge"]
-    max_vcpus = 8
-    min_vcpus = 0
-    desired_vcpus = 0
+    instance_type       = ["c5a.2xlarge"]
+    max_vcpus           = 8
+    min_vcpus           = 0
+    desired_vcpus       = 0
 
     launch_template {
       launch_template_id = aws_launch_template.hstdp.id
-      version = "$Latest"
+      version            = "$Latest"
     }
   }
   lifecycle {
-    ignore_changes = [compute_resources.0.desired_vcpus]
+    ignore_changes        = [compute_resources.0.desired_vcpus]
     create_before_destroy = true
   }
 }
 
 resource "aws_batch_job_definition" "model_job_def_main" {
   name                 = "calcloud-model-training-jobdef${local.environment}"
-  count = 1
+  count                = 1
   type                 = "container"
   container_properties = <<CONTAINER_PROPERTIES
   {
