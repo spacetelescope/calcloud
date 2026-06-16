@@ -37,6 +37,7 @@ JobResources = namedtuple(
         "crds_config",
         "initial_modeled_bin",
         "max_seconds",
+        "disk_size",
     ],
 )
 
@@ -143,8 +144,11 @@ def _get_resources(dataset, dataset_type, output_bucket, input_path, timeout_sca
     kill_time = int(min(max(clockTime, db_clock), 48 * 60 * 60) * timeout_scale)
     # minimum Batch requirement 60 seconds
     kill_time = int(max(kill_time, 60))
-
-    return JobResources(dataset, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time)
+    if dataset_type == "mvm":
+        disk_size = "large"
+    else:
+        disk_size = "default"
+    return JobResources(dataset, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time, disk_size)
 
 
 def _get_environment(job_resources, memory_retries, memory_bin):
@@ -156,6 +160,14 @@ def _get_environment(job_resources, memory_retries, memory_bin):
     job_queues = os.environ["JOBQUEUES"].split(",")
     job_resources = JobResources(*job_resources)
 
+    if job_resources.disk_size == "large":
+        job_queues = [x for x in job_queues if "large" in x]
+        job_defs = [x for x in job_defs if "large" in x]
+    else:
+        job_queues = [x for x in job_queues if "large" not in x]
+        job_defs = [x for x in job_defs if "large" not in x]
+
+    # This needs fixing
     final_bin = memory_bin if memory_bin is not None else job_resources.initial_modeled_bin
     final_bin += memory_retries
     if final_bin < len(job_defs):

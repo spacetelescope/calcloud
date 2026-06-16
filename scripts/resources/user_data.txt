@@ -1,0 +1,152 @@
+Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+MIME-Version: 1.0
+--==BOUNDARY==
+MIME-Version: 1.0
+Content-Type: text/x-shellscript; charset="us-ascii"
+#!/bin/bash -ex
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+sleep 5
+echo BEGIN
+
+date '+%Y-%m-%d %H:%M:%S'
+
+mkdir -p /usr/lib/ssl
+mkdir -p /etc/ssl/certs
+mkdir -p /etc/pki/ca-trust/extracted/pem
+ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /usr/lib/ssl/cert.pem
+
+export CURL_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+
+sleep 300
+
+yum -y update --exclude=amazon-ssm-agent
+yum -y install gcc libpng-devel libjpeg-devel
+yum -y install openssl-devel bzip2-devel libffi-devel zlib-devel
+
+cd /home/ec2-user
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install --update
+curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+mkdir /home/ec2-user/.aws
+yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+yum -y install terraform-1.0.11
+yum -y install git
+yum -y install python3
+yum -y groupinstall "Development Tools"
+yum install -y docker
+service docker start
+usermod -a -G docker ec2-user
+systemctl enable docker
+systemctl start docker
+
+cd /usr/src
+wget https://www.openssl.org/source/openssl-1.1.1q.tar.gz --no-check-certificate
+tar -xzvf openssl-1.1.1q.tar.gz
+cd openssl-1.1.1q
+./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic
+make
+make install
+cd /usr/src
+wget https://www.python.org/ftp/python/3.11.5/Python-3.11.5.tgz
+tar xzf Python-3.11.5.tgz
+cd Python-3.11.5
+./configure --enable-optimizations --with-openssl=/usr
+make install
+cd /home/ec2-user
+
+chown -R ec2-user:ec2-user /home/ec2-user/
+
+sudo -i -u ec2-user bash << EOF
+mkdir ~/bin ~/tmp
+cd ~/tmp
+echo PATH="/home/ec2-user/bin:/home/ec2-user/python/bin:/usr/src/Python-3.11.5/:$PATH" >> /home/ec2-user/.bashrc
+wget https://get.helm.sh/helm-v3.4.1-linux-amd64.tar.gz
+tar -zxvf helm-v3.4.1-linux-amd64.tar.gz
+mv linux-amd64/helm ~/bin
+curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+mv kubectl ~/bin
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+bash ~/.nvm/nvm.sh
+source ~/.bashrc
+nvm install 16
+npm config set registry http://registry.npmjs.org/
+npm config set cafile /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+npm install -g awsudo@1.5.0
+wget https://github.com/mozilla/sops/releases/download/v3.6.1/sops-v3.6.1.linux
+chmod +x sops-v3.6.1.linux
+mv sops-v3.6.1.linux ~/bin/sops
+cd /home/ec2-user
+curl -O https://ssb.stsci.edu/releases/caldp/20201012/latest-linux.yml
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /home/ec2-user/miniconda.sh
+bash /home/ec2-user/miniconda.sh -b -p /home/ec2-user/miniconda
+rm -rf ~/tmp
+cd /home/ec2-user
+find /home/ec2-user/miniconda -name '*.pem' | grep -E 'ssl/cert.pem|ssl/cacert.pem' >/tmp/certs
+for cert in `cat /tmp/certs`;
+do
+    echo "Replacing $cert"
+    rm -v -f $cert
+    ln -v -s /etc/ssl/certs/ca-certificates.crt $cert
+done
+EOF
+
+chown -R ec2-user:ec2-user /home/ec2-user/
+
+cd /home/ec2-user
+mkdir bhayden
+cd bhayden
+git clone https://github.com/spacetelescope/calcloud.git
+git clone https://github.com/spacetelescope/caldp.git
+cd calcloud
+git config --local user.name "Brian Hayden"
+git config --local user.email 5826711+bhayden53@users.noreply.github.com
+cd ../caldp
+git config --local user.name "Brian Hayden"
+git config --local user.email 5826711+bhayden53@users.noreply.github.com
+cd /home/ec2-user
+chown -R ec2-user:ec2-user bhayden/
+
+echo "export CURL_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem" >> /home/ec2-user/.bashrc
+echo "export REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem" >> /home/ec2-user/.bashrc
+echo "export ADMIN_ARN=\`aws sts get-caller-identity | grep "Account" | sed s/.*:// | sed s/\ \\\"/'arn:aws:iam::'/ | sed s/\\\",/':role\/hst_reprocessing_admin_role'/\`"  >> /home/ec2-user/.bashrc
+echo "export ECR_URI=\`aws ssm get-parameter --region us-east-1 --name /ecr/SharedServices | grep Value | sed s/.*:// | sed s/\ \\\"// | sed s/\\\",//\`"  >> /home/ec2-user/.bashrc
+
+cat << EOF > /home/ec2-user/post_launch.sh
+#!/bin/bash
+eval "\$(/home/ec2-user/miniconda/bin/conda shell.bash hook)"
+conda init
+source ~/.bashrc
+# conda config --add channels http://ssb.stsci.edu/astroconda
+# conda env create -n caldp --file latest-linux.yml
+conda init bash
+# conda activate caldp
+EOF
+
+# setup for generic needs for someone deploying the code
+cd /home/ec2-user
+mkdir deployer
+cd deployer
+git clone https://github.com/spacetelescope/calcloud.git
+cd calcloud
+git remote set-url origin DISABLED --push
+git fetch
+
+# setup for ami-rotation
+cd /home/ec2-user
+mkdir ami_rotate && cd ami_rotate
+git clone https://github.com/spacetelescope/calcloud.git
+cd calcloud
+git remote set-url origin DISABLED --push
+git fetch
+
+export AWS_DEFAULT_REGION=us-east-1
+
+
+chown -R ec2-user:ec2-user /home/ec2-user/post_launch.sh
+chown -R ec2-user:ec2-user /home/ec2-user/
+
+echo END
+--==BOUNDARY==--
