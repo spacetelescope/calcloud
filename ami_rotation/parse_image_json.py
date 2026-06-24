@@ -3,9 +3,24 @@ import json
 from collections import OrderedDict
 from datetime import datetime
 
-response = json.loads(str(sys.argv[1]))
+# This command parses the response to `aws ec2 describe-images`.
+# This response can be so long that it cannot be passed on the command-line.
+# When you call this program, you can either:
+# 1. pass the response on the command line, followed by the image-name-prefix
+# 2. store the response in a file called images.json, and only pass the image-name-prefix
+if len(sys.argv) == 3:
+    # Response has been passed on command-line
+    input_string = str(sys.argv[1])
+
+    image_name_filter = sys.argv[2]
+else:
+    # Response is in images.json file
+    with open("images.json", "r") as f:
+        input_string = f.read()
+    image_name_filter = sys.argv[1]
+
+response = json.loads(input_string)
 images = response["Images"]
-image_name_filter = sys.argv[2]
 
 stsciLinux2Ami = {}
 for image in images:
