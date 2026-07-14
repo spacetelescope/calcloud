@@ -35,19 +35,38 @@ terraform {
 
 # See also lambda module version in each lambda .tf file
 
+# We must use a different launch template for each volume size we use.
+locals {
+  launch_templates = {
+    default = {
+      name_suffix       = ""
+      volume_size       = 150
+      description_infix = ""
+    }
+    large-volume = {
+      name_suffix       = "-large-volume"
+      volume_size       = 3000
+      description_infix = "large-volume "
+    }
+  }
+}
+
 resource "aws_launch_template" "hstdp" {
   # IF YOU CHANGE THE LAUNCH TEMPLATE YOU MUST "TAINT" THE COMPUTE ENVIRONMENT BEFORE DEPLOY
   # IN ORDER FOR YOUR CHANGES TO BE PICKED UP BY BATCH
   # See https://docs.aws.amazon.com/batch/latest/userguide/create-compute-environment.html
   # and https://github.com/hashicorp/terraform-provider-aws/issues/15535
-  name = "calcloud-hst-worker${local.environment}"
-  description             = "Template for cluster worker nodes updated to limit stopped container lifespan"
+
+  for_each = local.launch_templates
+
+  name                   = "calcloud-hst-worker${each.value.name_suffix}${local.environment}"
+  description            = "Template for ${each.value.description_infix}cluster worker nodes updated to limit stopped container lifespan"
   ebs_optimized           = "false"
   image_id                = nonsensitive(aws_ssm_parameter.ecs_ami.value)
   update_default_version = true
   tags = {
-    "Name"            = "calcloud-hst-worker${local.environment}"
-    "calcloud-hst"    = "calcloud-hst-worker${local.environment}"
+    "Name"            = "calcloud-hst-worker${each.value.name_suffix}${local.environment}"
+    "calcloud-hst"    = "calcloud-hst-worker${each.value.name_suffix}${local.environment}"
     "stsci-poc-email" = var.stsci_poc_email
   }
   user_data               = base64encode(templatefile("${path.module}/user_data.sh", {}))
@@ -67,7 +86,7 @@ resource "aws_launch_template" "hstdp" {
     iops                  = lookup(var.lt_ebs_iops, local.environment, 0)
     # throughput is only valid for gp3, but it doesn't accept '0' as valid. null works, which is then set to 0
     throughput            = lookup(var.lt_ebs_throughput, local.environment, null)
-    volume_size           = 150
+    volume_size           = each.value.volume_size
     volume_type           = lookup(var.lt_ebs_type, local.environment, "gp2")
             }
   }
@@ -81,8 +100,8 @@ resource "aws_launch_template" "hstdp" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      "Name"            = "calcloud-hst-worker${local.environment}"
-      "calcloud-hst"    = "calcloud-hst-worker${local.environment}"
+      "Name"            = "calcloud-hst-worker${each.value.name_suffix}${local.environment}"
+      "calcloud-hst"    = "calcloud-hst-worker${each.value.name_suffix}${local.environment}"
       "stsci-poc-email" = var.stsci_poc_email
     }
   }
@@ -90,8 +109,8 @@ resource "aws_launch_template" "hstdp" {
   tag_specifications {
     resource_type = "volume"
     tags = {
-      "Name"            = "calcloud-hst-worker${local.environment}"
-      "calcloud-hst"    = "calcloud-hst-worker${local.environment}"
+      "Name"            = "calcloud-hst-worker${each.value.name_suffix}${local.environment}"
+      "calcloud-hst"    = "calcloud-hst-worker${each.value.name_suffix}${local.environment}"
       "stsci-poc-email" = var.stsci_poc_email
     }
   }
@@ -99,14 +118,14 @@ resource "aws_launch_template" "hstdp" {
 
 resource "aws_batch_job_queue" "batch_queue" {
   name = "calcloud-hst-queue-${local.ladder[count.index].name}${local.environment}"
-  count = 4
+  count = length(local.ladder)
   compute_environments = [aws_batch_compute_environment.compute_env[count.index].arn]
   priority = 10   # need to vectorize?
   state = "ENABLED"
 }
 
 resource "aws_batch_compute_environment" "compute_env" {
-  count = 4
+  count = length(local.ladder)
   compute_environment_name_prefix = "calcloud-hst-${local.ladder[count.index].name}${local.environment}"
   type = "MANAGED"
   service_role = nonsensitive(data.aws_ssm_parameter.batch_service_role.value)
@@ -125,7 +144,7 @@ resource "aws_batch_compute_environment" "compute_env" {
     desired_vcpus = local.ladder[count.index].ce_desired_vcpus
 
     launch_template {
-      launch_template_id = aws_launch_template.hstdp.id
+      launch_template_id = aws_launch_template.hstdp[local.ladder[count.index].lt_volume_size_key].id
       version = "$Latest"
     }
   }
@@ -142,7 +161,7 @@ resource "aws_batch_compute_environment" "compute_env" {
 
 resource "aws_batch_job_definition" "job_def" {
   name                 = "calcloud-jobdef-${local.ladder[count.index].name}${local.environment}"
-  count = 4
+  count = length(local.ladder)
   type                 = "container"
   container_properties = <<CONTAINER_PROPERTIES
   {

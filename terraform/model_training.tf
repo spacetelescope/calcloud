@@ -26,7 +26,7 @@ resource "aws_batch_compute_environment" "model_compute_env" {
     desired_vcpus = 0
 
     launch_template {
-      launch_template_id = aws_launch_template.hstdp.id
+      launch_template_id = aws_launch_template.hstdp["default"].id
       version = "$Latest"
     }
   }

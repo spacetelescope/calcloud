@@ -32,6 +32,7 @@ locals {
 
                 jd_memory = 2*(1024-128),
                 jd_vcpu = 1,
+                lt_volume_size_key = "default",
               },
               { # -------------------------------------------------------------------
                 name : "08g",
@@ -47,6 +48,7 @@ locals {
 
                 jd_memory = 8*(1024-128),
                 jd_vcpu = 2,
+                lt_volume_size_key = "default",
               },
               { # -------------------------------------------------------------------
                 name : "16g",
@@ -62,6 +64,7 @@ locals {
 
                 jd_memory = 16*(1024-128),
                 jd_vcpu = 2,
+                lt_volume_size_key = "default",
               },
               { # -------------------------------------------------------------------
                 name : "64g",
@@ -77,6 +80,70 @@ locals {
 
                 jd_memory = 64*(1024-128),
                 jd_vcpu = 8,
+                lt_volume_size_key = "default",
+              },
+                            { # -------------------------------------------------------------------
+                name : "02g-large-volume",
+
+                # 2g job def -> 2g queue -> 2g compute env
+                ce_instance_type = [
+                    "c5a.2xlarge",    #  8 cores,  16G    $0.308 / hr, 8 concurrent jobs
+                 ],
+                ce_min_vcpus : 0,
+                ce_max_vcpus : lookup(var.ce_max_vcpu, local.environment, 64),
+                ce_desired_vcpus : 0,
+
+                jd_memory = 2*(1024-128),
+                jd_vcpu = 1,
+                lt_volume_size_key = "large-volume",
+              },
+              { # -------------------------------------------------------------------
+                name : "08g-large-volume",
+
+                # 8g job def -> 8g queue -> 8g compute env
+                ce_instance_type = [
+                    "m5a.2xlarge",    #  8 cores, 32G     $0.344 / hr, 4 concurrent jobs
+                ],
+
+                ce_min_vcpus : 0,
+                ce_max_vcpus : lookup(var.ce_max_vcpu, local.environment, 64),
+                ce_desired_vcpus : 0,
+
+                jd_memory = 8*(1024-128),
+                jd_vcpu = 2,
+                lt_volume_size_key = "large-volume",
+              },
+              { # -------------------------------------------------------------------
+                name : "16g-large-volume",
+
+                # 16g job def -> 16g queue -> 16g compute env
+                ce_instance_type = [
+                    "r5a.xlarge",    #  4 cores,  32G    $0.226 / hr, 2 concurrent jobs
+                ],
+
+                ce_min_vcpus : 0,
+                ce_max_vcpus : lookup(var.ce_max_vcpu, local.environment, 64),
+                ce_desired_vcpus : 0,
+
+                jd_memory = 16*(1024-128),
+                jd_vcpu = 2,
+                lt_volume_size_key = "large-volume",
+              },
+              { # -------------------------------------------------------------------
+                name : "64g-large-volume",
+
+                # 64g job def -> 64g queue -> 64g compute env (r series or something else, enough memory to fit ~2 jobs per ec2)
+                ce_instance_type = [
+                    "r5a.2xlarge",    #  8 cores, 64G   $0.452 / hr, 1 concurrent job
+                ],
+
+                ce_min_vcpus : 0,
+                ce_max_vcpus : lookup(var.ce_max_vcpu, local.environment, 64),
+                ce_desired_vcpus : 0,
+
+                jd_memory = 64*(1024-128),
+                jd_vcpu = 8,
+                lt_volume_size_key = "large-volume",
               },
        ]
 

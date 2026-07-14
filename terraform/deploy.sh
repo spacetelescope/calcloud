@@ -43,14 +43,17 @@ awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backen
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
 # must taint the compute env to be safe about launch template handling. see comments in batch.tf
-for i in {0..3}; do
+for i in {0..7}; do
     awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[$i]
 done
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
-
-# This is the lambda for the prediction model. It is not routinely built because the code
-# contains create_package = false.  This causes the tain to fail with "Error: No such resource instance"
 awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
+
+# This can be removed after v0.4.49 is deployed to all environments.
+# We need to tell terraform we are moving aws_launch_template.hstdp -> aws_launch_template.hstdp["default"]
+if awsudo $ADMIN_ARN terraform state list | grep -q "aws_launch_template.hstdp$" ; then
+    awsudo $ADMIN_ARN terraform state mv aws_launch_template.hstdp 'aws_launch_template.hstdp[\"default\"]'
+fi
 
 # manual confirmation required
 awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}" -var "full_base_image=${BASE_IMAGE_TAG}" -var "ami_rotation_base_image=${AMIROTATION_DOCKER_IMAGE}"
