@@ -75,7 +75,7 @@ echo $aws_tfstate
 
 # get AMI id
 cd $CALCLOUD_BUILD_DIR/ami_rotation
-awsudo $ADMIN_ARN ec2 describe-images --region us-east-1 --executable-users self --output json > images.json
+awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 --executable-users self --output json > images.json
 ci_ami=`python3 parse_image_json.py STSCI-AMAZON-LINUX2023`
 ecs_ami=`python3 parse_image_json.py STSCI-EPH-ECS-AL2023`
 

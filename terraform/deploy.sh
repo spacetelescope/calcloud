@@ -14,7 +14,7 @@ echo $aws_tfstate
 
 # get AMI id(s)
 cd $CALCLOUD_BUILD_DIR/ami_rotation
-awsudo $ADMIN_ARN ec2 describe-images --region us-east-1 --executable-users self --output json > images.json
+awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 --executable-users self --output json > images.json
 ci_ami=`python3 parse_image_json.py STSCI-AMAZON-LINUX2023`
 ecs_ami=`python3 parse_image_json.py STSCI-EPH-ECS-AL2023`
 
@@ -43,11 +43,13 @@ awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backen
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
 # must taint the compute env to be safe about launch template handling. see comments in batch.tf
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[0]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[1]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[2]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[3]
+for i in {0..3}; do
+    awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[$i]
+done
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
+
+# This is the lambda for the prediction model. It is not routinely built because the code
+# contains create_package = false.  This causes the tain to fail with "Error: No such resource instance"
 awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
 
 # manual confirmation required

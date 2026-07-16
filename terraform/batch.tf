@@ -203,11 +203,14 @@ resource "aws_s3_bucket" "calcloud" {
     "Name"            = "calcloud-processing${local.environment}"
     "stsci-poc-email" = var.stsci_poc_email
   }
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm     = "AES256"
-      }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "calcloud" {
+  bucket = "calcloud-processing${local.environment}"
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
     }
   }
 }
