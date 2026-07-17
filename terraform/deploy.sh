@@ -14,7 +14,7 @@ echo $aws_tfstate
 
 # get AMI id(s)
 cd $CALCLOUD_BUILD_DIR/ami_rotation
-awsudo $ADMIN_ARN ec2 describe-images --region us-east-1 --executable-users self --output json > images.json
+awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 --executable-users self --output json > images.json
 ci_ami=`python3 parse_image_json.py STSCI-AMAZON-LINUX2023`
 ecs_ami=`python3 parse_image_json.py STSCI-EPH-ECS-AL2023`
 
@@ -43,12 +43,22 @@ awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backen
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
 # must taint the compute env to be safe about launch template handling. see comments in batch.tf
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[0]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[1]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[2]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[3]
+
+# In locals.tf, we define a local variable 'ladder' that is an array with one item for each compute environment.
+# When we change the length of the 'ladder' array, we need to change the LENGTH_LADDER variable here to match.
+LENGTH_LADDER=8
+for ((i=0; i<LENGTH_LADDER; i++)); do
+    awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[$i]
+done
+
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
 awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
+
+# This can be removed after v0.4.49 is deployed to all environments.
+# We need to tell terraform we are moving aws_launch_template.hstdp -> aws_launch_template.hstdp["default"]
+if awsudo $ADMIN_ARN terraform state list | grep -q "aws_launch_template.hstdp$" ; then
+    awsudo $ADMIN_ARN terraform state mv aws_launch_template.hstdp 'aws_launch_template.hstdp[\"default\"]'
+fi
 
 # manual confirmation required
 awsudo $ADMIN_ARN terraform apply -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}" -var "full_base_image=${BASE_IMAGE_TAG}" -var "ami_rotation_base_image=${AMIROTATION_DOCKER_IMAGE}"

@@ -5,7 +5,7 @@ source deploy_vars.sh
 cwd=`pwd`
 # setting up the calcloud source dir if it needs downloaded
 # equivalent to "if len($var) == 0"
-if [ -z "${CALCLOUD_BUILD_DIR}" ]
+if [ -z "${CALCLOUD_BUILD_DIR}" -o ! -d "${CALCLOUD_BUILD_DIR}" ]
 then
     mkdir -p $TMP_INSTALL_DIR
     CALCLOUD_BUILD_DIR="${TMP_INSTALL_DIR}/calcloud"
@@ -28,7 +28,7 @@ fi
 
 # setting up the caldp source dir if it needs downloaded
 # equivalent to "if len($var) == 0"
-if [ -z "${CALDP_BUILD_DIR}" ]
+if [ -z "${CALDP_BUILD_DIR}" -o ! -d "${CALDP_BUILD_DIR}" ]
 then
     mkdir -p $TMP_INSTALL_DIR
     CALDP_BUILD_DIR="${TMP_INSTALL_DIR}/caldp"
