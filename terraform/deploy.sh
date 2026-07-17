@@ -43,9 +43,14 @@ awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backen
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
 # must taint the compute env to be safe about launch template handling. see comments in batch.tf
-for i in {0..7}; do
+
+# In locals.tf, we define a local variable 'ladder' that is an array with one item for each compute environment.
+# When we change the length of the 'ladder' array, we need to change the LENGTH_LADDER variable here to match.
+LENGTH_LADDER=8
+for ((i=0; i<LENGTH_LADDER; i++)); do
     awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[$i]
 done
+
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
 awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
 

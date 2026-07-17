@@ -25,19 +25,36 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/broadcast")
 
 EVENT_DIR = str(Path(__file__).resolve().parent / "artifacts/events")
 
-JOBDEFINITIONS = ["calcloud-jobdef-2g", "calcloud-jobdef-2g-large-volume",
-                  "calcloud-jobdef-8g", "calcloud-jobdef-8g-large-volume",
-                  "calcloud_jobdef-16g", "calcloud_jobdef-16g-large-volume",
-                  "calcloud-jobdef-64g", "calcloud-jobdef-64g-large-volume"
-                  ]
-CENVIRONMENTS = ["calcloud-cenv-2g", "calcloud-cenv-2g-large-volume",
-                 "calcloud-cenv-8g", "calcloud-cenv-8g-large-volume",
-                 "calcloud-cenv-16g", "calcloud-cenv-16g-large-volume",
-                 "calcloud-cenv-64g", "calcloud-cenv-64g-large-volume",]
-JOBQUEUES = ["calcloud-jobqueue-2g", "calcloud-jobqueue-2g-large-volume",
-             "calcloud-jobqueue-8g", "calcloud-jobqueue-8g-large-volume",
-             "calcloud-jobqueue-16g", "calcloud-jobqueue-16g-large-volume",
-             "calcloud-jobqueue-64g", "calcloud-jobqueue-64g-large-volume"]
+JOBDEFINITIONS = [
+    "calcloud-jobdef-2g",
+    "calcloud-jobdef-2g-large-volume",
+    "calcloud-jobdef-8g",
+    "calcloud-jobdef-8g-large-volume",
+    "calcloud_jobdef-16g",
+    "calcloud_jobdef-16g-large-volume",
+    "calcloud-jobdef-64g",
+    "calcloud-jobdef-64g-large-volume",
+]
+CENVIRONMENTS = [
+    "calcloud-cenv-2g",
+    "calcloud-cenv-2g-large-volume",
+    "calcloud-cenv-8g",
+    "calcloud-cenv-8g-large-volume",
+    "calcloud-cenv-16g",
+    "calcloud-cenv-16g-large-volume",
+    "calcloud-cenv-64g",
+    "calcloud-cenv-64g-large-volume",
+]
+JOBQUEUES = [
+    "calcloud-jobqueue-2g",
+    "calcloud-jobqueue-2g-large-volume",
+    "calcloud-jobqueue-8g",
+    "calcloud-jobqueue-8g-large-volume",
+    "calcloud-jobqueue-16g",
+    "calcloud-jobqueue-16g-large-volume",
+    "calcloud-jobqueue-64g",
+    "calcloud-jobqueue-64g-large-volume",
+]
 BUCKET = "calcloud-processing-moto"
 TEST_DATASET_NAMES = [
     "ieloc4yzq",

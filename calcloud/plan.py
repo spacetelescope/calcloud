@@ -147,8 +147,9 @@ def _get_resources(dataset, dataset_type, output_bucket, input_path, timeout_sca
 
     disk_size = "large-volume" if dataset_type == "mvm" else "default"
 
-    return JobResources(dataset, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time,
-                        disk_size)
+    return JobResources(
+        dataset, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time, disk_size
+    )
 
 
 def _get_environment(job_resources, memory_retries, memory_bin):
