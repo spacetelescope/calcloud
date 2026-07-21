@@ -1,0 +1,9 @@
+GlobalJobId|SubmitDate|JobStartDate|CompletionDate|JobDuration|ImageSize|JobState|ExitCode|ExitReason|Dataset|LogStream|S3Path
+30f78d64-bc5e-4826-9671-5e59187bd8a8|1784643530|1784643530|1784643530|0|0|FAILED|0|None|ieloc4yzq|None|calcloud-processing-moto/outputs/ieloc4yzq/
+4118741d-aeba-49d7-ba44-8233074e59fb|1784643530|1784643530|1784643530|0|0|FAILED|0|None|wfc3_epo_2h|None|calcloud-processing-moto/outputs/wfc3_epo_2h/
+e7f1af9c-cf16-4506-8a14-b83aa93c5c79|1784643530|1784643530|1784643530|0|0|FAILED|0|None|skycell-p0115x10y10|None|calcloud-processing-moto/outputs/skycell-p0115x10y10/
+ef74be21-d7db-431b-b5f8-d904c2993a89|1784643530|1784643530|1784643530|0|0|FAILED|0|None|ipppssoo3|None|calcloud-processing-moto/outputs/ipppssoo3/
+525946ea-1729-4ac1-abc7-52533bc47844|1784643530|1784643530|1784643530|0|0|FAILED|0|None|ipppssoo4|None|calcloud-processing-moto/outputs/ipppssoo4/
+829a3a75-b1d4-40df-b16e-e63ef796b3d5|1784643530|1784643530|1784643530|0|0|FAILED|0|None|ipppssoo5|None|calcloud-processing-moto/outputs/ipppssoo5/
+a78dbe04-0e32-408b-8705-0f89c3d0eecf|1784643530|1784643530|1784643530|0|0|FAILED|0|None|ipppssoo6|None|calcloud-processing-moto/outputs/ipppssoo6/
+9c4de170-96d7-4347-b5c6-04001b4a1468|1784643530|1784643530|1784643530|0|0|FAILED|0|None|ipppssoo7|None|calcloud-processing-moto/outputs/ipppssoo7/
