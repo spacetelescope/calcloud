@@ -3,6 +3,7 @@ coverage
 .pydevproject
 .project
 .vscode
+.env
 *.pyc
 *~
 *.egg-info/
