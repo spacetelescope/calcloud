@@ -35,8 +35,6 @@ jobs:
             --cov=lambda/JobPredict \
             --cov=lambda/JobRescue \
             --cov=lambda/ModelIngest \
-            --cov=lambda/refreshCacheLogs \
-            --cov=lambda/refreshCacheSubmit \
             --cov=lambda/s3_trigger \
             --cov-fail-under 30 \
 

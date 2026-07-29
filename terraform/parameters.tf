@@ -58,44 +58,12 @@ data aws_ssm_parameter lambda_broadcast_role {
   name = "/iam/roles/calcloud_lambda_broadcast"
 }
 
-data aws_ssm_parameter lambda_cloudwatch_role {
-  name = "/iam/roles/calcloud_lambda_cloudWatchLogs"
-}
-
-data aws_ssm_parameter lambda_refreshCacheSubmit_role {
-  name = "/iam/roles/calcloud_lambda_refreshCacheSubmit"
-}
-
 data aws_ssm_parameter lambda_amiRotate_role {
   name = "/iam/roles/calcloud_lambda_amiRotate"
 }
 
 data aws_ssm_parameter model_ingest_role {
   name = "/iam/roles/calcloud_model_ingest"
-}
-
-data aws_ssm_parameter fs_blackboard_arn {
-  name = "/gateway/fileshare/blackboard"
-}
-
-data aws_ssm_parameter fs_control_arn {
-  name = "/gateway/fileshare/control"
-}
-
-data aws_ssm_parameter fs_crds_arn {
-  name = "/gateway/fileshare/crds_env_vars"
-}
-
-data aws_ssm_parameter fs_inputs_arn {
-  name = "/gateway/fileshare/inputs"
-}
-
-data aws_ssm_parameter fs_messages_arn {
-  name = "/gateway/fileshare/messages"
-}
-
-data aws_ssm_parameter fs_outputs_arn {
-  name = "/gateway/fileshare/outputs"
 }
 
 data aws_ssm_parameter lambda_rescue_role {
@@ -130,7 +98,7 @@ resource "aws_ssm_parameter" "ami_rotation_base_image" {
   name  = "/tf/env/calcloud-ami-rotation-base-image${local.environment}"
   type  = "String"
   value = "${var.ami_rotation_base_image}"
-  overwrite = true 
+  overwrite = true
 }
 
 resource "aws_ssm_parameter" "awsysver" {
