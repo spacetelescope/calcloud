@@ -5,11 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import time
-from sklearn.ensemble import RandomForestRegressor, HistGradientBoostingRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
-from JobPredict import predict_handler
 
 
 def get_dynamo_items(number_items):
@@ -82,10 +81,7 @@ def calculate_memory_model(data):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     # Memory model
-    memory_model = RandomForestRegressor(
-        n_estimators=200,
-        random_state=42,
-    )
+    memory_model = HistGradientBoostingRegressor(max_depth=5, learning_rate=0.05, max_iter=500, random_state=42)
     memory_model.fit(X_train, y_train)
     actual_memory = y_test
     predicted_memory = memory_model.predict(X_test)
@@ -102,12 +98,12 @@ def calculate_memory_model(data):
     print(f"  MAPE = {memory_mape:.1f}%")
     print("")
 
-    # Save the model
-    joblib.dump(memory_model, "scripts/memory_rf_model.pkl")
+    joblib.dump({"model": memory_model, "columns": list(X.columns)}, "scripts/memory_model.pkl")
 
     # To use:
-    #     rf_model = joblib.load("scripts/memory_rf_model.pkl")
-    #     prediction = np.expm1(rf_model.predict(feature_df))
+    #     saved = joblib.load("scripts/memory_model.pkl")
+    #     memory_model = saved["model"]
+    #     prediction = memorymodel.predict(feature_df)
 
     plot_actual_vs_predicted(
         actual_memory,
@@ -200,8 +196,8 @@ def calculate_wallclock_model(data):
 
     # To use:
     #     saved = joblib.load("scripts/wallclock_model.pkl")
-    #     model = saved["model"]
-    #     prediction = np.expm1(model.predict(feature_df))
+    #     wallclock_model = saved["model"]
+    #     prediction = np.expm1(wallclock_model.predict(feature_df))
 
     plot_actual_vs_predicted(
         actual_wallclock,
@@ -274,6 +270,8 @@ def plot_bins(items):
 
 
 def evaluate_model_prediction(items):
+    from JobPredict import predict_handler
+
     # load models
     clf = predict_handler.get_model("lambda/JobPredict/models/mem_clf/")
     mem_reg = predict_handler.get_model("lambda/JobPredict/models/mem_reg/")
@@ -377,7 +375,6 @@ def evaluate_model_prediction(items):
 
 
 def test_remotely():
-
     with open("data.csv") as f:
         reader = csv.DictReader(f)
         items = list(reader)
@@ -387,16 +384,16 @@ def test_remotely():
 
 
 def test_locally():
-    items = get_dynamo_items(100000)
+    items = get_dynamo_items(1000000)  
     convert_elements_to_numeric_values(items)
-    save_data_as_csv(items)
+    # save_data_as_csv(items)
 
-    # plot_bins(items)
-    # calculate_models(items)
+    plot_bins(items)
+    calculate_models(items)
 
 
 def main():
-    test_remotely()
+    test_locally()
 
 
 if __name__ == "__main__":
