@@ -5,42 +5,22 @@
 # 4 - return preds as json to parent lambda function
 """
 
+import os
+from pathlib import Path
+
 import boto3
+import joblib
 import numpy as np
-from sklearn.preprocessing import PowerTransformer
-import tensorflow as tf
+import pandas as pd
 from botocore.config import Config
-import json
+
+# Required to read the models from disk
+from sklearn.ensemble import HistGradientBoostingRegressor  # pylint: disable=unused-import
 
 # mitigation of potential API rate restrictions (esp for Batch API)
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
 s3 = boto3.resource("s3", config=retry_config)
 client = boto3.client("s3", config=retry_config)
-
-
-def load_pt_data(pt_file):
-    with open(pt_file, "r") as j:
-        pt_data = json.load(j)
-    return pt_data
-
-
-def get_model(model_path):
-    """Loads pretrained Keras functional model"""
-    model = tf.keras.models.load_model(model_path)
-    return model
-
-
-def classifier(model, data):
-    """Returns class prediction"""
-    pred_proba = model.predict(data)
-    pred = int(np.argmax(pred_proba, axis=-1))
-    return pred, pred_proba
-
-
-def regressor(model, data):
-    """Returns Regression model prediction"""
-    pred = model.predict(data)
-    return pred
 
 
 class Preprocess:
@@ -120,32 +100,87 @@ class Preprocess:
         elif i[0] == "i":
             instr = 3
 
-        inputs = np.array([n_files, total_mb, drizcorr, pctecorr, crsplit, subarray, detector, dtype, instr])
+        inputs = {
+            "n_files": n_files,
+            "total_mb": total_mb,
+            "drizcorr": drizcorr,
+            "pctecorr": pctecorr,
+            "crsplit": crsplit,
+            "subarray": subarray,
+            "detector": detector,
+            "dtype": dtype,
+            "instr": instr,
+        }
         return inputs
 
-    def transformer(self, pt_data):
-        """applies yeo-johnson power transform to first two indices of array (n_files, total_mb) using lambdas, mean and standard deviation calculated for each variable prior to model training.
 
-        Returns: X inputs as 2D-array for generating predictions
-        """
-        X = self.inputs
-        n_files = X[0]
-        total_mb = X[1]
-        # apply power transformer normalization to continuous vars
-        x = np.array([[n_files], [total_mb]]).reshape(1, -1)
-        pt = PowerTransformer(standardize=False)
-        pt.lambdas_ = np.array([pt_data["f_lambda"], pt_data["s_lambda"]])
-        # pt.lambdas_ = np.array([-1.05989146, 0.1691683])
-        xt = pt.transform(x)
-        # normalization (zero mean, unit variance)
-        f_mean, f_sigma = pt_data["f_mean"], pt_data["f_sigma"]
-        s_mean, s_sigma = pt_data["s_mean"], pt_data["s_sigma"]
-        # f_mean, f_sigma = 0.7313458816815209, 0.09209684806404451
-        # s_mean, s_sigma = 4.18491577280472, 2.4467903663338366
-        x_files = np.round(((xt[0, 0] - f_mean) / f_sigma), 5)
-        x_size = np.round(((xt[0, 1] - s_mean) / s_sigma), 5)
-        X = np.array([x_files, x_size, X[2], X[3], X[4], X[5], X[6], X[7], X[8]]).reshape(1, -1)
-        return X
+def build_feature_frame(feature_dict, feature_columns, for_wallclock=False):
+    """Recreate training-time preprocessing for one-row prediction."""
+    categorical_cols = ["instr", "dtype", "detector", "drizcorr", "pctecorr", "crsplit", "subarray"]
+
+    df = pd.DataFrame([feature_dict]).copy()
+
+    if for_wallclock:
+        df["log_n_files"] = np.log1p(df["n_files"])
+        df["log_total_mb"] = np.log1p(df["total_mb"])
+    else:
+        df["n_files"] = df["n_files"].astype(float)
+        df["total_mb"] = df["total_mb"].astype(float)
+
+    for col in categorical_cols:
+        df[col] = feature_dict[col]
+
+    df = pd.get_dummies(df, columns=categorical_cols, drop_first=False)
+
+    # Match the exact training feature order and fill unseen categories with 0.
+    feature_df = df.reindex(columns=feature_columns, fill_value=0.0)
+    return feature_df.astype(float)
+
+
+def get_model_path():
+    is_lambda_environment = "AWS_LAMBDA_FUNCTION_NAME" in os.environ
+    if is_lambda_environment:
+        return Path("models")
+    else:
+        return Path("lambda/JobPredict/models")
+
+
+def predict_memory(feature_dict):
+    """Predict memory in GB and memory bin for a given feature dict."""
+    model_path = get_model_path() / "memory_model.pkl"
+    saved = joblib.load(model_path)
+    memory_model = saved["model"]
+    feature_columns = saved["columns"]
+
+    feature_df = build_feature_frame(feature_dict, feature_columns, for_wallclock=False)
+
+    predicted_memory = memory_model.predict(feature_df)[0]
+
+    memory = predicted_memory * 1.10
+    if memory < 2:
+        predicted_bin = 0
+    elif memory < 8:
+        predicted_bin = 1
+    elif memory < 16:
+        predicted_bin = 2
+    else:
+        predicted_bin = 3
+    return predicted_memory, predicted_bin
+
+
+def predict_wallclock(feature_dict):
+    """Predict wallclock time in seconds for a given feature dict."""
+
+    model_path = get_model_path() / "wallclock_model.pkl"
+    saved = joblib.load(model_path)
+    wallclock_model = saved["model"]
+    feature_columns = saved["columns"]
+
+    feature_df = build_feature_frame(feature_dict, feature_columns, for_wallclock=True)
+
+    log_prediction = float(wallclock_model.predict(feature_df)[0])
+    prediction = float(np.expm1(log_prediction))
+    return prediction
 
 
 def lambda_handler(event, context):
@@ -164,28 +199,18 @@ def lambda_handler(event, context):
     MEMORY REGRESSION: A third regression model is used to estimate the actual value of memory needed for the job. This is mainly for the purpose of logging/future analysis and is not currently being used for allocating memory in calcloud jobs.
     """
     bucket_name = event["Bucket"]
-    # load models
-    clf = get_model("./models/mem_clf/")
-    mem_reg = get_model("./models/mem_reg/")
-    wall_reg = get_model("./models/wall_reg/")
     key = event["Key"]
     ipppssoot = event["Ipppssoot"]
-    pt_data = load_pt_data("./models/pt_transform")
-    print(f"pt_data: {pt_data}")
+
     prep = Preprocess(ipppssoot, bucket_name, key)
     prep.input_data = prep.import_data()
     prep.inputs = prep.scrub_keys()
-    X = prep.transformer(pt_data)
-    # Predict Memory Allocation (bin and value preds)
-    membin, pred_proba = classifier(clf, X)
-    memval = np.round(float(regressor(mem_reg, X)), 2)
-    # Predict Wallclock Allocation (execution time in seconds)
-    clocktime = int(regressor(wall_reg, X))
+
+    memval, membin = predict_memory(prep.inputs)
+    clocktime = predict_wallclock(prep.inputs)
+
     print(f"ipppssoot: {ipppssoot} keys: {prep.input_data}")
     print(f"ipppssoot: {ipppssoot} features: {prep.inputs}")
-    print(f"ipppssoot: {ipppssoot} X: {X}")
     predictions = {"ipppssoot": ipppssoot, "memBin": membin, "memVal": memval, "clockTime": clocktime}
     print(predictions)
-    probabilities = {"ipppssoot": ipppssoot, "probabilities": pred_proba}
-    print(probabilities)
     return {"memBin": membin, "memVal": memval, "clockTime": clocktime}

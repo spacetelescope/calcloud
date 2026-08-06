@@ -1,6 +1,7 @@
 import sys
-from . import test_model_ingest
-from . import conftest
+import numpy as np
+
+from . import conftest, test_model_ingest
 
 sys.path.append("lambda/")  # add the lambda directory to path
 
@@ -10,43 +11,10 @@ get_mem_model_file_text = test_model_ingest.get_mem_model_file_text
 put_mem_model_file = test_model_ingest.put_mem_model_file
 
 
-def mock_job_predict_lambda_handler(event, context):
-    # copied from predict_handler.lambda handler
-    # modified to use a recognizable path for the memory models (lambda/JobPredict/models/ instead of ./models/)
-
-    from JobPredict import predict_handler
-    import numpy as np
-
-    bucket_name = event["Bucket"]
-    # load models
-    clf = predict_handler.get_model("lambda/JobPredict/models/mem_clf/")
-    mem_reg = predict_handler.get_model("lambda/JobPredict/models/mem_reg/")
-    wall_reg = predict_handler.get_model("lambda/JobPredict/models/wall_reg/")
-    key = event["Key"]
-    ipppssoot = event["Ipppssoot"]
-    pt_data = predict_handler.load_pt_data("lambda/JobPredict/models/pt_transform")
-    print(f"pt_data: {pt_data}")
-    prep = predict_handler.Preprocess(ipppssoot, bucket_name, key)
-    prep.input_data = prep.import_data()
-    prep.inputs = prep.scrub_keys()
-    X = prep.transformer(pt_data)
-    # Predict Memory Allocation (bin and value preds)
-    membin, pred_proba = predict_handler.classifier(clf, X)
-    memval = np.round(float(predict_handler.regressor(mem_reg, X)), 2)
-    # Predict Wallclock Allocation (execution time in seconds)
-    clocktime = int(predict_handler.regressor(wall_reg, X))
-    print(f"ipppssoot: {ipppssoot} keys: {prep.input_data}")
-    print(f"ipppssoot: {ipppssoot} features: {prep.inputs}")
-    print(f"ipppssoot: {ipppssoot} X: {X}")
-    predictions = {"ipppssoot": ipppssoot, "memBin": membin, "memVal": memval, "clockTime": clocktime}
-    print(predictions)
-    probabilities = {"ipppssoot": ipppssoot, "probabilities": pred_proba}
-    print(probabilities)
-    return {"memBin": membin, "memVal": memval, "clockTime": clocktime}
-
-
 def test_model_lambda_job_predict(s3_client, dynamodb_client):
     """Test the lambda handler for JobPredict"""
+    from JobPredict import predict_handler
+
     from calcloud import io
 
     bucket = conftest.BUCKET
@@ -63,15 +31,16 @@ def test_model_lambda_job_predict(s3_client, dynamodb_client):
     key = f"control/{ipst}/{ipst}_MemModelFeatures.txt"
     event = {"Bucket": bucket, "Key": key, "Ipppssoot": ipst}
 
-    # calling predict_handler.lambda_handler directly will fail with OSError: No file or directory found at ./models/mem_clf/
-    # use mock_job_predict_lambda_handler defined above instead
-    predictions = mock_job_predict_lambda_handler(event, {})
+    predictions = predict_handler.lambda_handler(event, {})
     assert predictions["memBin"] == 0
+    assert np.isclose(predictions["memVal"], 0.7832648393119881)
+    assert np.isclose(predictions["clockTime"], 518.7213453456044)
 
 
 def test_model_lambda_job_predict_features(s3_client, s3_resource):
     """Test the different mapping options in predict_handler.Preprocessor.scrub_keys()"""
     from JobPredict import predict_handler
+
     from calcloud import io
 
     bucket = conftest.BUCKET
@@ -140,9 +109,5 @@ def test_model_lambda_job_predict_features(s3_client, s3_resource):
     mem_model_features_1 = preprocessor1.scrub_keys()
     mem_model_features_2 = preprocessor2.scrub_keys()
 
-    # the order of scrub_keys() output copied from predict_handler.py
-    dict_keys = ["n_files", "total_mb", "drizcorr", "pctecorr", "crsplit", "subarray", "detector", "dtype", "instr"]
-
-    for i in range(len(dict_keys)):
-        assert mem_model_features_1[i] == mem_model_expected_dict_1[dict_keys[i]]
-        assert mem_model_features_2[i] == mem_model_expected_dict_2[dict_keys[i]]
+    assert mem_model_features_1 == mem_model_expected_dict_1
+    assert mem_model_features_2 == mem_model_expected_dict_2
