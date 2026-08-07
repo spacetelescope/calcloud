@@ -162,7 +162,6 @@ locals {
        # this ssm param can cause issues if there are spaces
        ecr_address = trim(nonsensitive(data.aws_ssm_parameter.central_ecr.value), " ")
        ecr_predict_lambda_image = "${local.ecr_address}:predict-${local.common_image_tag}"
-       ecr_model_training_image = "${local.ecr_address}:training-${local.common_image_tag}"
        ecr_caldp_batch_image = "${local.ecr_address}:batch-${local.common_image_tag}"
 
 

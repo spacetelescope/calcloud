@@ -486,12 +486,12 @@ def test_remotely():
 
 
 def test_locally():
-    items = get_dynamo_items(1000000)  
-    convert_elements_to_numeric_values(items)
-    # save_data_as_csv(items)
+    # items = get_dynamo_items(1000000)
+    # convert_elements_to_numeric_values(items)
+    # # save_data_as_csv(items)
 
-    plot_bins(items)
-    calculate_models(items)
+    # plot_bins(items)
+    # calculate_models(items)
 
     row = {
         "n_files": 2,

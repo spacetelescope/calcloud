@@ -46,14 +46,12 @@ export IMAGE_REPO=`echo $repo_url | cut -d '/' -f2`        # hst-repro
 # tags are exported individually for some ecr api call convenience in other scripts
 export CALDP_ECR_TAG="batch-${COMMON_IMAGE_TAG}"
 export PREDICT_ECR_TAG="predict-${COMMON_IMAGE_TAG}"
-export TRAINING_ECR_TAG="training-${COMMON_IMAGE_TAG}"
 export AMIROTATION_ECR_TAG="amirotation-${COMMON_IMAGE_TAG}"
 export AMIROTATION_ECR_TAG_UNSCANNED="amirotation-not-scanned"
 export AMIROTATION_ECR_TAG_LATEST="amirotation-latest"
 
 export CALDP_DOCKER_IMAGE="${repo_url}:${CALDP_ECR_TAG}"
 export PREDICT_DOCKER_IMAGE="${repo_url}:${PREDICT_ECR_TAG}"
-export TRAINING_DOCKER_IMAGE="${repo_url}:${TRAINING_ECR_TAG}"
 export AMIROTATION_DOCKER_IMAGE="${repo_url}:${AMIROTATION_ECR_TAG}"
 export AMIROTATION_DOCKER_IMAGE_UNSCANNED="${repo_url}:${AMIROTATION_ECR_TAG_UNSCANNED}"
 export AMIROTATION_DOCKER_IMAGE_LATEST="${repo_url}:${AMIROTATION_ECR_TAG_LATEST}"

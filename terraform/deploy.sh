@@ -51,7 +51,6 @@ for ((i=0; i<LENGTH_LADDER; i++)); do
     awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[$i]
 done
 
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
 awsudo $ADMIN_ARN terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
 
 # This can be removed after v0.4.49 is deployed to all environments.
@@ -99,7 +98,6 @@ cd $CALCLOUD_BUILD_DIR/terraform
 echo ${aws_env}
 ./deploy_image_promote.sh --old-tag $CALDP_ECR_TAG batch-${aws_env}
 ./deploy_image_promote.sh --old-tag $PREDICT_ECR_TAG predict-${aws_env}
-./deploy_image_promote.sh --old-tag $TRAINING_ECR_TAG training-${aws_env}
 ./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG amirotation-${aws_env}
 
 cd ${CALCLOUD_BUILD_DIR}/terraform
