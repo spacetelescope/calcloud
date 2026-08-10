@@ -25,7 +25,6 @@ ENV JOBLIB_MULTIPROCESSING=0
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Native wheels will be fetched instantly on identical architectures
-RUN pip install --no-cache-dir --only-binary=:all: \
-    requirements.txt
+RUN pip install --no-cache-dir --only-binary=:all: -r requirements.txt
 
 CMD ["predict_handler.lambda_handler"]
