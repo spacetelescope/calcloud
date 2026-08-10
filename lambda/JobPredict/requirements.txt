@@ -1,6 +1,6 @@
-numpy==2.4.6
-scipy==1.17.1
+numpy==2.2.6
+scipy==1.16.3
 pandas==3.0.5
-scikit-learn==1.9.0
+scikit-learn==1.7.2
 boto3==1.43.66
 joblib==1.5.3

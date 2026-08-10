@@ -24,10 +24,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Native wheels will be fetched instantly on identical architectures
 RUN pip install --no-cache-dir --only-binary=:all: \
-    numpy==2.2.6 \
-    scipy==1.16.3 \
-    pandas==3.0.5 \
-    scikit-learn==1.9.0
+    numpy==2.2.6 scipy==1.16.3 pandas==3.0.5 scikit-learn==1.7.2
 
 # Install remaining requirements
 RUN python3.11 -m pip install -r requirements.txt

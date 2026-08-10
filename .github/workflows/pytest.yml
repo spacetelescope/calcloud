@@ -19,7 +19,7 @@ jobs:
       - name: install requirements
         run: |
           pip install .[dev]
-          pip install numpy==2.4.6 scipy==1.17.1 pandas==3.0.5 scikit-learn==1.9.0 --upgrade-strategy only-if-needed
+          pip install     numpy==2.2.6 scipy==1.16.3 pandas==3.0.5 scikit-learn==1.7.2 --upgrade-strategy only-if-needed
 
       - name: run pytest code coverage check
         run: |
@@ -54,7 +54,7 @@ jobs:
       - name: install requirements
         run: |
           pip install .[dev]
-          pip install numpy==2.4.6 scipy==1.17.1 pandas==3.0.5 scikit-learn==1.9.0
+          pip install numpy==2.2.6 scipy==1.16.3 pandas==3.0.5 scikit-learn==1.7.2
 
       - name: run pytest
         run: pytest -rP
