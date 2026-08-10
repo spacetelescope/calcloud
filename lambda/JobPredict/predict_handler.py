@@ -23,6 +23,21 @@ s3 = boto3.resource("s3", config=retry_config)
 client = boto3.client("s3", config=retry_config)
 
 
+# Load the models at container start time
+def get_model_path():
+    is_lambda_environment = "AWS_LAMBDA_FUNCTION_NAME" in os.environ
+    if is_lambda_environment:
+        return Path("models")
+    else:
+        return Path("lambda/JobPredict/models")
+
+memory_model_path = get_model_path() / "memory_model.pkl"
+memory_model_saved = joblib.load(memory_model_path)
+
+wallclock_model_path = get_model_path() / "wallclock_model.pkl"
+wallclock_saved = joblib.load(wallclock_model_path)
+
+
 class Preprocess:
     def __init__(self, ipppssoot, bucket_name, key):
         self.ipppssoot = ipppssoot
@@ -136,21 +151,10 @@ def build_feature_frame(feature_dict, feature_columns, for_wallclock=False):
     feature_df = df.reindex(columns=feature_columns, fill_value=0.0)
     return feature_df.astype(float)
 
-
-def get_model_path():
-    is_lambda_environment = "AWS_LAMBDA_FUNCTION_NAME" in os.environ
-    if is_lambda_environment:
-        return Path("models")
-    else:
-        return Path("lambda/JobPredict/models")
-
-
 def predict_memory(feature_dict):
     """Predict memory in GB and memory bin for a given feature dict."""
-    model_path = get_model_path() / "memory_model.pkl"
-    saved = joblib.load(model_path)
-    memory_model = saved["model"]
-    feature_columns = saved["columns"]
+    memory_model = memory_model_saved["model"]
+    feature_columns = memory_model_saved["columns"]
 
     feature_df = build_feature_frame(feature_dict, feature_columns, for_wallclock=False)
 
@@ -167,14 +171,11 @@ def predict_memory(feature_dict):
         predicted_bin = 3
     return predicted_memory, predicted_bin
 
-
 def predict_wallclock(feature_dict):
     """Predict wallclock time in seconds for a given feature dict."""
 
-    model_path = get_model_path() / "wallclock_model.pkl"
-    saved = joblib.load(model_path)
-    wallclock_model = saved["model"]
-    feature_columns = saved["columns"]
+    wallclock_model = wallclock_saved["model"]
+    feature_columns = wallclock_saved["columns"]
 
     feature_df = build_feature_frame(feature_dict, feature_columns, for_wallclock=True)
 
