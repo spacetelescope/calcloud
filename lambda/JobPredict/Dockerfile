@@ -1,5 +1,7 @@
 FROM amazon/aws-lambda-python:3.11
-COPY requirements.txt predict_handler.py models ./
+COPY requirements.txt predict_handler.py ./
+COPY models ./models/
+
 # SSL/TLS cert setup for STScI AWS firewalling
 USER root
 # temporary. remove when nss in the base amazon image is secure again
