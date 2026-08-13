@@ -15,12 +15,7 @@ ENV AWS_DEFAULT_REGION="us-east-1"
 ARG aws_env
 ARG CALCLOUD_VER
 
-RUN mkdir -p /etc/ssl/certs && \
-    mkdir -p /etc/pki/ca-trust/source/anchors
-
-COPY STSCICA.crt /etc/ssl/certs/STSCICA.crt
 COPY STSCICA.crt /etc/pki/ca-trust/source/anchors/STSCICA.crt
-
 RUN update-ca-trust
 
 # Install git, SSH, and other utilities
@@ -32,11 +27,6 @@ RUN set -ex \
     && yum install git -y  \
     && yum install tar wget python3.13 which -y \
     && yum install python3.13-pip -y
-
-# These should only happen once
-ENV REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-ENV CURL_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-ENV NODE_EXTRA_CA_CERTS=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
 
 RUN yum install https://rpm.nodesource.com/pub_16.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm -y
 RUN yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1
