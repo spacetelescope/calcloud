@@ -1,4 +1,4 @@
-FROM amazon/aws-lambda-python:3.11
+FROM amazon/aws-lambda-python:3.13
 COPY requirements.txt predict_handler.py ./
 COPY models ./models/
 

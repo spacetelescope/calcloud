@@ -47,4 +47,4 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         submit_plans(sys.argv[1])
     else:
-        print("usage:  python -m calcloud.submit [<plan_file> | - ]", file=sys.stderr)
+        print("usage:  python3.13 -m calcloud.submit [<plan_file> | - ]", file=sys.stderr)
