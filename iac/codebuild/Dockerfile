@@ -36,7 +36,7 @@ RUN npm install n -g
 RUN npm config set registry http://registry.npmjs.org/ && \
     npm install -g awsudo@1.5.0
 
-RUN pip3 install awscli
+RUN pip3.13 install awscli
 
 COPY calcloud_checkout.sh /root/
 
