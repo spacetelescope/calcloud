@@ -30,8 +30,8 @@ RUN set -ex \
     && yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo \
     && yum install terraform-1.0.11 -y \
     && yum install git -y  \
-    && yum install tar wget python3 which -y \
-    && yum install python3-pip -y
+    && yum install tar wget python3.13 which -y \
+    && yum install python3.13-pip -y
 
 # These should only happen once
 ENV REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem

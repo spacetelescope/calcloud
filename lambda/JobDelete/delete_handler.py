@@ -36,7 +36,8 @@ def lambda_handler(event, context):
         comm.messages.delete_literal("cancel-all")
         # Cancel all jobs in a killable state broadcasting cancel over job_ids
         job_ids = batch.get_job_ids()
-        comm.messages.broadcast("cancel", job_ids)
+        if job_ids:
+            comm.messages.broadcast("cancel", job_ids)
     elif batch.JOB_ID_RE.match(dataset):
         job_id, dataset = dataset, "unknown"  # kill one job, dataset = job_id
         print("Cancelling job_id", job_id)

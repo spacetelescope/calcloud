@@ -7,7 +7,7 @@ module "calcloud_lambda_submit" {
   description   = "looks for placed-dataset messages and submits jobs to Batch"
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "s3_trigger_handler.lambda_handler"
-  runtime       = "python3.11"
+  runtime       = "python3.13"
   publish       = false
   timeout       = 15*60   # see also SUBMIT_TIMEOUT below;  this is the AWS timeout, calcloud error handling may not occur
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
@@ -49,7 +49,7 @@ module "calcloud_lambda_submit" {
       JOBPREDICTLAMBDA = module.lambda_function_container_image.lambda_function_arn,
       SUBMIT_TIMEOUT = 14*60,  # leave some room for polling jitter, 14 min vs  15 min above. This is our timeout so error handling / cleanup should occur
       DDBTABLE = "${aws_dynamodb_table.calcloud_model_db.name}"
-  })                           
+  })
 
   tags = {
     Name              = "calcloud-job-submit${local.environment}"

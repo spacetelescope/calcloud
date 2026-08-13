@@ -1,8 +1,8 @@
-Content-Type: multipart/mixed; boundary="==BOUNDARY==" 
-MIME-Version: 1.0 
+Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+MIME-Version: 1.0
 
 --==BOUNDARY==
-MIME-Version: 1.0 
+MIME-Version: 1.0
 Content-Type: text/x-shellscript; charset="us-ascii"
 
 #!/bin/bash -ex
@@ -101,9 +101,9 @@ mkdir -p /usr/lib/ssl
 mkdir -p /etc/ssl/certs
 mkdir -p /etc/pki/ca-trust/extracted/pem
 ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/certs/ca-certificates.crt
-ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /usr/lib/ssl/cert.pem 
+ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /usr/lib/ssl/cert.pem
 
-yum install python3 -y -q
+yum install python3.13 -y -q
 
 sudo -i -u ec2-user bash << EOF
 mkdir ~/bin ~/tmp

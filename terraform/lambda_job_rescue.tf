@@ -6,7 +6,7 @@ module "calcloud_lambda_rescueJob" {
   description   = "Rescues the specified dataset (must be in error state) by deleting all outputs and messages and re-placing."
   # the path is relative to the path inside the lambda env, not in the local filesystem.
   handler       = "rescue_handler.lambda_handler"
-  runtime       = "python3.11"
+  runtime       = "python3.13"
   publish       = false
   timeout       = 900
   cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
@@ -48,7 +48,7 @@ module "calcloud_lambda_rescueJob" {
       JOBPREDICTLAMBDA = module.lambda_function_container_image.lambda_function_arn,
       SUBMIT_TIMEOUT = 14*60,  # leave some room for polling jitter, 14 min vs  15 min above
       DDBTABLE = "${aws_dynamodb_table.calcloud_model_db.name}"
-  })   
+  })
 
   tags = {
     Name              = "calcloud-job-rescue${local.environment}"
