@@ -8,9 +8,6 @@ USER root
 COPY STSCICA.crt /etc/pki/ca-trust/source/anchors/
 RUN update-ca-trust
 
-#log4j vuln patch
-RUN dnf update -y java-1.8.0-openjdk
-
 # Force joblib to bypass backend multiprocessing pool errors inside Lambda
 ENV JOBLIB_MULTIPROCESSING=0
 
