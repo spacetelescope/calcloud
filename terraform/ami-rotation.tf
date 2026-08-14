@@ -1,7 +1,7 @@
 resource "aws_launch_template" "ami_rotation" {
   name = "calcloud-ami-rotation${local.environment}"
   description             = "launch template for running ami rotation via terraform"
-  ebs_optimized           = "false"
+  ebs_optimized           = false
   image_id                = nonsensitive(aws_ssm_parameter.ci_ami.value)
   update_default_version = true
   tags = {
@@ -115,7 +115,7 @@ resource "aws_cloudwatch_event_rule" "ami-rotate-scheduler" {
   name                = "ami-rotate-scheduler${local.environment}"
   description         = "scheduler for ami rotation"
   schedule_expression = "cron(0 8 ? * TUE,FRI *)"
-  is_enabled = "false"   # disable because we now have CodeBuild project for AMI rotation
+  is_enabled = false   # disable because we now have CodeBuild project for AMI rotation
 }
 
 resource "aws_cloudwatch_event_target" "ami-rotate-scheduler" {
