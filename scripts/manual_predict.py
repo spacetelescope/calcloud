@@ -184,7 +184,7 @@ def build_feature_frame(feature_dict, feature_columns, for_wallclock=False):
 
 def predict_memory(feature_dict):
     """Predict memory in GB and memory bin for a given feature dict."""
-    model_path = "lambda/JobPredict/models/memory_model.pkl"
+    model_path = "scripts/memory_model.pkl"
     saved = joblib.load(model_path)
     memory_model = saved["model"]
     feature_columns = saved["columns"]
@@ -207,7 +207,7 @@ def predict_memory(feature_dict):
 
 def predict_wallclock(feature_dict):
     """Predict wallclock time in seconds for a given feature dict."""
-    model_path = "lambda/JobPredict/models/wallclock_model.pkl"
+    model_path = "scripts/wallclock_model.pkl"
     saved = joblib.load(model_path)
     wallclock_model = saved["model"]
     feature_columns = saved["columns"]
@@ -486,12 +486,12 @@ def test_remotely():
 
 
 def test_locally():
-    # items = get_dynamo_items(1000000)
-    # convert_elements_to_numeric_values(items)
-    # # save_data_as_csv(items)
+    items = get_dynamo_items(1000000)
+    convert_elements_to_numeric_values(items)
+    # save_data_as_csv(items)
 
-    # plot_bins(items)
-    # calculate_models(items)
+    plot_bins(items)
+    calculate_models(items)
 
     row = {
         "n_files": 2,
@@ -519,6 +519,7 @@ def test_locally():
     }
     predicted_memory, predicted_bin = predict_memory(row)
     predicted_wallclock = predict_wallclock(row)
+    print(f"Predicted Memory: {predicted_memory} GB, Bin: {predicted_bin}, Wallclock: {predicted_wallclock} s")
     a = 1
 
 

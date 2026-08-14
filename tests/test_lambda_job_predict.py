@@ -33,8 +33,8 @@ def test_model_lambda_job_predict(s3_client, dynamodb_client):
 
     predictions = predict_handler.lambda_handler(event, {})
     assert predictions["memBin"] == 0
-    assert np.isclose(predictions["memVal"], 0.7832648393119881)
-    assert np.isclose(predictions["clockTime"], 518.7213453456044)
+    assert np.isclose(predictions["memVal"], 0.8456014685200817)
+    assert np.isclose(predictions["clockTime"], 488.3735814329769)
 
 
 def test_model_lambda_job_predict_features(s3_client, s3_resource):
