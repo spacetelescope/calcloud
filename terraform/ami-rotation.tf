@@ -13,7 +13,7 @@ resource "aws_launch_template" "ami_rotation" {
           environment = var.environment,
           admin_arn = nonsensitive(data.aws_ssm_parameter.admin_arn.value),
           calcloud_ver = var.awsysver,
-          log_group = 'temp-val'
+          log_group = "temp-val"
       })
   )
   # SKW-TEMPORARY
