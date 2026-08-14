@@ -1,8 +1,8 @@
-Content-Type: multipart/mixed; boundary="==BOUNDARY==" 
-MIME-Version: 1.0 
+Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+MIME-Version: 1.0
 
 --==BOUNDARY==
-MIME-Version: 1.0 
+MIME-Version: 1.0
 Content-Type: text/x-shellscript; charset="us-ascii"
 
 #!/bin/bash -ex
@@ -101,9 +101,10 @@ mkdir -p /usr/lib/ssl
 mkdir -p /etc/ssl/certs
 mkdir -p /etc/pki/ca-trust/extracted/pem
 ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/ssl/certs/ca-certificates.crt
-ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /usr/lib/ssl/cert.pem 
+ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /usr/lib/ssl/cert.pem
 
-yum install python3 -y -q
+yum install python3.11 -y -q
+yum install python3.11-pip -y -q
 
 sudo -i -u ec2-user bash << EOF
 mkdir ~/bin ~/tmp
@@ -115,7 +116,7 @@ nvm install 16
 npm config set registry http://registry.npmjs.org/
 npm config set cafile /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
 npm install -g awsudo@1.5.0
-python3 -m pip install -q --upgrade pip && python3 -m pip install boto3 -q
+python3.11 -m pip install -q --upgrade pip && python3.11 -m pip install boto3 -q
 cd ~
 rm -rf ~/tmp
 EOF
@@ -131,7 +132,7 @@ sudo -i -u ec2-user bash << EOF
 cd /home/ec2-user
 source .bashrc
 aws logs create-log-stream --log-group-name "${log_group}" --log-stream-name $log_stream
-python3 /home/ec2-user/log_listener.py "${log_group}" $log_stream &
+python3.11 /home/ec2-user/log_listener.py "${log_group}" $log_stream &
 EOF
 
 # calcloud checkout, need right tag
