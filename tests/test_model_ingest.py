@@ -4,7 +4,7 @@ import pytest
 
 # Parameters to create the MemModelFeatures.txt, process_metrics.txt, and preview_metrics.txt files
 metrics_text = {
-    "command": 'Command being timed: "python -m caldp.create_previews s3://calcloud-processing-moto/inputs s3://calcloud-processing-moto/outputs/',
+    "command": 'Command being timed: "python3.11 -m caldp.create_previews s3://calcloud-processing-moto/inputs s3://calcloud-processing-moto/outputs/',
     "user_time": "User time (seconds): ",
     "system_time": "System time (seconds): ",
     "percent_cpu": "Percent of CPU this job got: ",
