@@ -12,8 +12,10 @@ resource "aws_launch_template" "ami_rotation" {
       templatefile("${path.module}/../ami_rotation/ami_rotation_userdata.sh", {
           environment = var.environment,
           admin_arn = nonsensitive(data.aws_ssm_parameter.admin_arn.value),
-          calcloud_ver = var.awsysver,
-          log_group = aws_cloudwatch_log_group.ami-rotation.name
+          calcloud_ver = var.awsysver
+          # SKW-TEMPORARY
+          # ,
+          # log_group = aws_cloudwatch_log_group.ami-rotation.name
       })
   )
 
@@ -103,13 +105,14 @@ module "calcloud_env_amiRotation" {
   }
 }
 
-resource "aws_cloudwatch_log_group" "ami-rotation" {
-  name              = "/tf/ec2/ami-rotation${local.environment}"
-  retention_in_days = local.lambda_log_retention_in_days
-  tags = {
-    "stsci-poc-email" = var.stsci_poc_email
-  }
-}
+# SKW-TEMPORARY
+# resource "aws_cloudwatch_log_group" "ami-rotation" {
+#   name              = "/tf/ec2/ami-rotation${local.environment}"
+#   retention_in_days = local.lambda_log_retention_in_days
+#   tags = {
+#     "stsci-poc-email" = var.stsci_poc_email
+#   }
+# }
 
 resource "aws_cloudwatch_event_rule" "ami-rotate-scheduler" {
   name                = "ami-rotate-scheduler${local.environment}"
