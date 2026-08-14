@@ -32,7 +32,7 @@ pwd
 echo "Sleeping for 30 seconds before scanning"
 sleep 30
 
-python3.13 ami-rotation-image-scan.py
+python3.11 ami-rotation-image-scan.py
 amirotation_image_scan_status=$?
 
 if [ $amirotation_image_scan_status == 0 ]

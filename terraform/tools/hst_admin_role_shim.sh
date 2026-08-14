@@ -20,9 +20,9 @@ CURRENT_AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
 printf "\n Assuming role..."
 if CREDENTIALS=`aws sts assume-role --role-arn $HST_ADMIN_ARN --role-session-name temp_admin_session --duration-seconds 3599` ; then
 
-        export AWS_ACCESS_KEY_ID=`echo ${CREDENTIALS} | python3.13 -c "import sys, json, os; temp=json.load(sys.stdin)['Credentials']['AccessKeyId'];print(temp)"`
-        export AWS_SECRET_ACCESS_KEY=`echo ${CREDENTIALS} | python3.13 -c "import sys, json, os; temp=json.load(sys.stdin)['Credentials']['SecretAccessKey'];print(temp)"`
-        export AWS_SESSION_TOKEN=`echo ${CREDENTIALS} | python3.13 -c "import sys, json, os; temp=json.load(sys.stdin)['Credentials']['SessionToken'];print(temp)"`
+        export AWS_ACCESS_KEY_ID=`echo ${CREDENTIALS} | python3.11 -c "import sys, json, os; temp=json.load(sys.stdin)['Credentials']['AccessKeyId'];print(temp)"`
+        export AWS_SECRET_ACCESS_KEY=`echo ${CREDENTIALS} | python3.11 -c "import sys, json, os; temp=json.load(sys.stdin)['Credentials']['SecretAccessKey'];print(temp)"`
+        export AWS_SESSION_TOKEN=`echo ${CREDENTIALS} | python3.11 -c "import sys, json, os; temp=json.load(sys.stdin)['Credentials']['SessionToken'];print(temp)"`
 
         printf "\n Role assumed:"
         aws sts get-caller-identity
