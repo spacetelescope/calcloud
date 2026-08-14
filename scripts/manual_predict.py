@@ -1,15 +1,14 @@
-import boto3
 import csv
+import time
+
+import boto3
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import time
-from sklearn.ensemble import RandomForestRegressor, HistGradientBoostingRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-
-from JobPredict import predict_handler
 
 
 def get_dynamo_items(number_items):
@@ -82,10 +81,7 @@ def calculate_memory_model(data):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     # Memory model
-    memory_model = RandomForestRegressor(
-        n_estimators=200,
-        random_state=42,
-    )
+    memory_model = HistGradientBoostingRegressor(max_depth=5, learning_rate=0.05, max_iter=500, random_state=42)
     memory_model.fit(X_train, y_train)
     actual_memory = y_test
     predicted_memory = memory_model.predict(X_test)
@@ -102,12 +98,7 @@ def calculate_memory_model(data):
     print(f"  MAPE = {memory_mape:.1f}%")
     print("")
 
-    # Save the model
-    joblib.dump(memory_model, "scripts/memory_rf_model.pkl")
-
-    # To use:
-    #     rf_model = joblib.load("scripts/memory_rf_model.pkl")
-    #     prediction = np.expm1(rf_model.predict(feature_df))
+    joblib.dump({"model": memory_model, "columns": list(X.columns)}, "scripts/memory_model.pkl")
 
     plot_actual_vs_predicted(
         actual_memory,
@@ -116,6 +107,116 @@ def calculate_memory_model(data):
         ylabel="Predicted Memory",
         title="Memory Predicted vs Actual",
     )
+
+    confirm_prediction(X_test, predicted_memory)
+
+
+def confirm_prediction(X_test, in_predicted, for_wallclock=False):
+    if for_wallclock:
+        model_path = "scripts/wallclock_model.pkl"
+    else:
+        model_path = "scripts/memory_model.pkl"
+    saved = joblib.load(model_path)
+    model = saved["model"]
+    feature_columns = saved["columns"]
+
+    test_df = X_test.iloc[0]
+    if for_wallclock:
+        test_dict = {"n_files": np.expm1(test_df["log_n_files"]), "total_mb": np.expm1(test_df["log_total_mb"])}
+    else:
+        test_dict = {"n_files": test_df["n_files"], "total_mb": test_df["total_mb"]}
+    test_dict |= {
+        "dtype": int(test_df["dtype_1"]),
+        "detector": int(test_df["detector_1"]),
+        "drizcorr": int(test_df["drizcorr_1"]),
+        "pctecorr": int(test_df["pctecorr_1"]),
+        "subarray": int(test_df["subarray_1"]),
+    }
+    if test_df["instr_1"]:
+        test_dict["instr"] = 1
+    elif test_df["instr_2"]:
+        test_dict["instr"] = 2
+    elif test_df["instr_3"]:
+        test_dict["instr"] = 3
+    else:
+        test_dict["instr"] = 0
+    if test_df["crsplit_1"]:
+        test_dict["crsplit"] = 1
+    elif test_df["crsplit_2"]:
+        test_dict["crsplit"] = 2
+    else:
+        test_dict["crsplit"] = 0
+
+    feature_dict = test_dict
+    feature_df = build_feature_frame(feature_dict, feature_columns, for_wallclock=for_wallclock)
+
+    out_predicted = model.predict(feature_df)[0]
+    if for_wallclock:
+        out_predicted = float(np.expm1(out_predicted))
+    if out_predicted == in_predicted[0]:
+        print(f"SUCCESS: Predicted match (wallclock={for_wallclock}): in={in_predicted[0]} vs out={out_predicted}")
+    else:
+        print(f"ERROR: Predicted mismatch (wallclock={for_wallclock}): in={in_predicted[0]} vs out={out_predicted}")
+
+
+def build_feature_frame(feature_dict, feature_columns, for_wallclock=False):
+    """Recreate training-time preprocessing for one-row prediction."""
+    categorical_cols = ["instr", "dtype", "detector", "drizcorr", "pctecorr", "crsplit", "subarray"]
+
+    df = pd.DataFrame([feature_dict]).copy()
+
+    if for_wallclock:
+        df["log_n_files"] = np.log1p(df["n_files"])
+        df["log_total_mb"] = np.log1p(df["total_mb"])
+    else:
+        df["n_files"] = df["n_files"].astype(float)
+        df["total_mb"] = df["total_mb"].astype(float)
+
+    for col in categorical_cols:
+        df[col] = feature_dict[col]
+
+    df = pd.get_dummies(df, columns=categorical_cols, drop_first=False)
+
+    # Match the exact training feature order and fill unseen categories with 0.
+    feature_df = df.reindex(columns=feature_columns, fill_value=0.0)
+    return feature_df.astype(float)
+
+
+def predict_memory(feature_dict):
+    """Predict memory in GB and memory bin for a given feature dict."""
+    model_path = "scripts/memory_model.pkl"
+    saved = joblib.load(model_path)
+    memory_model = saved["model"]
+    feature_columns = saved["columns"]
+
+    feature_df = build_feature_frame(feature_dict, feature_columns, for_wallclock=False)
+
+    predicted_memory = memory_model.predict(feature_df)[0]
+
+    memory = predicted_memory * 1.10
+    if memory < 2:
+        predicted_bin = 0
+    elif memory < 8:
+        predicted_bin = 1
+    elif memory < 16:
+        predicted_bin = 2
+    else:
+        predicted_bin = 3
+    return predicted_memory, predicted_bin
+
+
+def predict_wallclock(feature_dict):
+    """Predict wallclock time in seconds for a given feature dict."""
+    model_path = "scripts/wallclock_model.pkl"
+    saved = joblib.load(model_path)
+    wallclock_model = saved["model"]
+    feature_columns = saved["columns"]
+
+    feature_df = build_feature_frame(feature_dict, feature_columns, for_wallclock=True)
+
+    log_prediction = float(wallclock_model.predict(feature_df)[0])
+    prediction = float(np.expm1(log_prediction))
+    return prediction
 
 
 def plot_actual_vs_predicted(actual, predicted, xlabel, ylabel, title, use_log_log_scale=False, save=False):
@@ -198,11 +299,6 @@ def calculate_wallclock_model(data):
 
     joblib.dump({"model": wallclock_model, "columns": list(X.columns)}, "scripts/wallclock_model.pkl")
 
-    # To use:
-    #     saved = joblib.load("scripts/wallclock_model.pkl")
-    #     model = saved["model"]
-    #     prediction = np.expm1(model.predict(feature_df))
-
     plot_actual_vs_predicted(
         actual_wallclock,
         predicted_wallclock,
@@ -211,6 +307,8 @@ def calculate_wallclock_model(data):
         title="Wallclock: Predicted vs Actual (Log Scale)",
         use_log_log_scale=True,
     )
+
+    confirm_prediction(X_test, predicted_wallclock, for_wallclock=True)
 
 
 def calculate_models(items):
@@ -274,6 +372,8 @@ def plot_bins(items):
 
 
 def evaluate_model_prediction(items):
+    from JobPredict import predict_handler
+
     # load models
     clf = predict_handler.get_model("lambda/JobPredict/models/mem_clf/")
     mem_reg = predict_handler.get_model("lambda/JobPredict/models/mem_reg/")
@@ -377,7 +477,6 @@ def evaluate_model_prediction(items):
 
 
 def test_remotely():
-
     with open("data.csv") as f:
         reader = csv.DictReader(f)
         items = list(reader)
@@ -387,16 +486,45 @@ def test_remotely():
 
 
 def test_locally():
-    items = get_dynamo_items(100000)
+    items = get_dynamo_items(1000000)
     convert_elements_to_numeric_values(items)
-    save_data_as_csv(items)
+    # save_data_as_csv(items)
 
-    # plot_bins(items)
-    # calculate_models(items)
+    plot_bins(items)
+    calculate_models(items)
+
+    row = {
+        "n_files": 2,
+        "total_mb": np.float64(9.0),
+        "drizcorr": 0,
+        "pctecorr": 0,
+        "crsplit": 0,
+        "subarray": 1,
+        "detector": 0,
+        "dtype": 0,
+        "instr": 1,
+    }
+
+    # row from test_lambda_job_predict.py
+    row = {
+        "n_files": 1,
+        "total_mb": 10,
+        "drizcorr": 0,
+        "pctecorr": 1,
+        "crsplit": 1,
+        "subarray": 0,
+        "detector": 1,
+        "dtype": 1,
+        "instr": 3,
+    }
+    predicted_memory, predicted_bin = predict_memory(row)
+    predicted_wallclock = predict_wallclock(row)
+    print(f"Predicted Memory: {predicted_memory} GB, Bin: {predicted_bin}, Wallclock: {predicted_wallclock} s")
+    a = 1
 
 
 def main():
-    test_remotely()
+    test_locally()
 
 
 if __name__ == "__main__":
