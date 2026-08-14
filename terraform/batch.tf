@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.100"
+      version = "~> 5.76"
     }
     hashicorp-null = {
       source = "hashicorp/null"
@@ -61,7 +61,7 @@ resource "aws_launch_template" "hstdp" {
 
   name                   = "calcloud-hst-worker${each.value.name_suffix}${local.environment}"
   description            = "Template for ${each.value.description_infix}cluster worker nodes updated to limit stopped container lifespan"
-  ebs_optimized           = "false"
+  ebs_optimized           = false
   image_id                = nonsensitive(aws_ssm_parameter.ecs_ami.value)
   update_default_version = true
   tags = {
@@ -119,7 +119,10 @@ resource "aws_launch_template" "hstdp" {
 resource "aws_batch_job_queue" "batch_queue" {
   name = "calcloud-hst-queue-${local.ladder[count.index].name}${local.environment}"
   count = length(local.ladder)
-  compute_environments = [aws_batch_compute_environment.compute_env[count.index].arn]
+  compute_environment_order {
+    order = 1
+    compute_environment = aws_batch_compute_environment.compute_env[count.index].arn
+  }
   priority = 10   # need to vectorize?
   state = "ENABLED"
 }
@@ -266,7 +269,7 @@ resource "aws_s3_bucket_policy" "ssl_only_processing" {
             ],
             Condition = {
                 Bool = {
-                     "aws:SecureTransport" = "false"
+                     "aws:SecureTransport" = false
                 }
             }
         }
