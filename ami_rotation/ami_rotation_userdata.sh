@@ -106,6 +106,16 @@ ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /usr/lib/ssl/cert.pem
 yum install python3.11 -y -q
 yum install python3.11-pip -y -q
 
+# Set up the AWS Profile for the admin role.
+mkdir -p ~/.aws
+cat << EOF > ~/.aws/config
+[profile hst_reprocessing_admin_role]
+region = us-east-1
+role_arn = ${admin_arn}
+credential_source = Ec2InstanceMetadata
+EOF
+
+# Install nvm, nodejs, and awsudo for the ec2-user
 sudo -i -u ec2-user bash << EOF
 mkdir ~/bin ~/tmp
 cd ~/tmp
@@ -116,9 +126,13 @@ nvm install 16
 npm config set registry http://registry.npmjs.org/
 npm config set cafile /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
 npm install -g awsudo@1.5.0
-python3.11 -m pip install -q --upgrade pip && python3.11 -m pip install boto3 -q
 cd ~
 rm -rf ~/tmp
+EOF
+
+# Upgrade pip and install boto3
+sudo -i -u ec2-user bash << EOF
+python3.11 -m pip install -q --upgrade pip && python3.11 -m pip install boto3 -q
 EOF
 
 chown -R ec2-user:ec2-user /home/ec2-user/
