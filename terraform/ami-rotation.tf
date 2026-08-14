@@ -13,11 +13,13 @@ resource "aws_launch_template" "ami_rotation" {
           environment = var.environment,
           admin_arn = nonsensitive(data.aws_ssm_parameter.admin_arn.value),
           calcloud_ver = var.awsysver
-          # SKW-TEMPORARY
-          # ,
-          # log_group = aws_cloudwatch_log_group.ami-rotation.name
       })
   )
+  # SKW-TEMPORARY
+  # Should be up there with calcloud
+  # ,
+  # log_group = aws_cloudwatch_log_group.ami-rotation.name
+
 
   vpc_security_group_ids  = local.batch_sgs
   instance_type = "t3.large"
