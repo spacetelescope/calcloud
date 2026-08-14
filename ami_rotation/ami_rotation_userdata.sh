@@ -126,13 +126,14 @@ echo "export ADMIN_ARN=${admin_arn}" >> /home/ec2-user/.bashrc
 echo "export AWS_DEFAULT_REGION=us-east-1" >> /home/ec2-user/.bashrc
 echo "export aws_env=${environment}" >> /home/ec2-user/.bashrc
 
-# get cloudwatch logging going
-sudo -i -u ec2-user bash << EOF
-cd /home/ec2-user
-source .bashrc
-aws logs create-log-stream --log-group-name "${log_group}" --log-stream-name $log_stream
-python3.13 /home/ec2-user/log_listener.py "${log_group}" $log_stream &
-EOF
+# SKW-TEMPORARY
+# # get cloudwatch logging going
+# sudo -i -u ec2-user bash << EOF
+# cd /home/ec2-user
+# source .bashrc
+# aws logs create-log-stream --log-group-name "${log_group}" --log-stream-name $log_stream
+# python3.13 /home/ec2-user/log_listener.py "${log_group}" $log_stream &
+# EOF
 
 # calcloud checkout, need right tag
 cd /home/ec2-user
