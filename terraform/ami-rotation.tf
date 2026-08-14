@@ -12,12 +12,12 @@ resource "aws_launch_template" "ami_rotation" {
       templatefile("${path.module}/../ami_rotation/ami_rotation_userdata.sh", {
           environment = var.environment,
           admin_arn = nonsensitive(data.aws_ssm_parameter.admin_arn.value),
-          calcloud_ver = var.awsysver
+          calcloud_ver = var.awsysver,
+          log_group = 'temp-val'
       })
   )
   # SKW-TEMPORARY
-  # Should be up there with calcloud
-  # ,
+  # Should be up there with calcloud_ver
   # log_group = aws_cloudwatch_log_group.ami-rotation.name
 
 
