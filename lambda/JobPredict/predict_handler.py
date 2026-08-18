@@ -15,7 +15,7 @@ import pandas as pd
 from botocore.config import Config
 
 # Required to read the models from disk
-from sklearn.ensemble import HistGradientBoostingRegressor  # pylint: disable=unused-import
+from sklearn.ensemble import HistGradientBoostingRegressor  # noqa: F401 pylint: disable=unused-import
 
 # mitigation of potential API rate restrictions (esp for Batch API)
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
@@ -30,6 +30,7 @@ def get_model_path():
         return Path("models")
     else:
         return Path("lambda/JobPredict/models")
+
 
 memory_model_path = get_model_path() / "memory_model.pkl"
 memory_model_saved = joblib.load(memory_model_path)
@@ -151,6 +152,7 @@ def build_feature_frame(feature_dict, feature_columns, for_wallclock=False):
     feature_df = df.reindex(columns=feature_columns, fill_value=0.0)
     return feature_df.astype(float)
 
+
 def predict_memory(feature_dict):
     """Predict memory in GB and memory bin for a given feature dict."""
     memory_model = memory_model_saved["model"]
@@ -170,6 +172,7 @@ def predict_memory(feature_dict):
     else:
         predicted_bin = 3
     return float(predicted_memory), predicted_bin
+
 
 def predict_wallclock(feature_dict):
     """Predict wallclock time in seconds for a given feature dict."""
