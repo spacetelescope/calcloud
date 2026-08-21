@@ -33,13 +33,11 @@ module "lambda_model_ingest" {
     {
       # this is the lambda itself. The code in path will be placed directly into the lambda execution path
       path = "${path.module}/../lambda/ModelIngest"
-      pip_requirements = false
     },
     {
       # calcloud for the package
       path = "${path.module}/../calcloud"
       prefix_in_zip = "calcloud"
-      pip_requirements = false
     }
   ]
 
