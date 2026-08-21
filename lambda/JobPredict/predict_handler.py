@@ -188,19 +188,20 @@ def predict_wallclock(feature_dict):
 
 
 def lambda_handler(event, context):
-    """Predict Resource Allocation requirements for memory (GB) and max execution `kill time` / `wallclock` (seconds) using three pre-trained neural networks. This lambda is invoked from the Job Submit lambda which json.dumps the s3 bucket and key to the file containing job input parameters. The path to the text file in s3 assumes the following format: `control/ipppssoot/ipppssoot_MemModelFeatures.txt`.
+    """Predict Resource Allocation requirements for memory (GB) and max execution `kill time` / `wallclock` (seconds)
+    using HistGradientBoostingRegressor regressions from scikit-learn.  This lambda is invoked from the
+    Job Submit lambda which json.dumps the s3 bucket and key to the file containing job input parameters.
+    The path to the text file in s3 assumes the following format: `control/ipppssoot/ipppssoot_MemModelFeatures.txt`.
 
-    MEMORY BIN: classifier predicts which of 4 memory bins is most likely to be needed to process an HST dataset (ipppssoot) successfully. The probabilities of each bin are output to Cloudwatch logs and the highest bin probability is returned to the Calcloud job submit lambda invoking this one. Bin sizes are as follows:
-
-    Memory Bins:
-    0: < 2GB
-    1: 2-8GB
-    2: 8-16GB
-    3: >16GB
-
-    WALLCLOCK REGRESSION: regression generates estimate for specific number of seconds needed to process the dataset using the same input data. This number is then tripled in Calcloud for the sake of creating an extra buffer of overhead in order to prevent larger jobs from being killed unnecessarily.
-
-    MEMORY REGRESSION: A third regression model is used to estimate the actual value of memory needed for the job. This is mainly for the purpose of logging/future analysis and is not currently being used for allocating memory in calcloud jobs.
+    Returns dictionary with:
+    * memBin:    Prediction of which of 4 memory bins needed to process HST dataset (ipppssoot).
+                 0: < 2GB
+                 1: 2-8GB
+                 2: 8-16GB
+                 3: >16GB
+    * memVal:    Predicted memory value in GB needed to process the HST dataset (ipppssoot).
+                 memBin is derived from this.
+    * clockTime: Predicted wallclock time in seconds needed to process the HST dataset (ipppssoot).
     """
     bucket_name = event["Bucket"]
     key = event["Key"]

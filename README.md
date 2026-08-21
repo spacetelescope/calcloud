@@ -192,7 +192,7 @@ subdirectories:
             archiving.
 
 - control: is organized by IPPPSSOOT and stores job error/retry information as
-           well as inputs for the job requirements neural network evaluation.
+           well as inputs for the predicting job requirements.
 
 - blackboard: stores information which is used on premises by the OWL GUI to
            display job and processing information.

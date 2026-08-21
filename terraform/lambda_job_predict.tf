@@ -2,7 +2,7 @@ module "lambda_function_container_image" {
   source = "terraform-aws-modules/lambda/aws"
   version = "~> 6.0.0"
   function_name = "calcloud-job-predict${local.environment}"
-  description   = "pretrained neural networks for predicting job resource requirements (memory bin and max execution time)"
+  description   = "lambda for predicting job resource requirements (memory, memory bin, and max execution time)"
 
   create_package = false
   image_uri = local.ecr_predict_lambda_image
