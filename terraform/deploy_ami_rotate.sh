@@ -76,8 +76,8 @@ echo $aws_tfstate
 # get AMI id
 cd $CALCLOUD_BUILD_DIR/ami_rotation
 awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 --executable-users self --output json > images.json
-ci_ami=`python3 parse_image_json.py STSCI-AMAZON-LINUX2023`
-ecs_ami=`python3 parse_image_json.py STSCI-EPH-ECS-AL2023`
+ci_ami=`python3.11 parse_image_json.py STSCI-AMAZON-LINUX2023`
+ecs_ami=`python3.11 parse_image_json.py STSCI-EPH-ECS-AL2023`
 
 if [[ "$ci_ami" =~ ^ami-[a-z0-9]+$ ]]; then
     echo $ci_ami
@@ -104,13 +104,10 @@ awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[0]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[1]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[2]
 awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[3]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.model_compute_env[0]
 
 awsudo $ADMIN_ARN terraform plan -no-color -var "environment=${aws_env}" -out ami_rotate.out \
-    -target aws_batch_compute_environment.model_compute_env \
     -target aws_batch_compute_environment.compute_env \
     -target aws_batch_job_queue.batch_queue \
-    -target aws_batch_job_queue.model_queue \
     -target aws_launch_template.hstdp \
     -target aws_launch_template.ami_rotation \
     -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}"

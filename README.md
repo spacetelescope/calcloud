@@ -38,9 +38,7 @@ and handled by lambdas.
 for archiving.
 
 5. Predicting job memory and runtime requirements, and assigning each job to
-the most efficient AWS EC2 instance capable of processing it.  Continually
-retraining the prediction model using actual/observed memory and runtime from
-completed jobs.
+the most efficient AWS EC2 instance capable of processing it.
 
 6. Delivering key CalCloud / AWS Batch status via a blackboard file to the on
 premise OWL GUI where it is displayed for operators.
@@ -52,28 +50,28 @@ Gitflow
 -------
 
 This repository is organized under the [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow)
-model. Feature branches can be PR'ed into `develop` from forks. To the extent that 
+model. Feature branches can be PR'ed into `develop` from forks. To the extent that
 is reasonable, developers should follow these tenets of the Gitflow model:
 
 - feature branches should be started off of `develop`, and PR'ed back into `develop`
 - release candidates should branch off of `develop`, be PR'ed into `main`, and
   merged back into `develop` during final release.
-- hotfixes should branch off of `main`, be PR'ed back to `main`, and be merged back 
+- hotfixes should branch off of `main`, be PR'ed back to `main`, and be merged back
   to `develop` after release.
 
 While developers are free to work on features in their forks, it is preferred for releases
 and hotfixes to be prepared via branches on the primary repository.
 
-Our github action workflow `merge-main-to-develop` runs after any push to `main`, 
-(which automatically includes merged PR's). In practice this is a slight deviation 
-from Gitflow, which would merge the release or hotfix branch into `develop`. However, 
-due to the nature of github action permissions, the github action triggered by a PR from 
-a fork does not have sufficient scope to perform that secondary merge directly from the 
-PR commit. This security limitation would require a personal access token of an admin to 
-be added to the account to allow github actions to merge. By merging from `main` right 
-after push, the github action has sufficient privilege to push to `develop`. The 
-implication being that the security of code added via PR from a fork falls on the 
-administrators of this project, and is not inadvertently circumvented via github action 
+Our github action workflow `merge-main-to-develop` runs after any push to `main`,
+(which automatically includes merged PR's). In practice this is a slight deviation
+from Gitflow, which would merge the release or hotfix branch into `develop`. However,
+due to the nature of github action permissions, the github action triggered by a PR from
+a fork does not have sufficient scope to perform that secondary merge directly from the
+PR commit. This security limitation would require a personal access token of an admin to
+be added to the account to allow github actions to merge. By merging from `main` right
+after push, the github action has sufficient privilege to push to `develop`. The
+implication being that the security of code added via PR from a fork falls on the
+administrators of this project, and is not inadvertently circumvented via github action
 elevated privileges.
 
 Github Actions
@@ -85,16 +83,16 @@ The calcloud repo is set up for GitHub Actions with the following workflows:
 Whenever you do a PR or merge to spacetelescope/calcloud, GitHub will
 automatically run CI tests for calcloud.
 
-Additionally, there are several workflows that aid in managing the 
+Additionally, there are several workflows that aid in managing the
 [Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow)
 workflow.
 
 - tag-latest: automatically tags the latest commit to `develop` as `latest`
 - tag-stable: automatically tags the latest commit to `main` as `stable`
 - merge-main-to-develop: merges `main` back down to `develop` after any push to `main`
-- check-merge-main2develop: checks for merge failures with `develop`, for any PR to `main`. 
-  For information only; indicates that manual merge conflict resolution may be required 
-  to merge this PR back into `develop`. Not intended to block PR resolution, and no attempt 
+- check-merge-main2develop: checks for merge failures with `develop`, for any PR to `main`.
+  For information only; indicates that manual merge conflict resolution may be required
+  to merge this PR back into `develop`. Not intended to block PR resolution, and no attempt
   to resolve the conflict is needed prior to merging `main`.
 
 
@@ -130,18 +128,30 @@ Batch queue which is in turn associated with a particular EC2 instance type.
 There are 2G, 8G, 16G, and 64G memory rungs on the ladder and any job assigned
 to that rung is given that amount of memory to use.
 
-A neural network has been developed to predict which rung to use as a starting
-point for any particular IPPPSSOOT.  If a job fails due to memory exhaustion,
-it is automatically rescued and re-submitted on the next highest rung where it
-will have additional memory with which to succeed.  If a job fails running on
-the 64G rung due to memory exhaustion, it is not automatically rescued.
+We use a sklearn.ensemble.HistGradientBoostingRegressor to predict which run
+to use as a starting point for any particular IPPPSSOOT.  If a job fails
+due to memory exhaustion, it is automatically rescued and re-submitted
+on the next highest rung where it will have additional memory with which to succeed.
+If a job fails running on the 64G rung due to memory exhaustion, it is not
+automatically rescued.
+
+Disk space requirements
+-------------------------------
+
+IPPPSSOOTs and SVMs are processed with 150GB disks, but MVMs require more disk space.
+We use default-volume (150GB) instances for IPPPSSOOT and SVM processing, and large-volume (3000GB)
+instance for MVMs.
 
 AWS Batch Resource Organization
 -------------------------------
 
 The job ladder has a relatively simple mapping onto AWS batch resources
-representing each rung of the ladder.  Each 2G, 8G, 16G, or 64G ladder rung
-has:
+representing each rung of the ladder and disk space requirements.
+
+There are 8 rungs:
+    - default-volume - 2G -> 8G -> 16G -> 64G
+    - large-volume   - 2G -> 8G -> 16G -> 64G
+Each ladder rung has:
 
 1. a queue
 
@@ -153,7 +163,7 @@ rather than EC2 instances.
 that rung.
 
 While AWS Batch can support much more complex relationships,  the CalCloud
-configuration is 1:1:1,  4 linear rungs.
+configuration is 1:1:1,  4 rungs for default-volume and 4 runs for large-volume.
 
 Many other aspects of all jobs are constant, e.g. the same command line
 template, the same S3 bucket, and the same CALDP image are used for every rung
@@ -182,14 +192,12 @@ subdirectories:
             archiving.
 
 - control: is organized by IPPPSSOOT and stores job error/retry information as
-           well as inputs for the job requirements neural network evaluation.
+           well as inputs for the predicting job requirements.
 
 - blackboard: stores information which is used on premises by the OWL GUI to
            display job and processing information.
 
-A periodic lambda is used to force improve synchronization of the Storage
-Gateway between AWS and on premise NFS by flushing the cache.  Flush rates
-depend on the subdirectory being flushed.
+The Storage Gateways are set to automatically refresh their cache every 5 minutes.
 
 Message Passing
 ---------------
@@ -318,13 +326,13 @@ These are distinguished as either "retryable" or "not retryable".
 
 Blackboard
 ==========
-The data processing operations team at STSci maintains a database of metadata for every processing job of every dataset. In order to communicate that information from AWS to the on-premise system, a lambda function is run on a schedule (triggered by a cloudwatch event) to scrape the AWS Batch console with boto3 API calls. An ascii table is then uploaded to S3, which is copied on-premise by the storage gateway. A poller on-premise ingests the file into the database. 
+The data processing operations team at STSci maintains a database of metadata for every processing job of every dataset. In order to communicate that information from AWS to the on-premise system, a lambda function is run on a schedule (triggered by a cloudwatch event) to scrape the AWS Batch console with boto3 API calls. An ascii table is then uploaded to S3, which is copied on-premise by the storage gateway. A poller on-premise ingests the file into the database.
 
-This metadata is used in GUI applications for science operations staff to monitor job status. In AWS Batch, jobs are only guaranteed to persist in the AWS Batch console for 24 hours. If 20k jobs run over the weekend, monitoring that many jobs can become difficult without persisting this information. It also provides staff with an historical record of the number of jobs that are run in a typical timeframe, and the amount of CPU hours required. 
+This metadata is used in GUI applications for science operations staff to monitor job status. In AWS Batch, jobs are only guaranteed to persist in the AWS Batch console for 24 hours. If 20k jobs run over the weekend, monitoring that many jobs can become difficult without persisting this information. It also provides staff with an historical record of the number of jobs that are run in a typical timeframe, and the amount of CPU hours required.
 
-In our current implementation, the blackboard lambda runs on a 7 minute schedule. 7 minutes was chosen so as not to overlap with the storage gateway cache refresh operations, which are scheduled for submission every 5 minutes; we have observed the blackboard ascii file becoming corrupted in the on-premise NFS mount when the schedules line up at 5 minutes. The on-premise poller again runs on a schedule of a ~few minutes, so ultimately the on-premise database can be up to ~15 minutes behind the true AWS Batch Job status.
+In our current implementation, the blackboard lambda runs on a 7 minute schedule. The Storage Gateway refreshes every 5 minutes.  The on-premise poller again runs on a schedule of a ~few minutes, so ultimately the on-premise database can be up to ~15 minutes behind the true AWS Batch Job status.
 
-To speed up this sync, we could capture Batch state change events in CloudWatch and send them to lambda for ingestion into a dynamodb, which could then be either hooked up directly to the GUIs, or replicated in a more efficient fashion to the on-prem databases. 
+To speed up this sync, we could capture Batch state change events in CloudWatch and send them to lambda for ingestion into a dynamodb, which could then be either hooked up directly to the GUIs, or replicated in a more efficient fashion to the on-prem databases.
 
 
 Job Memory Models
@@ -333,30 +341,30 @@ Job Memory Models
 Overview
 --------
 
-Pre-trained artificial neural networks are implemented in the pipeline to predict job resource requirements for HST. All three network architectures are built using the Keras functional API from the Tensorflow library. 
+We use statistical models to predict system requirements for the jobs.
+We are using sklearn.ensemble.HistGradientBoostingRegressors trained on 1M completed jobs.
 
-1. Memory Classifier
-1D Convolutional Neural Network performs multi-class classification on 8 features to predict which of 4 possible "memory bins" is the most appropriate for a given dataset. An estimated probability score is assigned to each of the four possible target classes, i.e. Memory Bins, represented by an integer from 0 to 3. The memory size thresholds are categorized as follow:
-
+Based on IPPPSSOOT characteristics, we predict:
+- Memory and memory bin
   - `0: < 2GB`
   - `1: <= 8GB`
   - `2: <= 16GB`
   - `3: < 64GB`
+  We pad the memory value by 10% and then bin it into memory bins.
+- Wallclock time
+  AWS Batch requires a minimum threshold of 60 seconds to be set on each job, although many jobs take less than one minute to complete. The predicted value from this model is used by JobSubmit to set a maximum execution time in which the job has to be completed, after which a job is killed (regardless of whether or not it has finished).
 
-2. Memory Regressor
-1D-CNN performs logistic regression to estimate how much memory (in Gigabytes) a given dataset will require for processing. This prediction is not used directly by the pipeline because AWS compute doesn't require an exact number (hence the bin classification). We retain this model for the purpose of additional analysis of the datasets and their evolving characteristics.
 
-3. Wallclock Regressor
-1D-CNN performs logistic regression to estimate the job's execution time in wallclock seconds. AWS Batch requires a minimum threshold of 60 seconds to be set on each job, although many jobs take less than one minute to complete. The predicted value from this model is used by JobSubmit to set a maximum execution time in which the job has to be completed, after which a job is killed (regardless of whether or not it has finished).
-
-JobPredict 
+JobPredict
 --------------
 
-The JobPredict lambda is invoked by JobSubmit to determine resource allocation needs pertaining to memory and execution time. Upon invocation, a container is created on the fly using a docker image stored in the caldp ECR. The container then loads pre-trained models along with their learned parameters (e.g. weights) from saved keras files.
+The JobPredict lambda is invoked by JobSubmit to determine resource allocation needs pertaining to memory and execution time. Upon invocation, a container is created on the fly using a docker image stored in the caldp ECR. The container then loads the regression models from saved pkl files.
 
-The model's inputs are scraped from a text file in the calcloud-processing s3 bucket (`control/ipppssoot/MemoryModelFeatures.txt`) and converted into a numpy array. An additional preprocessing step applies a Yeo-Johnson power transform to the first two indices of the array (`n_files`, `total_mb`) using pre-calculated statistical values (mean, standard deviation and lambdas) representative of the entire training data "population". This transformation restricts all values into a 5-value range (-2 to 3) - see Model Training (below) for more details. 
+The model's inputs are scraped from a text file in the calcloud-processing s3 bucket (`control/ipppssoot/MemoryModelFeatures.txt`) and stored in a dictionary.
+Several values in the dictionary are categorical, and so we process those categorical values into separate features.
+We then convert that dictionary into a dataframe and use the models to make memory and wallclock predictions.
 
-The resulting 2D-array of transformed inputs are then fed into the models which generate predictions for minimum memory size and wallclock (execution) time requirements. Predicted outputs are formatted into JSON and returned back to the JobSubmit lambda to acquire the compute resources necessary for completing calibration processing on that particular ipppssoot's data.
+Predicted outputs are formatted into JSON and returned back to the JobSubmit lambda to acquire the compute resources necessary for completing calibration processing on that particular ipppssoot's data.
 
 
 Model Ingest
@@ -368,22 +376,10 @@ When a job finishes successfully, its status message (in s3) changes to `process
 Model Training
 --------------
 
-Keeping the models performative requires periodic retraining with the latest available data. Unless revisions are otherwise deemed necessary, the overall architecture and tuned hyperparameters of each network are re-built from scratch using the Keras functional API, then trained and validated using all available data. Model training iterations are manually submitted via AWS batch, which fires up a Docker container from the `training` image stored in CALDP elastic container repository (ECR) and runs through the entire training process as a standalone job (separate from the main calcloud processing runs):
+Model training is done locally using the manual_predict.py script. This code is intended to be run in an interactive
+mode.  It will present graphs of the overall distribution of memory and wallclock in the data set and the
+predicted vs. actual behavior of the memory and wallclock models.
 
-  1. Download training data from DynamoDB table
-  2. Preprocess (calculate statisics and re-run the PowerTransform on `n_files` and `total_mb`)
-  3. Build and compile models using Keras Functional API
-  4. Split data into train and test (validation) sets
-  5. Run batch training for each model
-  6. Calculate metrics and scores for evaluation 
-  7. Save and upload models, training results, and training data CSV backup file to s3
-  8. (optional) Run KFOLD cross-validation (10 splits)
-
-
-Calcloud ML Dashboard
----------------------
-
-Analyze model performance, compare training iterations and explore statistical attributes of the continually evolving dataset with an interactive dashboard built specifically for Calcloud's prediction and classification models. The dashboard is maintained in a separate repository which can be found here: [CALCLOUD-ML-DASHBOARD](https://github.com/alphasentaurii/calcloud-ml-dashboard.git).
 
 
 Migrating Data Across Environments

@@ -5,7 +5,6 @@ See ModelIngest/lambda_scrape.py for more information on how model data is inges
 
 import boto3
 import sys
-import numpy as np
 import datetime as dt
 import time
 import json
@@ -19,8 +18,8 @@ dynamodb = boto3.resource("dynamodb", config=common.retry_config, region_name="u
 
 
 def proc_time(start, end):
-    duration = np.round(end - start)
-    proc_time = np.round(duration / 60)
+    duration = round(end - start)
+    proc_time = round(duration / 60)
     if duration > 3600:
         return f"{proc_time} hours."
     elif duration > 60:
@@ -102,7 +101,7 @@ class Features(Scraper):
             if k == "n_files":
                 n_files = int(v)
             if k == "total_mb":
-                total_mb = int(np.round(float(v), 0))
+                total_mb = round(float(v), 0)
             if k == "DETECTOR":
                 if v in ["UVIS", "WFC"]:
                     detector = 1

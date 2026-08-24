@@ -61,7 +61,7 @@ resource "aws_launch_template" "hstdp" {
 
   name                   = "calcloud-hst-worker${each.value.name_suffix}${local.environment}"
   description            = "Template for ${each.value.description_infix}cluster worker nodes updated to limit stopped container lifespan"
-  ebs_optimized           = "false"
+  ebs_optimized           = false
   image_id                = nonsensitive(aws_ssm_parameter.ecs_ami.value)
   update_default_version = true
   tags = {

@@ -15,12 +15,7 @@ ENV AWS_DEFAULT_REGION="us-east-1"
 ARG aws_env
 ARG CALCLOUD_VER
 
-RUN mkdir -p /etc/ssl/certs && \
-    mkdir -p /etc/pki/ca-trust/source/anchors
-
-COPY STSCICA.crt /etc/ssl/certs/STSCICA.crt
 COPY STSCICA.crt /etc/pki/ca-trust/source/anchors/STSCICA.crt
-
 RUN update-ca-trust
 
 # Install git, SSH, and other utilities
@@ -30,13 +25,8 @@ RUN set -ex \
     && yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo \
     && yum install terraform-1.0.11 -y \
     && yum install git -y  \
-    && yum install tar wget python3 which -y \
-    && yum install python3-pip -y
-
-# These should only happen once
-ENV REQUESTS_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-ENV CURL_CA_BUNDLE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-ENV NODE_EXTRA_CA_CERTS=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+    && yum install tar wget python3.11 which -y \
+    && yum install python3.11-pip -y
 
 RUN yum install https://rpm.nodesource.com/pub_16.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm -y
 RUN yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1
@@ -46,7 +36,7 @@ RUN npm install n -g
 RUN npm config set registry http://registry.npmjs.org/ && \
     npm install -g awsudo@1.5.0
 
-RUN pip3 install awscli
+RUN pip3.11 install awscli
 
 COPY calcloud_checkout.sh /root/
 
