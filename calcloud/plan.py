@@ -111,7 +111,10 @@ def invoke_lambda_predict(dataset, dataset_type, output_bucket):
     else:
         # Return a default 'predictions' for now since models for SVM and MVM not yet implemented
         predictions = dict()
-        predictions["clockTime"] = 20 * 60
+        # For SVM's and MVM's use a predicted clocktime of 8 hours.
+        # When multiplied by 6, this gives a maximum expected clock time of 48 hours, which is the
+        # maximum that the caller will allow.
+        predictions["clockTime"] = 8 * 60 * 60
         predictions["memBin"] = 1
     # defaults: db_clock=20 minutes, wc_std=5
     db_clock, wc_std = query_ddb(dataset)
