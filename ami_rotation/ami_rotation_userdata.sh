@@ -121,6 +121,21 @@ cd ~
 rm -rf ~/tmp
 EOF
 
+# Set up the AWS Profile for the admin role.
+cat << EOF > /home/ec2-user/.aws/config
+[profile hst_reprocessing_admin_role]
+region = us-east-1
+role_arn = ${admin_arn}
+credential_source = Ec2InstanceMetadata
+
+# This profile is required for ecr describe-image-scan-findings because
+# that command cannot be called cross-account.
+[profile hst-repro-cross-account]
+region = us-east-1
+role_arn = arn:aws:iam::378083651696:role/hst-repro-cross-account-ECR-access
+source_profile = hst_reprocessing_admin_role
+EOF
+
 chown -R ec2-user:ec2-user /home/ec2-user/
 
 echo "export ADMIN_ARN=${admin_arn}" >> /home/ec2-user/.bashrc
