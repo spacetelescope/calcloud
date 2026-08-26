@@ -52,7 +52,6 @@ def _get_scan_results(image_digest, image_tag):
     """Issue an AWS command to dump the ECR scan results as JSON, load the
     JSON,  and return the resulting dict.
     """
-    admin_arn = os.environ["ADMIN_ARN"]
     image_repo = os.environ["IMAGE_REPO"]
     ecr_account_to_use = os.environ["ECR_ACCOUNT_ID"]
 
@@ -65,8 +64,10 @@ def _get_scan_results(image_digest, image_tag):
         file=sys.stderr,
     )
 
+    # This uses hst-repro-cross-account-ECR-access which is a role in the ECR account.
+    # You cannot run describe-image-scan-findings cross account, you have to use a role in the other account.
     scan_results = run(
-        f"awsudo -d 3600 {admin_arn}  aws ecr describe-image-scan-findings "
+        f"AWS_PROFILE=hst-repro-cross-account-ECR-access aws ecr describe-image-scan-findings "
         f"--no-paginate "
         f"--registry-id {ecr_account_to_use} "
         f"--repository-name {image_repo} "

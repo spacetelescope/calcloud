@@ -24,7 +24,7 @@ export TF_VAR_account_id=$ACCOUNT_ID
 aws_env=${aws_env:-""}
 if [ -z "${aws_env}" ]
 then
-    aws_env_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "environment" | grep "Value"`
+    aws_env_response=`AWS_PROFILE=hst_reprocessing_admin_role aws ssm get-parameter --name "environment" | grep "Value"`
     aws_env=${aws_env_response##*:}
     aws_env=`echo $aws_env | tr -d '",'`
 fi
@@ -34,7 +34,7 @@ export aws_env=${aws_env}
 repo_url=${repo_url:-""}
 if [ -z "${repo_url}" ]
 then
-    repo_url_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/ecr/SharedServices" | grep "Value"`
+    repo_url_response=`AWS_PROFILE=hst_reprocessing_admin_role aws ssm get-parameter --name "/ecr/SharedServices" | grep "Value"`
     repo_url=${repo_url_response##*:}
     repo_url=`echo $repo_url | tr -d '",'`
 fi

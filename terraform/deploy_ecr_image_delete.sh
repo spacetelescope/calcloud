@@ -15,7 +15,7 @@ if [[ "$#" == "0" ]]; then
     exit 2
 fi
 
-SSM_PARAM=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/ecr/SharedServices" --query "Parameter.Value" --output text`
+SSM_PARAM=`AWS_PROFILE=hst_reprocessing_admin_role aws ssm get-parameter --name "/ecr/SharedServices" --query "Parameter.Value" --output text`
 ECR_ACCOUNT_ID=`echo $SSM_PARAM | cut -d '.' -f1`    # 123456789123
 IMAGE_REPO=`echo $SSM_PARAM | cut -d '/' -f2`        # ecr-repo-name
 
@@ -25,5 +25,5 @@ for image in ${IMAGES}; do
     else
 	    QUALIFIER=imageTag
     fi
-    awsudo ${ADMIN_ARN} aws ecr batch-delete-image --registry-id ${ECR_ACCOUNT_ID} --repository-name ${IMAGE_REPO} --image-ids ${QUALIFIER}=${image}
+    AWS_PROFILE=hst_reprocessing_admin_role aws ecr batch-delete-image --registry-id ${ECR_ACCOUNT_ID} --repository-name ${IMAGE_REPO} --image-ids ${QUALIFIER}=${image}
 done
