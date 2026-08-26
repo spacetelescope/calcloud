@@ -109,16 +109,25 @@ yum install python3.11-pip -y -q
 sudo -i -u ec2-user bash << EOF
 mkdir ~/bin ~/tmp
 cd ~/tmp
-curl -s -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-bash ~/.nvm/nvm.sh
 source ~/.bashrc
-nvm install 16
-npm config set registry http://registry.npmjs.org/
-npm config set cafile /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
-npm install -g awsudo@1.5.0
 python3.11 -m pip install -q --upgrade pip && python3.11 -m pip install boto3 -q
 cd ~
 rm -rf ~/tmp
+EOF
+
+# Set up the AWS Profile for the admin role.
+cat << EOF > /home/ec2-user/.aws/config
+[profile hst_reprocessing_admin_role]
+region = us-east-1
+role_arn = ${admin_arn}
+credential_source = Ec2InstanceMetadata
+
+# This profile is required for ecr describe-image-scan-findings because
+# that command cannot be called cross-account.
+[profile hst-repro-cross-account-ECR-access]
+region = us-east-1
+role_arn = arn:aws:iam::378083651696:role/hst-repro-cross-account-ECR-access
+source_profile = hst_reprocessing_admin_role
 EOF
 
 chown -R ec2-user:ec2-user /home/ec2-user/
