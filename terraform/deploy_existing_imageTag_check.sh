@@ -17,7 +17,7 @@ anyImage="0"
 for imageTag in ${TAGS}; do
     # describe images returns exit code 1 if the image does not exist
     # batch-get-image does NOT
-    awsudo ${ADMIN_ARN} aws ecr describe-images --registry-id ${ECR_ACCOUNT_ID} --repository-name ${IMAGE_REPO} --image-ids imageTag=${imageTag}
+    AWS_PROFILE=hst_reprocessing_admin_role aws ecr describe-images --registry-id ${ECR_ACCOUNT_ID} --repository-name ${IMAGE_REPO} --image-ids imageTag=${imageTag}
     tagNotExist=$?
 
     if [[ $tagNotExist -eq 0 ]]; then

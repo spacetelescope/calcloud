@@ -66,7 +66,7 @@ def _get_scan_results(image_digest, image_tag):
     )
 
     scan_results = run(
-        f"awsudo -d 3600 {admin_arn}  aws ecr describe-image-scan-findings "
+        f"AWS_PROFILE=hst_reprocessing_admin_role aws ecr describe-image-scan-findings "
         f"--no-paginate "
         f"--registry-id {ecr_account_to_use} "
         f"--repository-name {image_repo} "

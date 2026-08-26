@@ -20,7 +20,7 @@ if [[ $amirotation_docker_build_status -ne 0 ]]; then
 fi
 
 # need to "log in" to ecr to push or pull the images
-awsudo $ADMIN_ARN aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $repo_url
+AWS_PROFILE=hst_reprocessing_admin_role aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $repo_url
 
 echo Pushing ${AMIROTATION_DOCKER_IMAGE_UNSCANNED}
 docker push ${AMIROTATION_DOCKER_IMAGE_UNSCANNED}
