@@ -168,12 +168,22 @@ class Targets(Scraper):
         self.bucket = bucket
         self.process_log = f"outputs/{self.ipst}/process_metrics.txt"
         self.preview_log = f"outputs/{self.ipst}/preview_metrics.txt"
+        self.disk_log = f"outputs/{self.ipst}/disk_metrics.txt"
         self.targets = None
 
     def scrape_targets(self):
         self.target_data = self.get_target_data()
         self.targets = self.convert_target_data()
         return self.targets
+
+    def get_s3_body(self, key):
+        obj = self.bucket.Object(key)
+        try:
+            body = obj.get()["Body"].read().splitlines()
+        except Exception as e:
+            body = None
+            print(e)
+        return body
 
     def get_target_data(self):
         """scrapes actual wallclock (sec) and memory (kb) from log files in s3 outputs bucket. Returns string-formatted list of scraped data.
@@ -183,12 +193,7 @@ class Targets(Scraper):
         target_data = {"wallclock": [], "memory": []}
         log_error = 0
         for key in log_files:
-            obj = self.bucket.Object(key)
-            try:
-                body = obj.get()["Body"].read().splitlines()
-            except Exception as e:
-                body = None
-                print(e)
+            body = self.get_s3_body(key)
             if body is not None:
                 status = str(body[-1]).split(":")[-1]
                 if "0" in status:
@@ -205,6 +210,13 @@ class Targets(Scraper):
                     log_error += 1  # processing error status (bad data)
             else:
                 log_error = -1  # log file missing or inaccessible
+
+        body = self.get_s3_body(self.disk_log)
+        if body:
+            max_disk = max((int(line.split()[2][:-1]) for line in body), default=0)
+            if max_disk:
+                target_data["max_disk"] = max_disk
+
         if log_error < 0:
             print("Missing logs: cannot save target data.")
             sys.exit(-1)
@@ -231,6 +243,10 @@ class Targets(Scraper):
         targets["wallclock"] = clock + 1
         targets["memory"] = kb / (10**6)
         targets["mem_bin"] = self.calculate_bin(targets["memory"])
+        if "max_disk" in self.target_data:
+            max_disk = self.target_data["max_disk"]
+            print(max_disk)
+            targets["max_disk"] = max_disk
         print("Targets:\n", targets)
         return targets
 
@@ -276,6 +292,8 @@ def create_payload(job_data, timestamp):
     }
     if features.get("product_type"):
         data["product_type"] = features["product_type"]
+    if targets.get("max_disk"):
+        data["max_disk"] = int(targets["max_disk"])
 
     ddb_payload = json.loads(json.dumps(data, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
     pprint(ddb_payload, indent=2)
