@@ -13,9 +13,4 @@ def lambda_handler(event, context=None):
     # ipst = key.split("-")[-1].split(".")[0]
     # model_ingest.ddb_ingest(ipst, bucket_name, table_name)
     dataset = "-".join(key.split("-")[1:]).split(".")[0]
-    dataset_type = hst.get_dataset_type(dataset)
-    if dataset_type == "ipst":
-        model_ingest.ddb_ingest(dataset, bucket_name, table_name)
-    else:
-        # Don't do anything with HAP datasets for now
-        pass
+    model_ingest.ddb_ingest(dataset, bucket_name, table_name)
