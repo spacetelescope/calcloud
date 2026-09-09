@@ -13,4 +13,5 @@ def lambda_handler(event, context=None):
     # ipst = key.split("-")[-1].split(".")[0]
     # model_ingest.ddb_ingest(ipst, bucket_name, table_name)
     dataset = "-".join(key.split("-")[1:]).split(".")[0]
+    print(f"key = {key}, dataset = {dataset}")
     model_ingest.ddb_ingest(dataset, bucket_name, table_name)
