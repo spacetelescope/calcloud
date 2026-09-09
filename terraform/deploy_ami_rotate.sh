@@ -4,15 +4,15 @@
 aws_env=${aws_env:-""}
 
 # get the versions from ssm params
-calcloud_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/awsysver-${aws_env}" | grep "Value"`
+calcloud_ver_response=`AWS_PROFILE=hst_reprocessing_admin_role aws ssm get-parameter --name "/tf/env/awsysver-${aws_env}" | grep "Value"`
 CALCLOUD_VER=${calcloud_ver_response##*:}
 CALCLOUD_VER=`echo $CALCLOUD_VER | tr -d '",'`
 
-caldp_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/awsdpver-${aws_env}" | grep "Value"`
+caldp_ver_response=`AWS_PROFILE=hst_reprocessing_admin_role aws ssm get-parameter --name "/tf/env/awsdpver-${aws_env}" | grep "Value"`
 CALDP_VER=${caldp_ver_response##*:}
 CALDP_VER=`echo $CALDP_VER | tr -d '",'`
 
-csys_ver_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/tf/env/csys_ver-${aws_env}" | grep "Value"`
+csys_ver_response=`AWS_PROFILE=hst_reprocessing_admin_role aws ssm get-parameter --name "/tf/env/csys_ver-${aws_env}" | grep "Value"`
 CSYS_VER=${csys_ver_response##*:}
 CSYS_VER=`echo $CSYS_VER | tr -d '",'`
 
@@ -62,20 +62,20 @@ fi
 # the env, i.e. sb,dev,test,prod
 if [ -z "${aws_env}" ]
 then
-    aws_env_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "environment" | grep "Value"`
+    aws_env_response=`AWS_PROFILE=hst_reprocessing_admin_role aws ssm get-parameter --name "environment" | grep "Value"`
     aws_env=${aws_env_response##*:}
     aws_env=`echo $aws_env | tr -d '",'`
 fi
 
 # the tf state bucket name
-aws_tfstate_response=`awsudo $ADMIN_ARN aws ssm get-parameter --name "/s3/tfstate" | grep "Value"`
+aws_tfstate_response=`AWS_PROFILE=hst_reprocessing_admin_role aws ssm get-parameter --name "/s3/tfstate" | grep "Value"`
 aws_tfstate=${aws_tfstate_response##*:}
 aws_tfstate=`echo $aws_tfstate | tr -d '",'`
 echo $aws_tfstate
 
 # get AMI id
 cd $CALCLOUD_BUILD_DIR/ami_rotation
-awsudo $ADMIN_ARN aws ec2 describe-images --region us-east-1 --executable-users self --output json > images.json
+AWS_PROFILE=hst_reprocessing_admin_role aws ec2 describe-images --region us-east-1 --executable-users self --output json > images.json
 ci_ami=`python3.11 parse_image_json.py STSCI-AMAZON-LINUX2023`
 ecs_ami=`python3.11 parse_image_json.py STSCI-EPH-ECS-AL2023`
 
@@ -97,22 +97,22 @@ fi
 cd ${CALCLOUD_BUILD_DIR}/terraform
 
 # terraform init and s3 state backend config
-awsudo $ADMIN_ARN terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
+AWS_PROFILE=hst_reprocessing_admin_role terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
 
 # in order to rotate the ami, requires a new version of the launch template and the associated compute environments
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[0]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[1]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[2]
-awsudo $ADMIN_ARN terraform taint aws_batch_compute_environment.compute_env[3]
+AWS_PROFILE=hst_reprocessing_admin_role terraform taint aws_batch_compute_environment.compute_env[0]
+AWS_PROFILE=hst_reprocessing_admin_role terraform taint aws_batch_compute_environment.compute_env[1]
+AWS_PROFILE=hst_reprocessing_admin_role terraform taint aws_batch_compute_environment.compute_env[2]
+AWS_PROFILE=hst_reprocessing_admin_role terraform taint aws_batch_compute_environment.compute_env[3]
 
-awsudo $ADMIN_ARN terraform plan -no-color -var "environment=${aws_env}" -out ami_rotate.out \
+AWS_PROFILE=hst_reprocessing_admin_role terraform plan -no-color -var "environment=${aws_env}" -out ami_rotate.out \
     -target aws_batch_compute_environment.compute_env \
     -target aws_batch_job_queue.batch_queue \
     -target aws_launch_template.hstdp \
     -target aws_launch_template.ami_rotation \
     -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}"
 
-awsudo $ADMIN_ARN terraform apply -no-color "ami_rotate.out"
+AWS_PROFILE=hst_reprocessing_admin_role terraform apply -no-color "ami_rotate.out"
 
 cd $HOME
 rm -rf $TMP_INSTALL_DIR
