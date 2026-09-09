@@ -10,7 +10,7 @@ import time
 import json
 from decimal import Decimal
 from pprint import pprint
-from . import common
+from . import common, hst
 
 s3 = boto3.resource("s3", config=common.retry_config)
 client = boto3.client("s3", config=common.retry_config)
@@ -157,6 +157,8 @@ class Features(Scraper):
             "dtype": dtype,
             "instr": instr,
         }
+        if self.input_data.get("product_type"):
+            features["product_type"] = self.input_data["product_type"]
         return features
 
 
@@ -256,7 +258,7 @@ def create_payload(job_data, timestamp):
     features = job_data["features"]
     targets = job_data["targets"]
     data = {
-        "ipst": ipst,
+        "ipst": ipst,         # Historical tag, new data use "dataset"
         "timestamp": int(timestamp),
         "total_mb": float(features["total_mb"]),
         "n_files": int(features["n_files"]),
@@ -270,7 +272,11 @@ def create_payload(job_data, timestamp):
         "memory": float(targets["memory"]),
         "wallclock": float(targets["wallclock"]),
         "mem_bin": int(targets["mem_bin"]),
+        "dataset": ipst,
     }
+    if features.get("product_type"):
+        data["product_type"] = features["product_type"]
+
     ddb_payload = json.loads(json.dumps(data, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
     pprint(ddb_payload, indent=2)
     return ddb_payload
@@ -288,6 +294,16 @@ def ddb_ingest(ipst, bucket_name, table_name):
     print_timestamp(start_time, "all", 0)
     scraper = Scraper(ipst, bucket_name)
     job_data = scraper.scrape_job_data()
+
+    # This is necessary for the transition to recording SVM/MVM data.
+    # Prior to Sep 2026, HSTSDP sent dummy data for all SVMs and MVMs.
+    # We do not want to record this dummy data in our Dynamo DB tables.
+    # This can be removed after a complete deploy to Ops of both HSTSDP and CALCLOUD.
+    dataset_type = hst.get_dataset_type(ipst)
+    if dataset_type != "ipst" and "product_type" not in job_data["features"]:
+        print(f"Not storing data for {dataset_type} {ipst} - no product_type in features")
+        return
+
     ddb_payload = create_payload(job_data, start_time)
     job_resp = put_job_data(ddb_payload, table_name)
     print("Put job data succeeded:")
