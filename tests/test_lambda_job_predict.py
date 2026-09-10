@@ -80,6 +80,7 @@ def test_model_lambda_job_predict_features(s3_client, s3_resource):
         "crsplit": 1,
         "dtype": 1,
         "instr": 3,
+        "dataset_type": "ipst",
     }
 
     mem_model_expected_dict_2 = {
@@ -92,6 +93,7 @@ def test_model_lambda_job_predict_features(s3_client, s3_resource):
         "crsplit": 2,
         "dtype": 0,
         "instr": 0,
+        "dataset_type": "ipst",
     }
 
     put_mem_model_file(ipst_1, comm, fileparams=mem_model_param_1)
