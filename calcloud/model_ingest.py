@@ -213,7 +213,13 @@ class Targets(Scraper):
 
         body = self.get_s3_body(self.disk_log)
         if body:
-            max_disk = max((int(line.split()[2][:-1]) for line in body), default=0)
+            max_disk = 0
+            for line in body:
+                items = line.split()
+                if len(items) == 6 and len(items[2]) > 1 and items[2][-1] == "G":
+                    value_str = items[2][:-1]
+                    if value_str.isdigit():
+                        max_disk = max(max_disk, int(value_str))
             if max_disk:
                 target_data["max_disk"] = max_disk
 
