@@ -10,7 +10,7 @@ import time
 import json
 from decimal import Decimal
 from pprint import pprint
-from . import common
+from . import common, hst, job_features
 
 s3 = boto3.resource("s3", config=common.retry_config)
 client = boto3.client("s3", config=common.retry_config)
@@ -62,7 +62,7 @@ class Features(Scraper):
 
     def scrape_features(self):
         self.input_data = self.download_inputs()
-        self.features = self.scrub_keys()
+        self.features = job_features.extract_input_features(self.ipst, self.input_data)
         return self.features
 
     def download_inputs(self):
@@ -70,94 +70,18 @@ class Features(Scraper):
         Returns dict of input features for each job (ipst)
         """
         key = f"control/{self.ipst}/{self.ipst}_MemModelFeatures.txt"
-        obj = self.bucket.Object(key)
         input_data = {}
-        try:
-            body = obj.get()["Body"].read().splitlines()
-        except Exception as e:
-            body = None
-            print(e)
+        body = job_features.get_s3_body(self.bucket, key)
         if body is None:
             print(f"Unable to download inputs: {self.ipst}")
             input_data = None
             sys.exit(3)
         else:
             for line in body:
-                k, v = str(line).strip("b'").split("=")
+                k, v = line.split("=", 1)
                 input_data[k] = v
             print(f"{self.ipst}: {input_data}")
             return input_data
-
-    def scrub_keys(self):
-        n_files = 0
-        total_mb = 0
-        detector = 0
-        subarray = 0
-        drizcorr = 0
-        pctecorr = 0
-        crsplit = 0
-
-        for k, v in self.input_data.items():
-            if k == "n_files":
-                n_files = int(v)
-            if k == "total_mb":
-                total_mb = round(float(v), 0)
-            if k == "DETECTOR":
-                if v in ["UVIS", "WFC"]:
-                    detector = 1
-                else:
-                    detector = 0
-            if k == "SUBARRAY":
-                if v == "True":
-                    subarray = 1
-                else:
-                    subarray = 0
-            if k == "DRIZCORR":
-                if v == "PERFORM":
-                    drizcorr = 1
-                else:
-                    drizcorr = 0
-            if k == "PCTECORR":
-                if v == "PERFORM":
-                    pctecorr = 1
-                else:
-                    pctecorr = 0
-            if k == "CRSPLIT":
-                if v == "NaN":
-                    crsplit = 0
-                elif v in ["1", "1.0"]:
-                    crsplit = 1
-                else:
-                    crsplit = 2
-
-        i = self.ipst
-        # dtype (asn or singleton)
-        if i[-1] == "0":
-            dtype = 1
-        else:
-            dtype = 0
-        # instr encoding cols
-        if i[0] == "j":
-            instr = 0
-        elif i[0] == "l":
-            instr = 1
-        elif i[0] == "o":
-            instr = 2
-        elif i[0] == "i":
-            instr = 3
-
-        features = {
-            "n_files": n_files,
-            "total_mb": total_mb,
-            "drizcorr": drizcorr,
-            "pctecorr": pctecorr,
-            "crsplit": crsplit,
-            "subarray": subarray,
-            "detector": detector,
-            "dtype": dtype,
-            "instr": instr,
-        }
-        return features
 
 
 class Targets(Scraper):
@@ -166,6 +90,7 @@ class Targets(Scraper):
         self.bucket = bucket
         self.process_log = f"outputs/{self.ipst}/process_metrics.txt"
         self.preview_log = f"outputs/{self.ipst}/preview_metrics.txt"
+        self.disk_log = f"outputs/{self.ipst}/disk_metrics.txt"
         self.targets = None
 
     def scrape_targets(self):
@@ -181,28 +106,36 @@ class Targets(Scraper):
         target_data = {"wallclock": [], "memory": []}
         log_error = 0
         for key in log_files:
-            obj = self.bucket.Object(key)
-            try:
-                body = obj.get()["Body"].read().splitlines()
-            except Exception as e:
-                body = None
-                print(e)
+            body = job_features.get_s3_body(self.bucket, key)
             if body is not None:
-                status = str(body[-1]).split(":")[-1]
+                status = body[-1].split(":")[-1]
                 if "0" in status:
                     # get wallclock time duration strings
-                    clockstring = str(body[4]).strip("b'\\t")
-                    wallclock = str(clockstring).replace("Elapsed (wall clock) time (h:mm:ss or m:ss): ", "")
+                    clockstring = body[4].strip()
+                    wallclock = clockstring.replace("Elapsed (wall clock) time (h:mm:ss or m:ss): ", "")
                     target_data["wallclock"].append(wallclock)
                     # get memory usage strings
-                    kbstring = str(body[9]).strip("b'\\t")
-                    kb = str(kbstring).replace("Maximum resident set size (kbytes): ", "")
+                    kbstring = body[9].strip()
+                    kb = kbstring.replace("Maximum resident set size (kbytes): ", "")
                     target_data["memory"].append(kb)
                 else:
                     print(f"log status has non-zero value: {status}")
                     log_error += 1  # processing error status (bad data)
             else:
                 log_error = -1  # log file missing or inaccessible
+
+        body = job_features.get_s3_body(self.bucket, self.disk_log)
+        if body:
+            max_disk = 0
+            for line in body:
+                items = line.split()
+                if len(items) == 6 and len(items[2]) > 1 and items[2][-1] == "G":
+                    value_str = items[2][:-1]
+                    if value_str.isdigit():
+                        max_disk = max(max_disk, int(value_str))
+            if max_disk:
+                target_data["max_disk"] = max_disk
+
         if log_error < 0:
             print("Missing logs: cannot save target data.")
             sys.exit(-1)
@@ -229,6 +162,10 @@ class Targets(Scraper):
         targets["wallclock"] = clock + 1
         targets["memory"] = kb / (10**6)
         targets["mem_bin"] = self.calculate_bin(targets["memory"])
+        if "max_disk" in self.target_data:
+            max_disk = self.target_data["max_disk"]
+            print(max_disk)
+            targets["max_disk"] = max_disk
         print("Targets:\n", targets)
         return targets
 
@@ -256,21 +193,26 @@ def create_payload(job_data, timestamp):
     features = job_data["features"]
     targets = job_data["targets"]
     data = {
-        "ipst": ipst,
-        "timestamp": int(timestamp),
-        "total_mb": float(features["total_mb"]),
-        "n_files": int(features["n_files"]),
-        "drizcorr": int(features["drizcorr"]),
-        "pctecorr": int(features["pctecorr"]),
-        "crsplit": int(features["crsplit"]),
-        "subarray": int(features["subarray"]),
-        "detector": int(features["detector"]),
-        "dtype": int(features["dtype"]),
-        "instr": int(features["instr"]),
-        "memory": float(targets["memory"]),
-        "wallclock": float(targets["wallclock"]),
-        "mem_bin": int(targets["mem_bin"]),
+        "ipst": ipst,  # Historical tag, new data use "dataset"
+        "dataset": ipst,
+        "timestamp": timestamp,
+        "total_mb": features["total_mb"],
+        "n_files": features["n_files"],
+        "drizcorr": features.get("drizcorr"),
+        "pctecorr": features.get("pctecorr"),
+        "crsplit": features.get("crsplit"),
+        "subarray": features.get("subarray"),
+        "detector": features.get("detector"),
+        "dtype": features.get("dtype"),
+        "instr": features.get("instr"),
+        "dataset_type": features.get("dataset_type"),
+        "memory": targets["memory"],
+        "wallclock": targets["wallclock"],
+        "mem_bin": targets["mem_bin"],
+        "max_disk": targets.get("max_disk"),
     }
+    data = {k: v for k, v in data.items() if v is not None}
+
     ddb_payload = json.loads(json.dumps(data, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
     pprint(ddb_payload, indent=2)
     return ddb_payload
@@ -288,6 +230,16 @@ def ddb_ingest(ipst, bucket_name, table_name):
     print_timestamp(start_time, "all", 0)
     scraper = Scraper(ipst, bucket_name)
     job_data = scraper.scrape_job_data()
+
+    # This is necessary for the transition to recording SVM/MVM data.
+    # Prior to Sep 2026, HSTSDP sent dummy data for all SVMs and MVMs.
+    # We do not want to record this dummy data in our Dynamo DB tables.
+    # This can be removed after a complete deploy to Ops of both HSTSDP and CALCLOUD.
+    dataset_type = hst.get_dataset_type(ipst)
+    if dataset_type != "ipst" and "dataset_type" not in job_data["features"]:
+        print(f"Not storing data for {dataset_type} {ipst} - no dataset_type in features")
+        return
+
     ddb_payload = create_payload(job_data, start_time)
     job_resp = put_job_data(ddb_payload, table_name)
     print("Put job data succeeded:")
