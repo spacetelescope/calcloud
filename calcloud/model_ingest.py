@@ -10,7 +10,7 @@ import time
 import json
 from decimal import Decimal
 from pprint import pprint
-from . import common, hst
+from . import common, hst, job_features
 
 s3 = boto3.resource("s3", config=common.retry_config)
 client = boto3.client("s3", config=common.retry_config)
@@ -37,15 +37,6 @@ def print_timestamp(ts, name, value):
         info = ""
     timestring = dt.datetime.fromtimestamp(ts).strftime("%m/%d/%Y - %H:%M:%S")
     print(f"{info} [{name}]: {timestring}")
-
-def get_s3_body(bucket, key):
-    obj = bucket.Object(key)
-    try:
-        body = obj.get()["Body"].read().decode("utf-8").splitlines()
-    except Exception as e:
-        body = None
-        print(e)
-    return body
 
 class Scraper:
     def __init__(self, ipst, bucket_name):
@@ -79,7 +70,7 @@ class Features(Scraper):
         """
         key = f"control/{self.ipst}/{self.ipst}_MemModelFeatures.txt"
         input_data = {}
-        body = get_s3_body(self.bucket, key)
+        body = job_features.get_s3_body(self.bucket, key)
         if body is None:
             print(f"Unable to download inputs: {self.ipst}")
             input_data = None
@@ -92,93 +83,7 @@ class Features(Scraper):
             return input_data
 
     def scrub_keys(self):
-        n_files = 0
-        total_mb = 0
-        detector = 0
-        subarray = 0
-        drizcorr = 0
-        pctecorr = 0
-        crsplit = 0
-
-        for k, v in self.input_data.items():
-            if k == "n_files":
-                n_files = int(v)
-            if k == "total_mb":
-                total_mb = round(float(v), 0)
-            if k == "DETECTOR":
-                if v in ["UVIS", "WFC"]:
-                    detector = 1
-                else:
-                    detector = 0
-            if k == "SUBARRAY":
-                if v == "True":
-                    subarray = 1
-                else:
-                    subarray = 0
-            if k == "DRIZCORR":
-                if v == "PERFORM":
-                    drizcorr = 1
-                else:
-                    drizcorr = 0
-            if k == "PCTECORR":
-                if v == "PERFORM":
-                    pctecorr = 1
-                else:
-                    pctecorr = 0
-            if k == "CRSPLIT":
-                if v == "NaN":
-                    crsplit = 0
-                elif v in ["1", "1.0"]:
-                    crsplit = 1
-                else:
-                    crsplit = 2
-
-        INSTR_ACS = 0
-        INSTR_COS = 1
-        INSTR_STIS = 2
-        INSTR_WFC3 = 3
-
-        DTYPE_SINGLETON = 0
-        DTYPE_ASN = 1
-        DTYPE_NO_VALUE = 2
-
-        i = self.ipst
-        if self.input_data.get("product_type") in ("svm", "mvm"):
-            dtype = DTYPE_NO_VALUE
-            if self.input_data["DETECTOR"] in ("UVIS", "IR"):
-                instr = INSTR_WFC3
-            elif self.input_data["DETECTOR"] in ("WFC", "SBC", "HRC"):
-                instr = INSTR_ACS
-        else:
-            # dtype (asn or singleton)
-            if i[-1] == "0":
-                dtype = DTYPE_ASN
-            else:
-                dtype = DTYPE_SINGLETON
-            # instr encoding cols
-            if i[0] == "j":
-                instr = INSTR_ACS
-            elif i[0] == "l":
-                instr = INSTR_COS
-            elif i[0] == "o":
-                instr = INSTR_STIS
-            elif i[0] == "i":
-                instr = INSTR_WFC3
-
-        features = {
-            "n_files": n_files,
-            "total_mb": total_mb,
-            "drizcorr": drizcorr,
-            "pctecorr": pctecorr,
-            "crsplit": crsplit,
-            "subarray": subarray,
-            "detector": detector,
-            "dtype": dtype,
-            "instr": instr,
-        }
-        if self.input_data.get("product_type"):
-            features["product_type"] = self.input_data["product_type"]
-        return features
+        return job_features.extract_input_features(self.ipst, self.input_data)
 
 
 class Targets(Scraper):
@@ -203,7 +108,7 @@ class Targets(Scraper):
         target_data = {"wallclock": [], "memory": []}
         log_error = 0
         for key in log_files:
-            body = self.get_s3_body(key)
+            body = job_features.get_s3_body(self.bucket, key)
             if body is not None:
                 status = body[-1].split(":")[-1]
                 if "0" in status:
@@ -221,7 +126,7 @@ class Targets(Scraper):
             else:
                 log_error = -1  # log file missing or inaccessible
 
-        body = self.get_s3_body(self.disk_log)
+        body = job_features.get_s3_body(self.bucket, self.disk_log)
         if body:
             max_disk = 0
             for line in body:

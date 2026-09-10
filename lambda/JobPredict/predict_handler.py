@@ -13,6 +13,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from botocore.config import Config
+from calcloud import job_features
 
 # Required to read the models from disk
 from sklearn.ensemble import HistGradientBoostingRegressor  # noqa: F401 pylint: disable=unused-import
@@ -50,84 +51,15 @@ class Preprocess:
     def import_data(self):
         """import job metadata file from s3 bucket"""
         bucket = s3.Bucket(self.bucket_name)
-        obj = bucket.Object(self.key)
         input_data = {}
-        body = obj.get()["Body"].read().splitlines()
+        body = job_features.get_s3_body(bucket, self.key)
         for line in body:
-            k, v = str(line).strip("b'").split("=")
+            k, v = line.split("=", 1)
             input_data[k] = v
         return input_data
 
     def scrub_keys(self):
-        n_files = 0
-        total_mb = 0
-        detector = 0
-        subarray = 0
-        drizcorr = 0
-        pctecorr = 0
-        crsplit = 0
-
-        for k, v in self.input_data.items():
-            if k == "n_files":
-                n_files = int(v)
-            if k == "total_mb":
-                total_mb = int(np.round(float(v), 0))
-            if k == "DETECTOR":
-                if v in ["UVIS", "WFC"]:
-                    detector = 1
-                else:
-                    detector = 0
-            if k == "SUBARRAY":
-                if v == "True":
-                    subarray = 1
-                else:
-                    subarray = 0
-            if k == "DRIZCORR":
-                if v == "PERFORM":
-                    drizcorr = 1
-                else:
-                    drizcorr = 0
-            if k == "PCTECORR":
-                if v == "PERFORM":
-                    pctecorr = 1
-                else:
-                    pctecorr = 0
-            if k == "CRSPLIT":
-                if v == "NaN":
-                    crsplit = 0
-                elif v in ["1.0", "1"]:
-                    crsplit = 1
-                else:
-                    crsplit = 2
-
-        i = self.ipppssoot
-        # dtype (asn or singleton)
-        if i[-1] == "0":
-            dtype = 1
-        else:
-            dtype = 0
-        # instr encoding cols
-        if i[0] == "j":
-            instr = 0
-        elif i[0] == "l":
-            instr = 1
-        elif i[0] == "o":
-            instr = 2
-        elif i[0] == "i":
-            instr = 3
-
-        inputs = {
-            "n_files": n_files,
-            "total_mb": total_mb,
-            "drizcorr": drizcorr,
-            "pctecorr": pctecorr,
-            "crsplit": crsplit,
-            "subarray": subarray,
-            "detector": detector,
-            "dtype": dtype,
-            "instr": instr,
-        }
-        return inputs
+        return job_features.extract_input_features(self.ipppssoot, self.input_data)
 
 
 def build_feature_frame(feature_dict, feature_columns, for_wallclock=False):
