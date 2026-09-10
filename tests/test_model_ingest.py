@@ -268,6 +268,7 @@ def test_model_ingest_feature_dict(s3_client, s3_resource):
         "crsplit": 1,
         "dtype": 1,
         "instr": 3,
+        "dataset_type": "ipst",
     }
 
     mem_model_expected_dict_2 = {
@@ -280,6 +281,7 @@ def test_model_ingest_feature_dict(s3_client, s3_resource):
         "crsplit": 2,
         "dtype": 0,
         "instr": 0,
+        "dataset_type": "ipst",
     }
 
     put_mem_model_file(ipst_1, comm, fileparams=mem_model_param_1)
@@ -296,3 +298,76 @@ def test_model_ingest_feature_dict(s3_client, s3_resource):
     for i in range(len(dict_keys)):
         assert mem_feature_dict_1[dict_keys[i]] == mem_model_expected_dict_1[dict_keys[i]]
         assert mem_feature_dict_2[dict_keys[i]] == mem_model_expected_dict_2[dict_keys[i]]
+
+    targets = {"memory": 0.5, "wallclock": 10, "mem_bin": 0}
+    payload_1 = model_ingest.create_payload({"ipst": ipst_1, "features": mem_feature_dict_1, "targets": targets}, 1.0)
+    payload_2 = model_ingest.create_payload({"ipst": ipst_2, "features": mem_feature_dict_2, "targets": targets}, 1.0)
+
+    assert payload_1["dataset_type"] == "ipst"
+    assert payload_2["dataset_type"] == "ipst"
+
+
+def test_model_ingest_feature_dict_svm_missing_values(s3_client, s3_resource):
+    from calcloud import io
+    from calcloud import model_ingest
+
+    bucket = conftest.BUCKET
+    s3_resource.create_bucket(Bucket=bucket)
+    comm = io.get_io_bundle(bucket=bucket, client=s3_client)
+
+    svm_dataset = "wfc3_epo_2h"
+
+    # Intentionally omit optional feature keys to verify default handling.
+    comm.control.put({f"{svm_dataset}/{svm_dataset}_MemModelFeatures.txt": "n_files=3\ntotal_mb=21.7"})
+
+    svm_features = model_ingest.Features(svm_dataset, s3_resource.Bucket(bucket)).scrape_features()
+
+    svm_expected_dict = {
+        "n_files": 3,
+        "total_mb": 22,
+        "detector": 0,
+        "instr": 3,
+        "dataset_type": "svm",
+    }
+
+    dict_keys = list(svm_expected_dict.keys())
+    for i in range(len(dict_keys)):
+        assert svm_features[dict_keys[i]] == svm_expected_dict[dict_keys[i]]
+    assert "dtype" not in svm_features
+
+    targets = {"memory": 0.5, "wallclock": 10, "mem_bin": 0}
+    svm_payload = model_ingest.create_payload({"ipst": svm_dataset, "features": svm_features, "targets": targets}, 1.0)
+
+    assert svm_payload["dataset_type"] == "svm"
+
+
+def test_model_ingest_feature_dict_mvm_missing_values(s3_client, s3_resource):
+    from calcloud import io
+    from calcloud import model_ingest
+
+    bucket = conftest.BUCKET
+    s3_resource.create_bucket(Bucket=bucket)
+    comm = io.get_io_bundle(bucket=bucket, client=s3_client)
+
+    mvm_dataset = "skycell-p0115x10y10"
+
+    # Intentionally omit optional feature keys to verify default handling.
+    comm.control.put({f"{mvm_dataset}/{mvm_dataset}_MemModelFeatures.txt": "n_files=9"})
+
+    mvm_features = model_ingest.Features(mvm_dataset, s3_resource.Bucket(bucket)).scrape_features()
+
+    mvm_expected_dict = {
+        "n_files": 9,
+        "total_mb": 0,
+        "dataset_type": "mvm",
+    }
+
+    dict_keys = list(mvm_expected_dict.keys())
+    for i in range(len(dict_keys)):
+        assert mvm_features[dict_keys[i]] == mvm_expected_dict[dict_keys[i]]
+    assert "instr" not in mvm_features
+
+    targets = {"memory": 0.5, "wallclock": 10, "mem_bin": 0}
+    mvm_payload = model_ingest.create_payload({"ipst": mvm_dataset, "features": mvm_features, "targets": targets}, 1.0)
+
+    assert mvm_payload["dataset_type"] == "mvm"
