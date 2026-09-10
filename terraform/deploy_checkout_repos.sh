@@ -13,17 +13,16 @@ then
     # calcloud source download/unpack
     cd $TMP_INSTALL_DIR
     git clone https://github.com/spacetelescope/calcloud.git
-    cd calcloud && git fetch --all --tags && git checkout tags/v${CALCLOUD_VER} && cd ..
-    git_exit_status=$?
-    if [[ $git_exit_status -ne 0 ]]; then
-        # try without the v
-        cd calcloud && git fetch --all --tags && git checkout tags/${CALCLOUD_VER} && cd ..
-        git_exit_status=$?
-    fi
-    if [[ $git_exit_status -ne 0 ]]; then
-        echo "could not checkout ${CALCLOUD_VER}; exiting"
+    cd calcloud && git fetch --all --tags
+    if git rev-parse -q --verify "refs/tags/v${CALCLOUD_VER}" >/dev/null; then
+        git checkout "tags/v${CALCLOUD_VER}"
+    elif git rev-parse -q --verify "refs/tags/${CALCLOUD_VER}" >/dev/null; then
+        git checkout "tags/${CALCLOUD_VER}"
+    else
+        echo "could not checkout v${CALCLOUD_VER} or ${CALCLOUD_VER}; exiting"
         exit 1
     fi
+    cd ..
 fi
 
 # setting up the caldp source dir if it needs downloaded
@@ -37,17 +36,16 @@ then
     # caldp source download/unpack
     # github's tarballs don't work with pip install, so we have to clone and checkout the tag
     git clone https://github.com/spacetelescope/caldp.git
-    cd caldp && git fetch --all --tags && git checkout tags/v${CALDP_VER} && cd ..
-    git_exit_status=$?
-    if [[ $git_exit_status -ne 0 ]]; then
-        # try without the v
-        cd caldp && git fetch --all --tags && git checkout tags/${CALDP_VER} && cd ..
-        git_exit_status=$?
-    fi
-    if [[ $git_exit_status -ne 0 ]]; then
-        echo "could not checkout ${CALDP_VER}; exiting"
+    cd caldp && git fetch --all --tags
+    if git rev-parse -q --verify "refs/tags/v${CALDP_VER}" >/dev/null; then
+        git checkout "tags/v${CALDP_VER}"
+    elif git rev-parse -q --verify "refs/tags/${CALDP_VER}" >/dev/null; then
+        git checkout "tags/${CALDP_VER}"
+    else
+        echo "could not checkout v${CALDP_VER} or ${CALDP_VER}; exiting"
         exit 1
     fi
+    cd ..
 fi
 
 chmod -R og+r ${TMP_INSTALL_DIR}
