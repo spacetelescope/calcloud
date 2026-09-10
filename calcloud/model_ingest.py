@@ -212,6 +212,7 @@ class Targets(Scraper):
                 log_error = -1  # log file missing or inaccessible
 
         body = self.get_s3_body(self.disk_log)
+        print(f"{self.bucket.name}, {self.disk_log}, body = {body}")
         if body:
             max_disk = 0
             for line in body:
