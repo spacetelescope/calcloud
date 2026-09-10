@@ -130,21 +130,45 @@ class Features(Scraper):
                 else:
                     crsplit = 2
 
+        INSTR_ACS = 0
+        INSTR_COS = 1
+        INSTR_STIS = 2
+        INSTR_WFC3 = 3
+
+        DTYPE_SINGLETON = 0
+        DTYPE_ASN = 1
+
         i = self.ipst
-        # dtype (asn or singleton)
-        if i[-1] == "0":
-            dtype = 1
+        if self.input_data.get("product_type") == "svm":
+            if n_files == 1:
+                dtype = DTYPE_SINGLETON
+            else:
+                dtype = DTYPE_ASN
+            if i.startswith("wfc3"):
+                instr = INSTR_WFC3
+            elif i.startswith("acs"):
+                instr = INSTR_ACS
+        elif self.input_data.get("product_type") == "mvm":
+            dtype = DTYPE_ASN
+            if detector in ("UVIS", "IR"):
+                instr = INSTR_WFC3
+            elif detector in ("WFC", "SBC", "HRC"):
+                instr = INSTR_ACS
         else:
-            dtype = 0
-        # instr encoding cols
-        if i[0] == "j":
-            instr = 0
-        elif i[0] == "l":
-            instr = 1
-        elif i[0] == "o":
-            instr = 2
-        elif i[0] == "i":
-            instr = 3
+            # dtype (asn or singleton)
+            if i[-1] == "0":
+                dtype = DTYPE_ASN
+            else:
+                dtype = DTYPE_SINGLETON
+            # instr encoding cols
+            if i[0] == "j":
+                instr = INSTR_ACS
+            elif i[0] == "l":
+                instr = INSTR_COS
+            elif i[0] == "o":
+                instr = INSTR_STIS
+            elif i[0] == "i":
+                instr = INSTR_WFC3
 
         features = {
             "n_files": n_files,
