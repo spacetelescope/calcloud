@@ -73,7 +73,7 @@ class Features(Scraper):
         obj = self.bucket.Object(key)
         input_data = {}
         try:
-            body = obj.get()["Body"].read().splitlines()
+            body = obj.get()["Body"].read().decode("utf-8").splitlines()
         except Exception as e:
             body = None
             print(e)
@@ -83,7 +83,7 @@ class Features(Scraper):
             sys.exit(3)
         else:
             for line in body:
-                k, v = str(line).strip("b'").split("=")
+                k, v = line.split("=", 1)
                 input_data[k] = v
             print(f"{self.ipst}: {input_data}")
             return input_data
@@ -203,7 +203,7 @@ class Targets(Scraper):
     def get_s3_body(self, key):
         obj = self.bucket.Object(key)
         try:
-            body = obj.get()["Body"].read().splitlines()
+            body = obj.get()["Body"].read().decode("utf-8").splitlines()
         except Exception as e:
             body = None
             print(e)
@@ -219,15 +219,15 @@ class Targets(Scraper):
         for key in log_files:
             body = self.get_s3_body(key)
             if body is not None:
-                status = str(body[-1]).split(":")[-1]
+                status = body[-1].split(":")[-1]
                 if "0" in status:
                     # get wallclock time duration strings
-                    clockstring = str(body[4]).strip("b'\\t")
-                    wallclock = str(clockstring).replace("Elapsed (wall clock) time (h:mm:ss or m:ss): ", "")
+                    clockstring = body[4].strip()
+                    wallclock = clockstring.replace("Elapsed (wall clock) time (h:mm:ss or m:ss): ", "")
                     target_data["wallclock"].append(wallclock)
                     # get memory usage strings
-                    kbstring = str(body[9]).strip("b'\\t")
-                    kb = str(kbstring).replace("Maximum resident set size (kbytes): ", "")
+                    kbstring = body[9].strip()
+                    kb = kbstring.replace("Maximum resident set size (kbytes): ", "")
                     target_data["memory"].append(kb)
                 else:
                     print(f"log status has non-zero value: {status}")
