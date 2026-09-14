@@ -48,9 +48,17 @@ class Scraper:
     def scrape_job_data(self):
         """Calls scrape functions for retrieving feature and target data.
         Returns dictionary of data to be ingested for a given ipst/job"""
-        features = Features(self.ipst, self.bucket).scrape_features()
+        feature_scraper = Features(self.ipst, self.bucket)
+        features = feature_scraper.scrape_features()
+
         targets = Targets(self.ipst, self.bucket).scrape_targets()
-        self.job_data = {"ipst": self.ipst, "features": features, "targets": targets}
+        dataset_type = hst.get_dataset_type(self.ipst)
+        self.job_data = {
+            "ipst": self.ipst,
+            "features": features,
+            "targets": targets,
+            "store_data": dataset_type == "ipst" or feature_scraper.incoming_dataset_type_present,
+        }
         return self.job_data
 
 
@@ -59,9 +67,13 @@ class Features(Scraper):
         self.ipst = ipst
         self.bucket = bucket
         self.features = None
+        self.input_feature_keys = []
+        self.incoming_dataset_type_present = False
 
     def scrape_features(self):
         self.input_data = self.download_inputs()
+        self.input_feature_keys = list(self.input_data.keys())
+        self.incoming_dataset_type_present = any(key.lower() == "dataset_type" for key in self.input_feature_keys)
         self.features = job_features.extract_input_features(self.ipst, self.input_data)
         return self.features
 
@@ -235,16 +247,14 @@ def ddb_ingest(ipst, bucket_name, table_name):
     # Prior to Sep 2026, HSTSDP sent dummy data for all SVMs and MVMs.
     # We do not want to record this dummy data in our Dynamo DB tables.
     # This can be removed after a complete deploy to Ops of both HSTSDP and CALCLOUD.
-    dataset_type = hst.get_dataset_type(ipst)
-    if dataset_type != "ipst" and "dataset_type" not in job_data["features"]:
-        print(f"Not storing data for {dataset_type} {ipst} - no dataset_type in features")
-        return
-
-    ddb_payload = create_payload(job_data, start_time)
-    job_resp = put_job_data(ddb_payload, table_name)
-    print("Put job data succeeded:")
-    pprint(job_resp, indent=2)
-    end_time = time.time()
-    print_timestamp(end_time, "SCRAPE and INGEST", 1)
-    duration = proc_time(start_time, end_time)
-    print(f"Data ingest took {duration}\n")
+    if job_data["store_data"]:
+        ddb_payload = create_payload(job_data, start_time)
+        job_resp = put_job_data(ddb_payload, table_name)
+        print("Put job data succeeded:")
+        pprint(job_resp, indent=2)
+        end_time = time.time()
+        print_timestamp(end_time, "SCRAPE and INGEST", 1)
+        duration = proc_time(start_time, end_time)
+        print(f"Data ingest took {duration}\n")
+    else:
+        print(f"Not storing data for {job_data['features'].get('dataset_type')} {ipst} - no dataset_type in features")
