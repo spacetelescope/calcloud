@@ -113,7 +113,7 @@ def invoke_lambda_predict(dataset, dataset_type, output_bucket):
         clockTime = predictions["clockTime"] * (1 + wc_std)
         memBin = predictions["memBin"]
     else:
-        # The maximum MVM time that seen on-prem is 54 hours, so set SVM/MVM clockTime to 72 hours.
+        # The maximum MVM time seen on-prem is 54 hours, so set SVM/MVM clockTime to 72 hours.
         clockTime = 72 * 60 * 60
         db_clock = 0
         memBin = 1
