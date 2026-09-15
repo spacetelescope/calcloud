@@ -162,15 +162,15 @@ def predict_memory(feature_dict):
 
     predicted_memory = memory_model.predict(feature_df)[0]
 
-    # 128 of 1024 MB is reserved for ECS.  See locals.tf.
-    available_memory = 1 - (128 / 1024)
-
-    memory = predicted_memory * 1.10
-    if memory < 2 * available_memory:
+    # Adjust predicted memory to account for:
+    # - 10% error in prediction
+    # - 128 MB / 1024 MB reserved for operating system.  See locals.tf.
+    memory = predicted_memory * 1.10 * (1024 / (1024 - 128))
+    if memory < 2:
         predicted_bin = 0
-    elif memory < 8 * available_memory:
+    elif memory < 8:
         predicted_bin = 1
-    elif memory < 16 * available_memory:
+    elif memory < 16:
         predicted_bin = 2
     else:
         predicted_bin = 3
