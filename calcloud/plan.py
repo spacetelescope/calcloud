@@ -108,18 +108,16 @@ def invoke_lambda_predict(dataset, dataset_type, output_bucket):
         )
         predictions = json.load(response["Payload"])
         log.info(f"Predictions for {dataset}: {predictions}")
+        # defaults: db_clock=20 minutes, wc_std=5
+        db_clock, wc_std = query_ddb(dataset)
+        clockTime = predictions["clockTime"] * (1 + wc_std)
+        memBin = predictions["memBin"]
     else:
-        # Return a default 'predictions' for now since models for SVM and MVM not yet implemented
-        predictions = dict()
-        # For SVM's and MVM's use a predicted clocktime of 12 hours.
-        # When multiplied by 6, this gives a maximum expected clock time of 72 hours.
-        # The maximum MVM time that we know of on-prem is 54 hours, and we want to allow for this.
-        predictions["clockTime"] = 12 * 60 * 60
-        predictions["memBin"] = 1
-    # defaults: db_clock=20 minutes, wc_std=5
-    db_clock, wc_std = query_ddb(dataset)
-    clockTime = predictions["clockTime"] * (1 + wc_std)
-    return clockTime, db_clock, predictions["memBin"]
+        # The maximum MVM time that seen on-prem is 54 hours, so set SVM/MVM clockTime to 72 hours.
+        clockTime = 72 * 60 * 60
+        db_clock = 0
+        memBin = 1
+    return clockTime, db_clock, memBin
 
 
 def _get_resources(dataset, dataset_type, output_bucket, input_path, timeout_scale):
