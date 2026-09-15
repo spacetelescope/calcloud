@@ -162,7 +162,10 @@ def predict_memory(feature_dict):
 
     predicted_memory = memory_model.predict(feature_df)[0]
 
-    memory = predicted_memory * 1.10
+    # Adjust predicted memory to account for:
+    # - 10% error in prediction
+    # - 128 MB / 1024 MB reserved for operating system.  See locals.tf.
+    memory = predicted_memory * 1.10 * (1024 / (1024 - 128))
     if memory < 2:
         predicted_bin = 0
     elif memory < 8:
