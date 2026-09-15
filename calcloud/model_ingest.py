@@ -83,7 +83,7 @@ class Features(Scraper):
         """
         key = f"control/{self.ipst}/{self.ipst}_MemModelFeatures.txt"
         input_data = {}
-        body = job_features.get_s3_body(self.bucket, key)
+        body = job_features.get_s3_body_str_lines(self.bucket, key)
         if body is None:
             print(f"Unable to download inputs: {self.ipst}")
             input_data = None
@@ -110,43 +110,57 @@ class Targets(Scraper):
         self.targets = self.convert_target_data()
         return self.targets
 
-    def get_target_data(self):
-        """scrapes actual wallclock (sec) and memory (kb) from log files in s3 outputs bucket. Returns string-formatted list of scraped data.
-        {'wallclock': ['1:32.79', '0:30.26'], 'memory': ['423876', '236576']}
-        """
+    def get_wallclock_and_memory_lists(self) -> tuple[int, list[str], list[str]]:
+        """Return log_error, wallclock values, and memory values from the process and preview logs."""
         log_files = [self.process_log, self.preview_log]
-        target_data = {"wallclock": [], "memory": []}
+        wallclock_list = []
+        memory_list = []
         log_error = 0
         for key in log_files:
-            body = job_features.get_s3_body(self.bucket, key)
+            body = job_features.get_s3_body_str_lines(self.bucket, key)
             if body is not None:
                 status = body[-1].split(":")[-1]
                 if "0" in status:
-                    # get wallclock time duration strings
                     clockstring = body[4].strip()
                     wallclock = clockstring.replace("Elapsed (wall clock) time (h:mm:ss or m:ss): ", "")
-                    target_data["wallclock"].append(wallclock)
-                    # get memory usage strings
+                    wallclock_list.append(wallclock)
+
                     kbstring = body[9].strip()
                     kb = kbstring.replace("Maximum resident set size (kbytes): ", "")
-                    target_data["memory"].append(kb)
+                    memory_list.append(kb)
                 else:
                     print(f"log status has non-zero value: {status}")
-                    log_error += 1  # processing error status (bad data)
+                    log_error += 1
             else:
-                log_error = -1  # log file missing or inaccessible
+                log_error = -1
+        return log_error, wallclock_list, memory_list
 
-        body = job_features.get_s3_body(self.bucket, self.disk_log)
+    def get_max_disk_usage(self) -> int | None:
+        """Returns the maximum disk usage recorded in the disk_metrics log, in GB."""
+        max_disk = 0
+        body = job_features.get_s3_body_str_lines(self.bucket, self.disk_log)
         if body:
-            max_disk = 0
             for line in body:
                 items = line.split()
                 if len(items) == 6 and len(items[2]) > 1 and items[2][-1] == "G":
                     value_str = items[2][:-1]
                     if value_str.isdigit():
                         max_disk = max(max_disk, int(value_str))
-            if max_disk:
-                target_data["max_disk"] = max_disk
+        return max_disk or None
+
+    def get_target_data(self):
+        """scrapes actual wallclock (sec) and memory (kb) from log files in s3 outputs bucket. Returns string-formatted list of scraped data.
+        {'wallclock': ['1:32.79', '0:30.26'], 'memory': ['423876', '236576']}
+        """
+
+        target_data = {"wallclock": [], "memory": []}
+        log_error, wallclock_list, memory_list = self.get_wallclock_and_memory_lists()
+        target_data["wallclock"] = wallclock_list
+        target_data["memory"] = memory_list
+
+        max_disk = self.get_max_disk_usage()
+        if max_disk is not None:
+            target_data["max_disk"] = max_disk
 
         if log_error < 0:
             print("Missing logs: cannot save target data.")
@@ -243,10 +257,10 @@ def ddb_ingest(ipst, bucket_name, table_name):
     scraper = Scraper(ipst, bucket_name)
     job_data = scraper.scrape_job_data()
 
-    # This is necessary for the transition to recording SVM/MVM data.
-    # Prior to Sep 2026, HSTSDP sent dummy data for all SVMs and MVMs.
-    # We do not want to record this dummy data in our Dynamo DB tables.
-    # This can be removed after a complete deploy to Ops of both HSTSDP and CALCLOUD.
+    # Prior to HSTDP-2026.3.0, the on-premises code sends the same dummy feature file for all SVMs and MVMs.
+    # We do not want to store this dummy data in DynamoDB.
+    # After we deploy HSTDP-2026.3.0 to Ops, the on-premises code will be sending real data about SVMs and MVMs, and so
+    # we should remove the job_data["store_data"] condition and store all data in DynamoDB.
     if job_data["store_data"]:
         ddb_payload = create_payload(job_data, start_time)
         job_resp = put_job_data(ddb_payload, table_name)

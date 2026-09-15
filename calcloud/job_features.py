@@ -3,8 +3,9 @@
 from . import hst
 
 
-def get_s3_body(bucket, key):
-    """Retrieve the body of an S3 object as a list of lines."""
+def get_s3_body_str_lines(bucket: str, key: str) -> list[str] | None:
+    """Retrieve the body of an S3 object as a list of strings, where each each string is a line in the S3 object.
+    If there is an error, return None."""
     obj = bucket.Object(key)
     try:
         body = obj.get()["Body"].read().decode("utf-8").splitlines()
