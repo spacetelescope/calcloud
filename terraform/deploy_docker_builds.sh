@@ -22,7 +22,8 @@ fi
 # jobPredict lambda env
 cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
 source hst_admin_role_shim.sh cert-update
-set -o pipefail && docker build -f Dockerfile -t ${PREDICT_DOCKER_IMAGE} .
+cd ${CALCLOUD_BUILD_DIR}
+set -o pipefail && docker build -f lambda/JobPredict/Dockerfile -t ${PREDICT_DOCKER_IMAGE} .
 model_docker_build_status=$?
 if [[ $model_docker_build_status -ne 0 ]]; then
     echo "predict lambda env docker build failed; exiting"
