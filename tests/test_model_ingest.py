@@ -76,6 +76,22 @@ mem_model_default_param = {
 }
 
 
+@pytest.fixture
+def disk_metrics_mixed_df_bg_text():
+    return "\n".join(
+        [
+            "Filesystem     1G-blocks  Used Available Use% Mounted on",
+            "overlay              250G   18G      232G   8% /",
+            "tmpfs                  1G    0G        1G   0% /dev",
+            "overlay              250G  NAG      232G   8% /",  # non-numeric used value
+            "overlay              250G   42G      208G  17% /data",
+            "overlay              250G",  # partial line
+            "missing              cols   10G        2G",  # partial line
+            "",
+        ]
+    )
+
+
 def get_metrics_file_text(params=metrics_default_param):
     assert sorted(metrics_text.keys()) == sorted(params.keys())
     keys = metrics_text.keys()
@@ -115,6 +131,12 @@ def put_process_metrics_file(ipst, comm, fileparams=metrics_default_param.copy()
     process_metrics_file_name = f"{ipst}/process_metrics.txt"
     process_metrics_file_msg = {process_metrics_file_name: process_metrics_file_text}
     comm.outputs.put(process_metrics_file_msg)
+
+
+def put_disk_metrics_file(ipst, comm, file_text):
+    disk_metrics_file_name = f"{ipst}/disk_metrics.txt"
+    disk_metrics_file_msg = {disk_metrics_file_name: file_text}
+    comm.outputs.put(disk_metrics_file_msg)
 
 
 def put_mem_model_file(ipst, comm, fileparams=mem_model_default_param.copy()):
@@ -225,6 +247,38 @@ def test_model_ingest_memory_bins(s3_resource):
     for i in range(len(memory_bins["memory"])):
         mem_bin = target_scraper.calculate_bin(memory_bins["memory"][i])
         assert mem_bin == memory_bins["expected_mem_bin"][i]
+
+
+def test_model_ingest_disk_metrics_max_used_value_in_payload(s3_client, s3_resource, disk_metrics_mixed_df_bg_text):
+    from calcloud import model_ingest
+    from calcloud import io
+
+    bucket = conftest.BUCKET
+    s3_resource.create_bucket(Bucket=bucket)
+    comm = io.get_io_bundle(bucket=bucket, client=s3_client)
+    ipst = "ipppssoo0"
+
+    put_process_metrics_file(ipst, comm, fileparams=metrics_default_param.copy())
+    put_preview_metrics_file(ipst, comm, fileparams=metrics_default_param.copy())
+    put_disk_metrics_file(ipst, comm, file_text=disk_metrics_mixed_df_bg_text)
+
+    target_scraper = model_ingest.Targets(ipst, s3_resource.Bucket(bucket))
+    target_data = target_scraper.get_target_data()
+    assert target_data["max_disk"] == 42
+
+    target_scraper.target_data = target_data
+    targets = target_scraper.convert_target_data()
+
+    payload = model_ingest.create_payload(
+        {
+            "ipst": ipst,
+            "features": {"total_mb": 10, "n_files": 1, "dataset_type": "ipst"},
+            "targets": targets,
+        },
+        1.0,
+    )
+
+    assert payload["max_disk"] == 42
 
 
 def test_model_ingest_feature_dict(s3_client, s3_resource):
