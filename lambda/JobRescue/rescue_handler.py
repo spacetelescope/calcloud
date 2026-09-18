@@ -10,10 +10,14 @@ A key feature of "rescuing" is the deletion of prior job outputs,  if any.
 from calcloud import io
 from calcloud import lambda_submit
 from calcloud import s3
+from calcloud.log import configure_logging
 
 RESCUE_TYPES = ["error", "terminated"]
 
 MAX_PER_LAMBDA = 100
+
+
+logger = configure_logging()
 
 
 def lambda_handler(event, context):
@@ -24,7 +28,7 @@ def lambda_handler(event, context):
     overrides = comm.messages.get(f"rescue-{dataset}")
 
     if dataset == "all":
-        print("Rescuing all")
+        logger.info("Rescuing all")
 
         comm.messages.delete_literal("rescue-all")  # don't interpret all as existing datasets
 
@@ -32,6 +36,6 @@ def lambda_handler(event, context):
 
         comm.messages.broadcast("rescue", rescues, overrides)
     else:
-        print("Rescuing", dataset)
+        logger.info("Rescuing %s", dataset)
         # comm.outputs.delete(dataset)
         lambda_submit.main(comm, dataset, bucket_name, overrides)
