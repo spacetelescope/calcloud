@@ -45,10 +45,13 @@ cd ${CALCLOUD_BUILD_DIR}/terraform
 # must taint the compute env to be safe about launch template handling. see comments in batch.tf
 
 # In locals.tf, we define a local variable 'ladder' that is an array with one item for each compute environment.
-# When we change the length of the 'ladder' array, we need to change the LENGTH_LADDER variable here to match.
-LENGTH_LADDER=8
+LENGTH_LADDER=$(AWS_PROFILE=hst_reprocessing_admin_role terraform console <<'EOF' | tail -n 1
+length(local.ladder)
+EOF
+)
+
 for ((i=0; i<LENGTH_LADDER; i++)); do
-    AWS_PROFILE=hst_reprocessing_admin_role terraform taint aws_batch_compute_environment.compute_env[$i]
+    AWS_PROFILE=hst_reprocessing_admin_role terraform taint "aws_batch_compute_environment.compute_env[$i]"
 done
 
 AWS_PROFILE=hst_reprocessing_admin_role terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
