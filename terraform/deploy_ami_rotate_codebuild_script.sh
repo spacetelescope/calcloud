@@ -1,7 +1,7 @@
 #! /bin/bash -xu
 
-# Same as deploy_ami_rotate.sh but removed ADMIN_ARN
-# since the hst-repro-codebuild-role should be able to run this script without assuming the admin role
+# AMI rotation deploy script for the CodeBuild path.
+# The hst-repro-codebuild-role should be able to run this script without assuming the admin role.
 aws_env=${aws_env:-""}
 
 # get the versions from ssm params
@@ -101,10 +101,10 @@ cd ${CALCLOUD_BUILD_DIR}/terraform
 terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
 
 # in order to rotate the ami, requires a new version of the launch template and the associated compute environments
-terraform taint aws_batch_compute_environment.compute_env[0]
-terraform taint aws_batch_compute_environment.compute_env[1]
-terraform taint aws_batch_compute_environment.compute_env[2]
-terraform taint aws_batch_compute_environment.compute_env[3]
+LENGTH_LADDER=8
+for ((i=0; i<LENGTH_LADDER; i++)); do
+    AWS_PROFILE=hst_reprocessing_admin_role terraform taint aws_batch_compute_environment.compute_env[$i]
+done
 
 terraform plan -no-color -var "environment=${aws_env}" -out ami_rotate.out \
     -target aws_batch_compute_environment.compute_env \
