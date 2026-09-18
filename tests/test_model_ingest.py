@@ -76,6 +76,22 @@ mem_model_default_param = {
 }
 
 
+@pytest.fixture
+def disk_metrics_mixed_df_bg_text():
+    return "\n".join(
+        [
+            "Filesystem     1G-blocks  Used Available Use% Mounted on",
+            "overlay              250G   18G      232G   8% /",
+            "tmpfs                  1G    0G        1G   0% /dev",
+            "overlay              250G  NAG      232G   8% /",  # non-numeric used value
+            "overlay              250G   42G      208G  17% /data",
+            "overlay              250G",  # partial line
+            "missing              cols   10G        2G",  # partial line
+            "",
+        ]
+    )
+
+
 def get_metrics_file_text(params=metrics_default_param):
     assert sorted(metrics_text.keys()) == sorted(params.keys())
     keys = metrics_text.keys()
@@ -115,6 +131,12 @@ def put_process_metrics_file(ipst, comm, fileparams=metrics_default_param.copy()
     process_metrics_file_name = f"{ipst}/process_metrics.txt"
     process_metrics_file_msg = {process_metrics_file_name: process_metrics_file_text}
     comm.outputs.put(process_metrics_file_msg)
+
+
+def put_disk_metrics_file(ipst, comm, file_text):
+    disk_metrics_file_name = f"{ipst}/disk_metrics.txt"
+    disk_metrics_file_msg = {disk_metrics_file_name: file_text}
+    comm.outputs.put(disk_metrics_file_msg)
 
 
 def put_mem_model_file(ipst, comm, fileparams=mem_model_default_param.copy()):
@@ -227,6 +249,38 @@ def test_model_ingest_memory_bins(s3_resource):
         assert mem_bin == memory_bins["expected_mem_bin"][i]
 
 
+def test_model_ingest_disk_metrics_max_used_value_in_payload(s3_client, s3_resource, disk_metrics_mixed_df_bg_text):
+    from calcloud import model_ingest
+    from calcloud import io
+
+    bucket = conftest.BUCKET
+    s3_resource.create_bucket(Bucket=bucket)
+    comm = io.get_io_bundle(bucket=bucket, client=s3_client)
+    ipst = "ipppssoo0"
+
+    put_process_metrics_file(ipst, comm, fileparams=metrics_default_param.copy())
+    put_preview_metrics_file(ipst, comm, fileparams=metrics_default_param.copy())
+    put_disk_metrics_file(ipst, comm, file_text=disk_metrics_mixed_df_bg_text)
+
+    target_scraper = model_ingest.Targets(ipst, s3_resource.Bucket(bucket))
+    target_data = target_scraper.get_target_data()
+    assert target_data["max_disk"] == 42
+
+    target_scraper.target_data = target_data
+    targets = target_scraper.convert_target_data()
+
+    payload = model_ingest.create_payload(
+        {
+            "ipst": ipst,
+            "features": {"total_mb": 10, "n_files": 1, "dataset_type": "ipst"},
+            "targets": targets,
+        },
+        1.0,
+    )
+
+    assert payload["max_disk"] == 42
+
+
 def test_model_ingest_feature_dict(s3_client, s3_resource):
     from calcloud import model_ingest
     from calcloud import io
@@ -268,6 +322,7 @@ def test_model_ingest_feature_dict(s3_client, s3_resource):
         "crsplit": 1,
         "dtype": 1,
         "instr": 3,
+        "dataset_type": "ipst",
     }
 
     mem_model_expected_dict_2 = {
@@ -280,6 +335,7 @@ def test_model_ingest_feature_dict(s3_client, s3_resource):
         "crsplit": 2,
         "dtype": 0,
         "instr": 0,
+        "dataset_type": "ipst",
     }
 
     put_mem_model_file(ipst_1, comm, fileparams=mem_model_param_1)
@@ -296,3 +352,133 @@ def test_model_ingest_feature_dict(s3_client, s3_resource):
     for i in range(len(dict_keys)):
         assert mem_feature_dict_1[dict_keys[i]] == mem_model_expected_dict_1[dict_keys[i]]
         assert mem_feature_dict_2[dict_keys[i]] == mem_model_expected_dict_2[dict_keys[i]]
+
+    targets = {"memory": 0.5, "wallclock": 10, "mem_bin": 0}
+    payload_1 = model_ingest.create_payload({"ipst": ipst_1, "features": mem_feature_dict_1, "targets": targets}, 1.0)
+    payload_2 = model_ingest.create_payload({"ipst": ipst_2, "features": mem_feature_dict_2, "targets": targets}, 1.0)
+
+    assert payload_1["dataset_type"] == "ipst"
+    assert payload_2["dataset_type"] == "ipst"
+
+
+def test_model_ingest_feature_dict_svm_missing_values(s3_client, s3_resource):
+    from calcloud import io
+    from calcloud import model_ingest
+
+    bucket = conftest.BUCKET
+    s3_resource.create_bucket(Bucket=bucket)
+    comm = io.get_io_bundle(bucket=bucket, client=s3_client)
+
+    svm_dataset = "wfc3_epo_2h"
+
+    # Intentionally omit optional feature keys to verify default handling.
+    comm.control.put({f"{svm_dataset}/{svm_dataset}_MemModelFeatures.txt": "n_files=3\ntotal_mb=21.7"})
+
+    svm_features = model_ingest.Features(svm_dataset, s3_resource.Bucket(bucket)).scrape_features()
+
+    svm_expected_dict = {
+        "n_files": 3,
+        "total_mb": 22,
+        "detector": 0,
+        "instr": 3,
+        "dataset_type": "svm",
+    }
+
+    dict_keys = list(svm_expected_dict.keys())
+    for i in range(len(dict_keys)):
+        assert svm_features[dict_keys[i]] == svm_expected_dict[dict_keys[i]]
+    assert "dtype" not in svm_features
+
+    targets = {"memory": 0.5, "wallclock": 10, "mem_bin": 0}
+    svm_payload = model_ingest.create_payload({"ipst": svm_dataset, "features": svm_features, "targets": targets}, 1.0)
+
+    assert svm_payload["dataset_type"] == "svm"
+
+
+def test_model_ingest_feature_dict_mvm_missing_values(s3_client, s3_resource):
+    from calcloud import io
+    from calcloud import model_ingest
+
+    bucket = conftest.BUCKET
+    s3_resource.create_bucket(Bucket=bucket)
+    comm = io.get_io_bundle(bucket=bucket, client=s3_client)
+
+    mvm_dataset = "skycell-p0115x10y10"
+
+    # Intentionally omit optional feature keys to verify default handling.
+    comm.control.put({f"{mvm_dataset}/{mvm_dataset}_MemModelFeatures.txt": "n_files=9"})
+
+    mvm_features = model_ingest.Features(mvm_dataset, s3_resource.Bucket(bucket)).scrape_features()
+
+    mvm_expected_dict = {
+        "n_files": 9,
+        "total_mb": 0,
+        "dataset_type": "mvm",
+    }
+
+    dict_keys = list(mvm_expected_dict.keys())
+    for i in range(len(dict_keys)):
+        assert mvm_features[dict_keys[i]] == mvm_expected_dict[dict_keys[i]]
+    assert "instr" not in mvm_features
+
+    targets = {"memory": 0.5, "wallclock": 10, "mem_bin": 0}
+    mvm_payload = model_ingest.create_payload({"ipst": mvm_dataset, "features": mvm_features, "targets": targets}, 1.0)
+
+    assert mvm_payload["dataset_type"] == "mvm"
+
+
+def test_scrape_job_data_sets_store_data_from_dataset_type_and_raw_field(s3_client, s3_resource):
+    from calcloud import io
+    from calcloud import model_ingest
+
+    bucket = conftest.BUCKET
+    s3_resource.create_bucket(Bucket=bucket)
+    comm = io.get_io_bundle(bucket=bucket, client=s3_client)
+
+    dataset_with_field = "wfc3_epo_2h"
+    dataset_without_field = "skycell-p0115x10y10"
+
+    comm.control.put(
+        {
+            f"{dataset_with_field}/{dataset_with_field}_MemModelFeatures.txt": "n_files=3\ntotal_mb=21.7\ndataset_type=svm"
+        }
+    )
+    comm.control.put(
+        {f"{dataset_without_field}/{dataset_without_field}_MemModelFeatures.txt": "n_files=9\ntotal_mb=1.1"}
+    )
+
+    put_process_metrics_file(dataset_with_field, comm, fileparams=metrics_default_param.copy())
+    put_preview_metrics_file(dataset_with_field, comm, fileparams=metrics_default_param.copy())
+    put_process_metrics_file(dataset_without_field, comm, fileparams=metrics_default_param.copy())
+    put_preview_metrics_file(dataset_without_field, comm, fileparams=metrics_default_param.copy())
+
+    with_field_job_data = model_ingest.Scraper(dataset_with_field, bucket).scrape_job_data()
+    without_field_job_data = model_ingest.Scraper(dataset_without_field, bucket).scrape_job_data()
+
+    assert with_field_job_data["store_data"] is True
+    assert without_field_job_data["store_data"] is False
+
+
+def test_ddb_ingest_svm_requires_raw_dataset_type_field(s3_client, s3_resource, dynamodb_resource, dynamodb_client):
+    from calcloud import io
+    from calcloud import model_ingest
+
+    bucket = conftest.BUCKET
+    table_name = os.environ.get("DDBTABLE")
+    s3_resource.create_bucket(Bucket=bucket)
+    conftest.setup_dynamodb(dynamodb_client)
+    comm = io.get_io_bundle(bucket=bucket, client=s3_client)
+
+    svm_dataset = "wfc3_epo_2h"
+
+    # Intentionally omit dataset_type from raw feature text; transition guard should skip ingest.
+    comm.control.put({f"{svm_dataset}/{svm_dataset}_MemModelFeatures.txt": "n_files=3\ntotal_mb=21.7"})
+
+    put_process_metrics_file(svm_dataset, comm, fileparams=metrics_default_param.copy())
+    put_preview_metrics_file(svm_dataset, comm, fileparams=metrics_default_param.copy())
+
+    model_ingest.ddb_ingest(svm_dataset, bucket, table_name)
+
+    table = dynamodb_resource.Table(table_name)
+    response = table.get_item(Key={"ipst": svm_dataset})
+    assert "Item" not in response

@@ -1,11 +1,12 @@
 FROM amazon/aws-lambda-python:3.11
-COPY requirements.txt predict_handler.py ./
-COPY models ./models/
+COPY lambda/JobPredict/requirements.txt lambda/JobPredict/predict_handler.py ./
+COPY lambda/JobPredict/models ./models/
+COPY calcloud ./calcloud
 
 # SSL/TLS cert setup for STScI AWS firewalling
 USER root
 
-COPY STSCICA.crt /etc/pki/ca-trust/source/anchors/
+COPY lambda/JobPredict/STSCICA.crt /etc/pki/ca-trust/source/anchors/
 RUN update-ca-trust
 
 # Force joblib to bypass backend multiprocessing pool errors inside Lambda
