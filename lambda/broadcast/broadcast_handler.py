@@ -14,6 +14,10 @@ and directly putting each message.
 
 from calcloud import io
 from calcloud import s3
+from calcloud.log import configure_logging
+
+
+logger = configure_logging()
 
 
 def lambda_handler(event, context):
@@ -42,7 +46,7 @@ def check_for_kill(comm, message):
     """Return True IFF a broadcast-kill message has been written to S3."""
     try:
         comm.messages.get("broadcast-kill")  # 12x cheaper than listl
-        print(message)
+        logger.info(message)
         return True
     except comm.messages.client.exceptions.NoSuchKey:
         return False
