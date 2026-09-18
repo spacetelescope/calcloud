@@ -22,8 +22,11 @@ order to short circuit memory based retries on subsequent rescues.
 from calcloud import batch
 from calcloud import io
 from calcloud import s3
-from calcloud import log
 from calcloud import hst
+from calcloud.log import configure_logging, trap_exception
+
+
+logger = configure_logging()
 
 
 def lambda_handler(event, context):
@@ -40,11 +43,11 @@ def lambda_handler(event, context):
             comm.messages.broadcast("cancel", job_ids)
     elif batch.JOB_ID_RE.match(dataset):
         job_id, dataset = dataset, "unknown"  # kill one job, dataset = job_id
-        print("Cancelling job_id", job_id)
+        logger.info("Cancelling job_id %s", job_id)
         comm.messages.delete_literal(f"cancel-{job_id}")
-        with log.trap_exception("Handling messages + control for", job_id):
+        with trap_exception("Handling messages + control for", job_id):
             dataset = batch.get_job_name(job_id)
-            print("Handling messages and control for", dataset)
+            logger.info("Handling messages and control for %s", dataset)
             comm.messages.delete(f"all-{dataset}")
             comm.messages.put(f"terminated-{dataset}", "cancel lambda " + bucket_name)
             try:
@@ -54,10 +57,10 @@ def lambda_handler(event, context):
             metadata["terminated"] = True
             comm.xdata.put(dataset, metadata)
         # Do last so terminate flag is set if possible.
-        print("Terminating", job_id)
+        logger.info("Terminating %s", job_id)
         batch.terminate_job(job_id, "Operator cancelled")
     elif hst.IPPPSSOOT_RE.match(dataset) or hst.SVM_RE.match(dataset) or hst.MVM_RE.match(dataset):  # kill one dataset
-        print("Cancelling dataset", dataset)
+        logger.info("Cancelling dataset %s", dataset)
         comm.messages.delete(f"all-{dataset}")
         comm.messages.put(f"terminated-{dataset}", "cancel lambda " + bucket_name)
         metadata = comm.xdata.get(dataset)
@@ -65,8 +68,8 @@ def lambda_handler(event, context):
         metadata["cancel_type"] = "dataset"
         comm.xdata.put(dataset, metadata)
         job_id = metadata["job_id"]
-        with log.trap_exception("Terminating", job_id):
-            print("Terminating", job_id)
+        with trap_exception("Terminating", job_id):
+            logger.info("Terminating %s", job_id)
             batch.terminate_job(job_id, "Operator cancelled")
     else:
         raise ValueError("Bad cancel ID", dataset)

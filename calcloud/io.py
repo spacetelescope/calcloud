@@ -9,11 +9,14 @@ import doctest
 import json
 import uuid
 import yaml
+import logging
 
 from calcloud import s3
 from calcloud import hst
 from calcloud import batch
-from calcloud import log
+
+
+logger = logging.getLogger(__name__)
 
 # -------------------------------------------------------------
 
@@ -733,7 +736,7 @@ CONTROL_KEYWORDS = {
 
 def validate_control(metadata):
     """Check the `metadata` dictionary for valid keywords and value types."""
-    log.info("Validating control metadata", metadata)
+    logger.info("Validating control metadata %s", metadata)
     if metadata is None:
         return {}
     if not isinstance(metadata, dict):
