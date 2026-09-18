@@ -18,9 +18,12 @@ import os
 
 from . import plan
 from . import submit
-from . import log
 from . import io
 from . import hst
+from . import log
+
+
+logger = log.configure_logging()
 
 
 class CalcloudInputsFailure(RuntimeError):
@@ -46,7 +49,7 @@ def main(comm, dataset, bucket_name, overrides):
         terminated = comm.messages.listl(f"terminated-{dataset}")
         _main(comm, dataset, bucket_name, overrides)
     except Exception as exc:
-        log.error(f"Exception in lambda_submit.main for {dataset} = {exc}")
+        logger.error("Exception in lambda_submit.main for %s = %s", dataset, exc)
         if terminated:
             msg_name = "terminated-" + dataset
         else:
@@ -82,9 +85,9 @@ def _main(comm, dataset, bucket_name, overrides):
     p = plan.get_plan(dataset, dataset_type, bucket_name, f"{bucket_name}/inputs", metadata)
 
     # Only reached if get_plan() defines a viable job plan
-    log.info("Job Plan:", p)
+    logger.info("Job Plan: %s", p)
     response = submit.submit_job(p)
-    log.info("Submitted job for", dataset, "as ID", response["jobId"])
+    logger.info("Submitted job for %s as ID %s", dataset, response["jobId"])
     metadata["job_id"] = response["jobId"]
     comm.xdata.put(dataset, metadata)
     comm.messages.put(f"submit-{dataset}")
@@ -109,8 +112,12 @@ def _wait_for_inputs(comm, dataset):
                 f"Both the 'placed' and 'rescue' messages for {dataset} have been deleted. Aborting input wait and submission."
             )
         if not input_tarball or not memory_modeling:
-            log.info(
-                f"Waiting for inputs for {dataset} time remaining={seconds_to_fail}. input_tarball={len(input_tarball)}  memory_modeling={len(memory_modeling)}"
+            logger.info(
+                "Waiting for inputs for %s time remaining=%s. input_tarball=%s memory_modeling=%s",
+                dataset,
+                seconds_to_fail,
+                len(input_tarball),
+                len(memory_modeling),
             )
             time.sleep(poll_seconds)
             seconds_to_fail -= poll_seconds
@@ -118,4 +125,4 @@ def _wait_for_inputs(comm, dataset):
                 raise CalcloudInputsFailure(
                     f"Wait for inputs for {dataset} timeout, aborting submission.  input_tarball={len(input_tarball)}  memory_modeling={len(memory_modeling)}"
                 )
-    log.info(f"Inputs for {dataset} found.")
+    logger.info("Inputs for %s found.", dataset)
