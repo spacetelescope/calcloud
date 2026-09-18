@@ -28,7 +28,6 @@ jobs:
           pytest \
             --verbose \
             --cov=calcloud \
-            --cov=lambda/AmiRotation \
             --cov=lambda/batch_events \
             --cov=lambda/blackboard \
             --cov=lambda/broadcast \

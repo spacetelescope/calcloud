@@ -30,10 +30,6 @@ data aws_ssm_parameter vpc {
    name = "vpc"
 }
 
-data aws_ssm_parameter admin_arn {
-  name = "/iam/roles/calcloud_admin"
-}
-
 data aws_ssm_parameter lambda_submit_role {
   name = "/iam/roles/calcloud_lambda_submit"
 }
@@ -56,10 +52,6 @@ data aws_ssm_parameter lambda_cleanup_role {
 
 data aws_ssm_parameter lambda_broadcast_role {
   name = "/iam/roles/calcloud_lambda_broadcast"
-}
-
-data aws_ssm_parameter lambda_amiRotate_role {
-  name = "/iam/roles/calcloud_lambda_amiRotate"
 }
 
 data aws_ssm_parameter model_ingest_role {
