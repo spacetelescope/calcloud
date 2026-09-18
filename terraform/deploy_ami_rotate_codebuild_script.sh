@@ -110,7 +110,6 @@ terraform plan -no-color -var "environment=${aws_env}" -out ami_rotate.out \
     -target aws_batch_compute_environment.compute_env \
     -target aws_batch_job_queue.batch_queue \
     -target aws_launch_template.hstdp \
-    -target aws_launch_template.ami_rotation \
     -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}"
 
 terraform show ami_rotate.out > "ami_rotate.txt"
