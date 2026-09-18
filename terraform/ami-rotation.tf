@@ -9,12 +9,12 @@ resource "aws_launch_template" "ami_rotation" {
     "stsci-poc-email" = var.stsci_poc_email
   }
   user_data               = base64encode(
-      templatefile("${path.module}/../ami_rotation/ami_rotation_userdata.sh", {
+    templatefile("${path.module}/../ami_rotation/ami_rotation_userdata.sh", {
           environment = var.environment,
           admin_arn = nonsensitive(data.aws_ssm_parameter.admin_arn.value),
           calcloud_ver = var.awsysver,
           log_group = aws_cloudwatch_log_group.ami-rotation.name
-      })
+    })
   )
 
   vpc_security_group_ids  = local.batch_sgs
@@ -58,51 +58,6 @@ resource "aws_launch_template" "ami_rotation" {
   }
 }
 
-module "calcloud_env_amiRotation" {
-  source = "terraform-aws-modules/lambda/aws"
-  version = "~> 6.0.0"
-
-  function_name = "calcloud-env-AmiRotation${local.environment}"
-  description   = "spawns an ec2 bi-weekly which rotates the ami for batch"
-  # the path is relative to the path inside the lambda env, not in the local filesystem.
-  handler       = "ami_rotation.lambda_handler"
-  runtime       = "python3.11"
-  publish       = false
-  timeout       = 60
-  cloudwatch_logs_retention_in_days = local.lambda_log_retention_in_days
-
-  source_path = [
-    {
-      # this is the lambda itself. The code in path will be placed directly into the lambda execution path
-      path = "${path.module}/../lambda/AmiRotation"
-      pip_requirements = false
-    }
-  ]
-
-  store_on_s3 = true
-  s3_bucket   = aws_s3_bucket.calcloud_lambda_envs.id
-
-  # ensures that terraform doesn't try to mess with IAM
-  create_role = false
-  attach_cloudwatch_logs_policy = false
-  attach_dead_letter_policy = false
-  attach_network_policy = false
-  attach_tracing_policy = false
-  attach_async_event_policy = false
-
-  lambda_role = nonsensitive(data.aws_ssm_parameter.lambda_amiRotate_role.value)
-
-  environment_variables = merge(local.common_env_vars, {
-    LAUNCH_TEMPLATE_NAME=aws_launch_template.ami_rotation.name,
-    SUBNET = local.batch_subnet_ids[0]
-  })
-
-  tags = {
-    Name              = "calcloud-env-AmiRotation${local.environment}"
-    "stsci-poc-email" = var.stsci_poc_email
-  }
-}
-
 resource "aws_cloudwatch_log_group" "ami-rotation" {
   name              = "/tf/ec2/ami-rotation${local.environment}"
   retention_in_days = local.lambda_log_retention_in_days
@@ -111,23 +66,3 @@ resource "aws_cloudwatch_log_group" "ami-rotation" {
   }
 }
 
-resource "aws_cloudwatch_event_rule" "ami-rotate-scheduler" {
-  name                = "ami-rotate-scheduler${local.environment}"
-  description         = "scheduler for ami rotation"
-  schedule_expression = "cron(0 8 ? * TUE,FRI *)"
-  is_enabled = false   # disable because we now have CodeBuild project for AMI rotation
-}
-
-resource "aws_cloudwatch_event_target" "ami-rotate-scheduler" {
-  rule      = aws_cloudwatch_event_rule.ami-rotate-scheduler.name
-  target_id = "lambda"
-  arn       = module.calcloud_env_amiRotation.lambda_function_arn
-}
-
-resource "aws_lambda_permission" "allow_lambda_exec_ami_rotate" {
-  statement_id  = "AllowExecutionFromCloudWatch"
-  action        = "lambda:InvokeFunction"
-  function_name = module.calcloud_env_amiRotation.lambda_function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.ami-rotate-scheduler.arn
-}

@@ -58,10 +58,6 @@ data aws_ssm_parameter lambda_broadcast_role {
   name = "/iam/roles/calcloud_lambda_broadcast"
 }
 
-data aws_ssm_parameter lambda_amiRotate_role {
-  name = "/iam/roles/calcloud_lambda_amiRotate"
-}
-
 data aws_ssm_parameter model_ingest_role {
   name = "/iam/roles/calcloud_model_ingest"
 }

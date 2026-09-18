@@ -16,7 +16,6 @@ boto3.set_stream_logger("botocore.credentials", logging.DEBUG)
 # add lambda paths for testing
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/blackboard"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/batch_events"))
-sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/AmiRotation"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobClean"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobDelete"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobRescue"))
