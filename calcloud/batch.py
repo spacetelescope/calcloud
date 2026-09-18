@@ -4,14 +4,18 @@ them act on job counts > 100 jobs.
 """
 
 import argparse
-import json
 import datetime
+import json
+import logging
 import re
 import os
 
 import boto3
 
 from . import common
+
+
+logger = logging.getLogger(__name__)
 
 JOB_STATUSES = tuple("SUBMITTED|PENDING|RUNNABLE|STARTING|RUNNING|SUCCEEDED|FAILED".split("|"))
 
@@ -145,8 +149,8 @@ def terminate_job(job_id, reason=None, client=None):
     client = client or get_default_client()
     job_id = job_id.replace("_", "-")  # undo hacking needed to make it a simple messsage id
     response = client.terminate_job(jobId=job_id, reason=reason)
-    print(response)
-    print(f"terminate response: {response['ResponseMetadata']['HTTPStatusCode']}: {job_id}")
+    logger.debug("terminate response: %s", response)
+    logger.info("terminate response: %s: %s", response["ResponseMetadata"]["HTTPStatusCode"], job_id)
     return response["ResponseMetadata"]["HTTPStatusCode"] == 200
 
 
