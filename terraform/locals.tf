@@ -19,8 +19,6 @@ locals {
 
        # Reserving 128M/1024M for ECS overheads
 
-       # If you change the length of the ladder array, you must increase LENGTH_LADDER in deploy.sh to match.
-       # See LENGTH_LADDER in deploy.sh.
        ladder = [
               { # -------------------------------------------------------------------
                 name : "02g",
