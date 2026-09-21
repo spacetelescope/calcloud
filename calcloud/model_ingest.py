@@ -87,14 +87,14 @@ class Features(Scraper):
         input_data = {}
         body = job_features.get_s3_body_str_lines(self.bucket, key)
         if body is None:
-            logger.error("Unable to download inputs: %s", self.ipst)
+            logger.error("Unable to download inputs: %s", self.ipst, extra={"dataset": self.ipst})
             input_data = None
             sys.exit(3)
         else:
             for line in body:
                 k, v = line.split("=", 1)
                 input_data[k] = v
-            logger.debug("%s: %s", self.ipst, input_data)
+            logger.debug("%s: %s", self.ipst, input_data, extra={"dataset": self.ipst})
             return input_data
 
 
@@ -131,7 +131,7 @@ class Targets(Scraper):
                     kb = kbstring.replace("Maximum resident set size (kbytes): ", "")
                     memory_list.append(kb)
                 else:
-                    logger.warning("log status has non-zero value: %s", status)
+                    logger.warning("log status has non-zero value: %s", status, extra={"dataset": self.ipst})
                     log_error += 1
             else:
                 log_error = -1
@@ -165,13 +165,13 @@ class Targets(Scraper):
             target_data["max_disk"] = max_disk
 
         if log_error < 0:
-            logger.error("Missing logs: cannot save target data.")
+            logger.error("Missing logs: cannot save target data.", extra={"dataset": self.ipst})
             sys.exit(-1)
         elif log_error > 0:
-            logger.error("Logs have Non-zero status: cannot save target data.")
+            logger.error("Logs have Non-zero status: cannot save target data.", extra={"dataset": self.ipst})
             sys.exit(log_error)
         else:
-            logger.info("%s: %s", self.ipst, target_data)
+            logger.info("%s: %s", self.ipst, target_data, extra={"dataset": self.ipst})
             return target_data
 
     def convert_target_data(self):
@@ -194,7 +194,7 @@ class Targets(Scraper):
             max_disk = self.target_data["max_disk"]
             logger.debug("max_disk=%s", max_disk)
             targets["max_disk"] = max_disk
-        logger.info("Targets:\n%s", targets)
+        logger.info("Targets:\n%s", targets, extra={"dataset": self.ipst})
         return targets
 
     def calculate_bin(self, memory):
@@ -242,7 +242,7 @@ def create_payload(job_data, timestamp):
     data = {k: v for k, v in data.items() if v is not None}
 
     ddb_payload = json.loads(json.dumps(data, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
-    logger.debug("%s", pformat(ddb_payload, indent=2))
+    logger.debug("%s", pformat(ddb_payload, indent=2), extra={"dataset": ipst})
     return ddb_payload
 
 
@@ -266,14 +266,19 @@ def ddb_ingest(ipst, bucket_name, table_name):
     if job_data["store_data"]:
         ddb_payload = create_payload(job_data, start_time)
         job_resp = put_job_data(ddb_payload, table_name)
-        logger.info("Put job data succeeded:\n%s", pformat(job_resp, indent=2))
+        logger.info(
+            "Put job data succeeded:\n%s",
+            pformat(job_resp, indent=2),
+            extra={"dataset": ipst},
+        )
         end_time = time.time()
         print_timestamp(end_time, "SCRAPE and INGEST", 1)
         duration = proc_time(start_time, end_time)
-        logger.info("Data ingest took %s", duration)
+        logger.info("Data ingest took %s", duration, extra={"dataset": ipst})
     else:
         logger.info(
             "Not storing data for %s %s - no dataset_type in features",
             job_data["features"].get("dataset_type"),
             ipst,
+            extra={"dataset": ipst},
         )
