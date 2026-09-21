@@ -50,6 +50,8 @@ class Scraper:
         Returns dictionary of data to be ingested for a given ipst/job"""
         feature_scraper = Features(self.ipst, self.bucket)
         features = feature_scraper.scrape_features()
+        if features is None:
+            return None
 
         targets = Targets(self.ipst, self.bucket).scrape_targets()
         dataset_type = hst.get_dataset_type(self.ipst)
@@ -72,6 +74,8 @@ class Features(Scraper):
 
     def scrape_features(self):
         self.input_data = self.download_inputs()
+        if self.input_data is None:
+            return None
         self.input_feature_keys = list(self.input_data.keys())
         self.incoming_dataset_type_present = any(key.lower() == "dataset_type" for key in self.input_feature_keys)
         self.features = job_features.extract_input_features(self.ipst, self.input_data)
@@ -86,8 +90,7 @@ class Features(Scraper):
         body = job_features.get_s3_body_str_lines(self.bucket, key)
         if body is None:
             print(f"Unable to download inputs: {self.ipst}")
-            input_data = None
-            sys.exit(3)
+            return None
         else:
             for line in body:
                 k, v = line.split("=", 1)
@@ -256,6 +259,12 @@ def ddb_ingest(ipst, bucket_name, table_name):
     print_timestamp(start_time, "all", 0)
     scraper = Scraper(ipst, bucket_name)
     job_data = scraper.scrape_job_data()
+    if job_data is None:
+        # If HSTSDP wants to bypass processing in the cloud, it does not upload the _MemModelFeatures.txt file
+        # and creates a "processed-<dataset>.trigger" file.  The trigger file causes lambda_scrape to run, but
+        # no processing was actually done.  In this case, skip model_ingest.py without error.
+        print(f"No job data found for {ipst}, skipping model_ingest.py")
+        return
 
     # Prior to HSTDP-2026.3.0, the on-premises code sends the same dummy feature file for all SVMs and MVMs.
     # We do not want to store this dummy data in DynamoDB.
