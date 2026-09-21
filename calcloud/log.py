@@ -6,10 +6,42 @@ context manager that some call sites still use.
 """
 
 import contextlib
+import datetime as dt
+import json
 import logging
 import os
 
 _LOGGER_NAME = "calcloud"
+
+
+class JsonLogFormatter(logging.Formatter):
+    """Format log records as single-line JSON for log shippers."""
+
+    def format(self, record):
+        payload = {
+            "timestamp": dt.datetime.fromtimestamp(record.created, tz=dt.timezone.utc)
+            .isoformat(timespec="milliseconds")
+            .replace("+00:00", "Z"),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+
+        dataset = getattr(record, "dataset", None)
+        if dataset is not None:
+            payload["dataset"] = dataset
+
+        aws_request_id = getattr(record, "aws_request_id", None)
+        if aws_request_id is not None:
+            payload["aws_request_id"] = aws_request_id
+
+        if record.exc_info:
+            payload["exception"] = self.formatException(record.exc_info)
+
+        if record.stack_info:
+            payload["stack"] = self.formatStack(record.stack_info)
+
+        return json.dumps(payload, default=str)
 
 
 def _is_lambda_environment():
@@ -29,11 +61,13 @@ def configure_logging(name=_LOGGER_NAME, level=None):
     root = logging.getLogger()
     if not root.handlers:
         logging.basicConfig(level=level, format="%(levelname)s - %(message)s")
-    else:
-        root.setLevel(level)
 
-    if _is_lambda_environment() and not root.handlers:
-        logging.basicConfig(level=level, format="%(levelname)s - %(message)s")
+    root.setLevel(level)
+
+    if _is_lambda_environment():
+        formatter = JsonLogFormatter()
+        for handler in root.handlers:
+            handler.setFormatter(formatter)
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.NOTSET)

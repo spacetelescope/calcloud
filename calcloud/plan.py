@@ -110,7 +110,7 @@ def invoke_lambda_predict(dataset, dataset_type, output_bucket):
             Payload=json.dumps(inputParams),
         )
         predictions = json.load(response["Payload"])
-        logger.info("Predictions for %s: %s", dataset, predictions)
+        logger.info("Predictions for %s: %s", dataset, predictions, extra={"dataset": dataset})
         # defaults: db_clock=20 minutes, wc_std=5
         db_clock, wc_std = query_ddb(dataset)
         clockTime = predictions["clockTime"] * (1 + wc_std)
@@ -185,6 +185,7 @@ def _get_environment(job_resources, memory_retries, memory_bin):
             memory_retries,
             memory_bin,
             final_bin,
+            extra={"dataset": job_resources.dataset},
         )
         job_definition = job_defs[final_bin]
         job_queue = job_queues[final_bin]
@@ -193,7 +194,7 @@ def _get_environment(job_resources, memory_retries, memory_bin):
             f"No higher memory job definition for {job_resources.dataset} "
             f"after {memory_retries} and {memory_bin}"
         )
-        logger.info(msg)
+        logger.info(msg, extra={"dataset": job_resources.dataset})
         raise AllBinsTriedQuit(*msg)
 
     return JobEnv(job_queue, job_definition, "caldp-process")
