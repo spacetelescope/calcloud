@@ -1,6 +1,8 @@
 """Shared feature extraction for job metadata used by multiple lambdas."""
 
-from . import hst
+from . import hst, log
+
+logger = log.configure_logging()
 
 
 def get_s3_body_str_lines(bucket: str, key: str) -> list[str] | None:
@@ -9,9 +11,9 @@ def get_s3_body_str_lines(bucket: str, key: str) -> list[str] | None:
     obj = bucket.Object(key)
     try:
         body = obj.get()["Body"].read().decode("utf-8").splitlines()
-    except Exception as exc:
+    except Exception as exc:  # noqa F841
         body = None
-        print(exc)
+        logger.exception("Failed to read S3 body for %s", key)
     return body
 
 

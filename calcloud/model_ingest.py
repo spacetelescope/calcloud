@@ -4,13 +4,15 @@ See ModelIngest/lambda_scrape.py for more information on how model data is inges
 """
 
 import boto3
-import sys
 import datetime as dt
-import time
 import json
+import sys
+import time
 from decimal import Decimal
-from pprint import pprint
-from . import common, hst, job_features
+from pprint import pformat
+from . import common, hst, job_features, log
+
+logger = log.configure_logging()
 
 s3 = boto3.resource("s3", config=common.retry_config)
 client = boto3.client("s3", config=common.retry_config)
@@ -36,7 +38,7 @@ def print_timestamp(ts, name, value):
     else:
         info = ""
     timestring = dt.datetime.fromtimestamp(ts).strftime("%m/%d/%Y - %H:%M:%S")
-    print(f"{info} [{name}]: {timestring}")
+    logger.info("%s [%s]: %s", info, name, timestring)
 
 
 class Scraper:
@@ -85,14 +87,14 @@ class Features(Scraper):
         input_data = {}
         body = job_features.get_s3_body_str_lines(self.bucket, key)
         if body is None:
-            print(f"Unable to download inputs: {self.ipst}")
+            logger.error("Unable to download inputs: %s", self.ipst, extra={"dataset": self.ipst})
             input_data = None
             sys.exit(3)
         else:
             for line in body:
                 k, v = line.split("=", 1)
                 input_data[k] = v
-            print(f"{self.ipst}: {input_data}")
+            logger.debug("%s: %s", self.ipst, input_data, extra={"dataset": self.ipst})
             return input_data
 
 
@@ -129,7 +131,7 @@ class Targets(Scraper):
                     kb = kbstring.replace("Maximum resident set size (kbytes): ", "")
                     memory_list.append(kb)
                 else:
-                    print(f"log status has non-zero value: {status}")
+                    logger.warning("log status has non-zero value: %s", status, extra={"dataset": self.ipst})
                     log_error += 1
             else:
                 log_error = -1
@@ -163,13 +165,13 @@ class Targets(Scraper):
             target_data["max_disk"] = max_disk
 
         if log_error < 0:
-            print("Missing logs: cannot save target data.")
+            logger.error("Missing logs: cannot save target data.", extra={"dataset": self.ipst})
             sys.exit(-1)
         elif log_error > 0:
-            print("Logs have Non-zero status: cannot save target data.")
+            logger.error("Logs have Non-zero status: cannot save target data.", extra={"dataset": self.ipst})
             sys.exit(log_error)
         else:
-            print(f"{self.ipst}: {target_data}")
+            logger.info("%s: %s", self.ipst, target_data, extra={"dataset": self.ipst})
             return target_data
 
     def convert_target_data(self):
@@ -181,18 +183,18 @@ class Targets(Scraper):
         for timestr in self.target_data["wallclock"]:
             clocktime = reversed(timestr.split(".")[0].split(":"))
             clock += sum(x * int(t) for x, t in zip([1, 60, 3600], clocktime))
-            print(clock)
+            logger.debug("clock=%s", clock)
         for memstr in self.target_data["memory"]:
             kb += float(memstr)
-            print(kb)
+            logger.debug("kb=%s", kb)
         targets["wallclock"] = clock + 1
         targets["memory"] = kb / (10**6)
         targets["mem_bin"] = self.calculate_bin(targets["memory"])
         if "max_disk" in self.target_data:
             max_disk = self.target_data["max_disk"]
-            print(max_disk)
+            logger.debug("max_disk=%s", max_disk)
             targets["max_disk"] = max_disk
-        print("Targets:\n", targets)
+        logger.info("Targets:\n%s", targets, extra={"dataset": self.ipst})
         return targets
 
     def calculate_bin(self, memory):
@@ -240,7 +242,7 @@ def create_payload(job_data, timestamp):
     data = {k: v for k, v in data.items() if v is not None}
 
     ddb_payload = json.loads(json.dumps(data, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
-    pprint(ddb_payload, indent=2)
+    logger.debug("%s", pformat(ddb_payload, indent=2), extra={"dataset": ipst})
     return ddb_payload
 
 
@@ -264,11 +266,19 @@ def ddb_ingest(ipst, bucket_name, table_name):
     if job_data["store_data"]:
         ddb_payload = create_payload(job_data, start_time)
         job_resp = put_job_data(ddb_payload, table_name)
-        print("Put job data succeeded:")
-        pprint(job_resp, indent=2)
+        logger.info(
+            "Put job data succeeded:\n%s",
+            pformat(job_resp, indent=2),
+            extra={"dataset": ipst},
+        )
         end_time = time.time()
         print_timestamp(end_time, "SCRAPE and INGEST", 1)
         duration = proc_time(start_time, end_time)
-        print(f"Data ingest took {duration}\n")
+        logger.info("Data ingest took %s", duration, extra={"dataset": ipst})
     else:
-        print(f"Not storing data for {job_data['features'].get('dataset_type')} {ipst} - no dataset_type in features")
+        logger.info(
+            "Not storing data for %s %s - no dataset_type in features",
+            job_data["features"].get("dataset_type"),
+            ipst,
+            extra={"dataset": ipst},
+        )

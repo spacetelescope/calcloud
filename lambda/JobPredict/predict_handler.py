@@ -14,9 +14,12 @@ import numpy as np
 import pandas as pd
 from botocore.config import Config
 from calcloud import job_features
+from calcloud.log import configure_logging
 
 # Required to read the models from disk
 from sklearn.ensemble import HistGradientBoostingRegressor  # noqa: F401 pylint: disable=unused-import
+
+logger = configure_logging()
 
 # mitigation of potential API rate restrictions (esp for Batch API)
 retry_config = Config(retries={"max_attempts": 5, "mode": "standard"})
@@ -149,8 +152,8 @@ def lambda_handler(event, context):
     memval, membin = predict_memory(prep.inputs)
     clocktime = predict_wallclock(prep.inputs)
 
-    print(f"ipppssoot: {ipppssoot} keys: {prep.input_data}")
-    print(f"ipppssoot: {ipppssoot} features: {prep.inputs}")
+    logger.info("ipppssoot: %s keys: %s", ipppssoot, prep.input_data)
+    logger.info("ipppssoot: %s features: %s", ipppssoot, prep.inputs)
     predictions = {"ipppssoot": ipppssoot, "memBin": membin, "memVal": memval, "clockTime": clocktime}
-    print(predictions)
+    logger.info(predictions)
     return {"memBin": membin, "memVal": memval, "clockTime": clocktime}

@@ -14,12 +14,14 @@ import os
 from collections import namedtuple
 
 from . import hst
-from . import log
 from . import common
+from . import log
 
 import json
 import boto3
 from boto3.dynamodb.conditions import Key
+
+logger = log.configure_logging()
 
 client = boto3.client("lambda", config=common.retry_config)
 dynamodb = boto3.resource("dynamodb", config=common.retry_config, region_name="us-east-1")
@@ -107,7 +109,7 @@ def invoke_lambda_predict(dataset, dataset_type, output_bucket):
             Payload=json.dumps(inputParams),
         )
         predictions = json.load(response["Payload"])
-        log.info(f"Predictions for {dataset}: {predictions}")
+        logger.info("Predictions for %s: %s", dataset, predictions, extra={"dataset": dataset})
         # defaults: db_clock=20 minutes, wc_std=5
         db_clock, wc_std = query_ddb(dataset)
         clockTime = predictions["clockTime"] * (1 + wc_std)
@@ -175,30 +177,20 @@ def _get_environment(job_resources, memory_retries, memory_bin):
     final_bin = memory_bin if memory_bin is not None else job_resources.initial_modeled_bin
     final_bin += memory_retries
     if final_bin < len(job_defs):
-        log.info(
-            "Selecting resources for",
+        logger.info(
+            "Selecting resources for %s Initial modeled bin %s Memory retries %s Memory bin %s Final bin index %s",
             job_resources.dataset,
-            "Initial modeled bin",
             job_resources.initial_modeled_bin,
-            "Memory retries",
             memory_retries,
-            "Memory bin",
             memory_bin,
-            "Final bin index",
             final_bin,
+            extra={"dataset": job_resources.dataset},
         )
         job_definition = job_defs[final_bin]
         job_queue = job_queues[final_bin]
     else:
-        msg = (
-            "No higher memory job definition for",
-            job_resources.dataset,
-            "after",
-            memory_retries,
-            "and",
-            memory_bin,
-        )
-        log.info(*msg)
+        msg = f"No higher memory job definition for {job_resources.dataset} " f"after {memory_retries} and {memory_bin}"
+        logger.info(msg, extra={"dataset": job_resources.dataset})
         raise AllBinsTriedQuit(*msg)
 
     return JobEnv(job_queue, job_definition, "caldp-process")

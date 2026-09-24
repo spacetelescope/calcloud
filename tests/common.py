@@ -49,7 +49,7 @@ def setup_ingest_messages(comm, overrides={}):
 
     # insert the extra ingested messages
     for i in range(3):
-        dataset = f"ipppss{str(i+n).zfill(2)}t"
+        dataset = f"ipppss{str(i + n).zfill(2)}t"
         comm.messages.put(f"ingested-{dataset}", payload=overrides)
         datasets.append(dataset)
         message_types.append("ingested")
@@ -69,7 +69,7 @@ def setup_error_messages(comm, overrides={}):
 
     # insert the extra error messages
     for i in range(3):
-        dataset = f"ipppss{str(i+n).zfill(2)}t"
+        dataset = f"ipppss{str(i + n).zfill(2)}t"
         comm.messages.put(f"error-{dataset}", payload=overrides)
         datasets.append(dataset)
         message_types.append("error")

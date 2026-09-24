@@ -5,8 +5,9 @@ rate metrics.
 from collections import Counter
 import datetime
 import os
-
 from calcloud import log
+
+logger = log.configure_logging()
 
 # ===================================================================
 
@@ -19,7 +20,7 @@ class TimingStats:
         self.started = None
         self.stopped = None
         self.elapsed = None
-        self.output = log.info if output is None else output
+        self.output = logger.info if output is None else output
         self.start()
 
     def get_stat(self, name):
@@ -102,8 +103,8 @@ class TimingStats:
             )
 
     def msg(self, *args):
-        """Format (*args, **keys) using log.format() and call output()."""
-        self.output(*args, eol="")
+        """Format (*args, **keys) and call output()."""
+        self.output(" ".join(str(arg) for arg in args))
 
 
 # ===================================================================
