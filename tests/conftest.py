@@ -16,7 +16,6 @@ boto3.set_stream_logger("botocore.credentials", logging.DEBUG)
 # add lambda paths for testing
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/blackboard"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/batch_events"))
-sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/AmiRotation"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobClean"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobDelete"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobRescue"))
@@ -76,7 +75,6 @@ os.environ["BUCKET"] = BUCKET
 os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 os.environ["MAX_MEMORY_RETRIES"] = "4"
 os.environ["MAX_DOCKER_RETRIES"] = "4"
-os.environ["LAUNCH_TEMPLATE_NAME"] = "test_launch_template"
 os.environ["SUBMIT_TIMEOUT"] = "10"  # for timing out waiting for inputs to submit batch jobs
 os.environ["JOBPREDICTLAMBDA"] = "job_predict_lambda"
 os.environ["DDBTABLE"] = "mock_ddb_table"
