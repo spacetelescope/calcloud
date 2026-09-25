@@ -12,6 +12,7 @@ import logging
 import os
 
 _LOGGER_NAME = "calcloud"
+_NOISY_LAMBDA_LOGGERS = ("botocore.credentials",)
 
 
 class JsonLogFormatter(logging.Formatter):
@@ -68,6 +69,8 @@ def configure_logging(name=_LOGGER_NAME, level=None):
         formatter = JsonLogFormatter()
         for handler in root.handlers:
             handler.setFormatter(formatter)
+        for logger_name in _NOISY_LAMBDA_LOGGERS:
+            logging.getLogger(logger_name).setLevel(logging.WARNING)
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.NOTSET)
