@@ -152,8 +152,8 @@ def lambda_handler(event, context):
     memval, membin = predict_memory(prep.inputs)
     clocktime = predict_wallclock(prep.inputs)
 
-    logger.info("ipppssoot: %s keys: %s", ipppssoot, prep.input_data)
-    logger.info("ipppssoot: %s features: %s", ipppssoot, prep.inputs)
-    predictions = {"ipppssoot": ipppssoot, "memBin": membin, "memVal": memval, "clockTime": clocktime}
-    logger.info(predictions)
-    return {"memBin": membin, "memVal": memval, "clockTime": clocktime}
+    predictions = {"memBin": membin, "memVal": memval, "clockTime": clocktime}
+    logger.info(
+        "ipppssoot: %s, keys: %s, features: %s, predictions: %s", ipppssoot, prep.input_data, prep.inputs, predictions
+    )
+    return predictions

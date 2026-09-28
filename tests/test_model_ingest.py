@@ -199,10 +199,10 @@ def test_model_ingest_no_mem_features(s3_resource):
 
     feature_scraper = model_ingest.Features(ipst, s3_resource.Bucket(bucket))
 
-    with pytest.raises(SystemExit):
-        # attempt to memory model file from an empty s3 bucket
-        # since the memory model file does not exist, it should result in an exception and cause the system to exit
-        feature_scraper.download_inputs()
+    # attempt to memory model file from an empty s3 bucket
+    # since the memory model file does not exist, it should get None
+    result = feature_scraper.download_inputs()
+    assert result is None
 
 
 def test_model_ingest_target_data_errors(s3_client, s3_resource):
