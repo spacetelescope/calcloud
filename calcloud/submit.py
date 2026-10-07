@@ -2,7 +2,7 @@
 
 import sys
 import ast
-
+import os
 import boto3
 
 from . import plan
@@ -21,7 +21,14 @@ def submit_job(plan_tuple):
             #     {"value": f"{info.memory}", "type": "MEMORY"},
             #     {"value": f"{info.vcpus}", "type": "VCPU"},
             # ],
-            "command": [info.command, info.dataset, info.input_path, info.s3_output_uri, info.crds_config],
+            "command": [
+                info.command,
+                info.dataset,
+                info.input_path,
+                info.s3_output_uri,
+                info.crds_config,
+                os.environ["CALCLOUD_ENVIRONMENT"].lstrip("-"),
+            ],
         },
         "timeout": {"attemptDurationSeconds": info.max_seconds},
     }
