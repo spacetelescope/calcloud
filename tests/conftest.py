@@ -72,6 +72,7 @@ TEST_DATASET_NAMES = [
 os.environ["JOBDEFINITIONS"] = ",".join(JOBDEFINITIONS)
 os.environ["JOBQUEUES"] = ",".join(JOBQUEUES)
 os.environ["BUCKET"] = BUCKET
+os.environ["CALCLOUD_ENVIRONMENT"] = "-dev"
 os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 os.environ["MAX_MEMORY_RETRIES"] = "4"
 os.environ["MAX_DOCKER_RETRIES"] = "4"
