@@ -165,7 +165,7 @@ resource "aws_batch_job_definition" "job_def" {
   type                 = "container"
   container_properties = <<CONTAINER_PROPERTIES
   {
-    "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config"],
+    "command": ["Ref::command", "Ref::dataset", "Ref::input_path", "Ref::s3_output_path", "Ref::crds_config", "Ref::deployment_environment"],
     "environment": [
       {"name": "AWSDPVER", "value": "${var.awsdpver}"},
       {"name": "AWSYSVER", "value": "${var.awsysver}"},
@@ -193,6 +193,7 @@ resource "aws_batch_job_definition" "job_def" {
     "input_path" = "astroquery:"
     "s3_output_path" = "s3://${aws_s3_bucket.calcloud.bucket}/outputs"
     "crds_config" = "caldp-config-offsite"
+    "deployment_environment" = "${regexreplace(local.environment, "^-", "")}"
   }
 }
 
