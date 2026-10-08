@@ -5,7 +5,7 @@ from . import hst, log
 logger = log.configure_logging()
 
 
-def get_s3_body_str_lines(bucket: str, key: str) -> list[str] | None:
+def get_s3_body_str_lines(bucket: str, key: str, log_exception: bool = False) -> list[str] | None:
     """Retrieve the body of an S3 object as a list of strings, where each each string is a line in the S3 object.
     If there is an error, return None."""
     obj = bucket.Object(key)
@@ -13,7 +13,10 @@ def get_s3_body_str_lines(bucket: str, key: str) -> list[str] | None:
         body = obj.get()["Body"].read().decode("utf-8").splitlines()
     except Exception as exc:  # noqa F841
         body = None
-        logger.exception("Failed to read S3 body for %s", key)
+        if log_exception:
+            logger.exception("Failed to read S3 body for %s", key)
+        else:
+            logger.info("Failed to read S3 body for %s", key)
     return body
 
 
