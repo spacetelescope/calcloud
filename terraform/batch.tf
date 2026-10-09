@@ -10,27 +10,27 @@ terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = "~> 5.17.0"
+      version = ">= 5.17.0, < 6.0.0"
     }
     hashicorp-null = {
       source = "hashicorp/null"
-      version = "~> 3.2.1"
+      version = ">= 3.2.1, < 4.0.0"
     }
     hashicorp-external = {
       source = "hashicorp/external"
-      version = "~> 2.3.1"
+      version = ">= 2.3.1, < 3.0.0"
     }
     hashicorp-local = {
       source = "hashicorp/local"
-      version = "~> 2.4.0"
+      version = ">= 2.4.0, < 3.0.0"
     }
     hashicorp-random = {
       source = "hashicorp/random"
-      version = "~> 3.5.1"
+      version = ">= 3.5.1, < 4.0.0"
     }
     docker = {
       source = "kreuzwerker/docker"
-      version = "~> 3.0.2"
+      version = ">= 3.0.2, < 4.0.0"
     }
   }
 }
