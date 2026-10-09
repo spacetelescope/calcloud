@@ -89,7 +89,7 @@ class Features(Scraper):
         """
         key = f"control/{self.ipst}/{self.ipst}_MemModelFeatures.txt"
         input_data = {}
-        body = job_features.get_s3_body_str_lines(self.bucket, key)
+        body = job_features.get_s3_body_str_lines(self.bucket, key, log_exception=False)
         if body is None:
             logger.info("Unable to download inputs: %s", self.ipst, extra={"dataset": self.ipst})
             return None
@@ -122,7 +122,7 @@ class Targets(Scraper):
         memory_list = []
         log_error = 0
         for key in log_files:
-            body = job_features.get_s3_body_str_lines(self.bucket, key)
+            body = job_features.get_s3_body_str_lines(self.bucket, key, log_exception=True)
             if body is not None:
                 status = body[-1].split(":")[-1]
                 if "0" in status:
@@ -135,7 +135,7 @@ class Targets(Scraper):
                     memory_list.append(kb)
                 else:
                     logger.warning("log status has non-zero value: %s", status, extra={"dataset": self.ipst})
-                    log_error += 1
+                    log_error = 1
             else:
                 log_error = -1
         return log_error, wallclock_list, memory_list
@@ -143,7 +143,7 @@ class Targets(Scraper):
     def get_max_disk_usage(self) -> int | None:
         """Returns the maximum disk usage recorded in the disk_metrics log, in GB."""
         max_disk = 0
-        body = job_features.get_s3_body_str_lines(self.bucket, self.disk_log)
+        body = job_features.get_s3_body_str_lines(self.bucket, self.disk_log, log_exception=True)
         if body:
             for line in body:
                 items = line.split()
