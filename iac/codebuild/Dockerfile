@@ -23,7 +23,7 @@ RUN set -ex \
     && yum update -y --security \
     && yum install -y  gcc libpng-devel libjpeg-devel unzip yum-utils \
     && yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo \
-    && yum install terraform-1.0.11 -y \
+    && yum install terraform-1.16.5 -y \
     && yum install git -y  \
     && yum install tar wget python3.11 which -y \
     && yum install python3.11-pip -y
