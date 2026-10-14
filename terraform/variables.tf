@@ -135,7 +135,7 @@ variable crds_bucket {
   default = {
     "-sb" = "test"
     "-dev" = "test"
-    "-test" = "ops"
+    "-test" = "test"
     "-ops" = "ops"
   }
 }
