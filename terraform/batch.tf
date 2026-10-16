@@ -10,7 +10,7 @@ terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = ">= 5.17.0, < 6.0.0"
+      version = ">= 6.0.0, < 7.0.0"
     }
     hashicorp-null = {
       source = "hashicorp/null"
@@ -131,7 +131,7 @@ resource "aws_batch_job_queue" "batch_queue" {
 
 resource "aws_batch_compute_environment" "compute_env" {
   count = length(local.ladder)
-  compute_environment_name_prefix = "calcloud-hst-${local.ladder[count.index].name}${local.environment}"
+  name_prefix = "calcloud-hst-${local.ladder[count.index].name}${local.environment}"
   type = "MANAGED"
   service_role = nonsensitive(data.aws_ssm_parameter.batch_service_role.value)
 
