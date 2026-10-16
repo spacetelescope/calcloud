@@ -12,10 +12,6 @@ terraform {
       source = "hashicorp/aws"
       version = ">= 6.0.0, < 7.0.0"
     }
-    hashicorp-null = {
-      source = "hashicorp/null"
-      version = ">= 3.2.1, < 4.0.0"
-    }
     hashicorp-external = {
       source = "hashicorp/external"
       version = ">= 2.3.1, < 3.0.0"
@@ -23,6 +19,10 @@ terraform {
     hashicorp-local = {
       source = "hashicorp/local"
       version = ">= 2.4.0, < 3.0.0"
+    }
+    hashicorp-null = {
+      source = "hashicorp/null"
+      version = ">= 3.2.1, < 4.0.0"
     }
     hashicorp-random = {
       source = "hashicorp/random"
