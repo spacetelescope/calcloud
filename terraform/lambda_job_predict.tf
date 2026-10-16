@@ -1,6 +1,6 @@
 module "lambda_function_container_image" {
   source = "terraform-aws-modules/lambda/aws"
-  version = "~> 6.0.0"
+  version = "8.12.0"
   function_name = "calcloud-job-predict${local.environment}"
   description   = "lambda for predicting job resource requirements (memory, memory bin, and max execution time)"
 
