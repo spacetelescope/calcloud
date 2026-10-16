@@ -10,6 +10,10 @@ resource aws_codebuild_project ami_rotation {
         type = "NO_CACHE"
     }
 
+    tags = {
+        "stsci-poc-email" = var.stsci_poc_email
+    }
+
     environment {
         compute_type    = "BUILD_GENERAL1_SMALL"
         image           = "${var.ami_rotation_base_image}"
@@ -31,13 +35,13 @@ resource aws_codebuild_project ami_rotation {
             name  = "aws_env"
             value = "${local.pre_environment}"
         }
-	
+
         # Uncomment to use the CALCLOUD version built into the codebuild image instead of pulling latest from github
         #environment_variable {
         #     name  = "CALCLOUD_BUILD_DIR"
         #     value = "/opt/calcloud/ami_rotate/calcloud"
         #}
-    
+
     }
 
     logs_config {
@@ -63,5 +67,5 @@ resource "aws_cloudwatch_event_target" "ami-rotate-scheduler-codebuild" {
   rule      = aws_cloudwatch_event_rule.ami-rotate-scheduler-codebuild.name
   target_id = "codebuild"
   arn       = aws_codebuild_project.ami_rotation.arn
-  role_arn  = "arn:aws:iam::${var.account_id}:role/service-role/${data.aws_ssm_parameter.codebuild_role_name.value}" 
+  role_arn  = "arn:aws:iam::${var.account_id}:role/service-role/${data.aws_ssm_parameter.codebuild_role_name.value}"
 }
