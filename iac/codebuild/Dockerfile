@@ -25,10 +25,10 @@ RUN set -ex \
     && yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo \
     && yum install terraform-1.16.5 -y \
     && yum install git -y  \
-    && yum install tar wget python3.11 which -y \
-    && yum install python3.11-pip -y
+    && yum install tar wget python3.13 which -y \
+    && yum install python3.13-pip -y
 
-RUN pip3.11 install awscli
+RUN pip3.13 install awscli
 
 COPY calcloud_checkout.sh /root/
 
