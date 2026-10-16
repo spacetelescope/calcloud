@@ -1,7 +1,7 @@
 module "calcloud_lambda_submit" {
   source = "terraform-aws-modules/lambda/aws"
   # https://github.com/hashicorp/terraform/issues/17211
-  version = "~> 6.0.0"
+  version = "8.12.0"
 
   function_name = "calcloud-job-submit${local.environment}"
   description   = "looks for placed-dataset messages and submits jobs to Batch"
@@ -49,7 +49,7 @@ module "calcloud_lambda_submit" {
       JOBPREDICTLAMBDA = module.lambda_function_container_image.lambda_function_arn,
       SUBMIT_TIMEOUT = 14*60,  # leave some room for polling jitter, 14 min vs  15 min above. This is our timeout so error handling / cleanup should occur
       DDBTABLE = "${aws_dynamodb_table.calcloud_model_db.name}"
-  })                           
+  })
 
   tags = {
     Name              = "calcloud-job-submit${local.environment}"
