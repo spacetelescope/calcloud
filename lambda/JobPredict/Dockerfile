@@ -1,4 +1,4 @@
-FROM amazon/aws-lambda-python:3.11
+FROM public.ecr.aws/lambda/python:3.13
 COPY lambda/JobPredict/requirements.txt lambda/JobPredict/predict_handler.py ./
 COPY lambda/JobPredict/models ./models/
 COPY calcloud ./calcloud
@@ -13,9 +13,9 @@ RUN update-ca-trust
 ENV JOBLIB_MULTIPROCESSING=0
 
 # Update build tools.  Old pip versions cannot read modern wheel tags and will default to source builds.
-RUN pip3.11 install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip3.13 install --no-cache-dir --upgrade pip setuptools wheel
 
 # Native wheels will be fetched instantly on identical architectures
-RUN pip3.11 install --no-cache-dir --only-binary=:all: -r requirements.txt
+RUN pip3.13 install --no-cache-dir --only-binary=:all: -r requirements.txt
 
 CMD ["predict_handler.lambda_handler"]

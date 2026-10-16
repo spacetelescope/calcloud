@@ -6,6 +6,7 @@
 """
 
 import os
+import sys
 from pathlib import Path
 
 import boto3
@@ -15,6 +16,7 @@ import pandas as pd
 from botocore.config import Config
 from calcloud import job_features
 from calcloud.log import configure_logging
+from sklearn._loss import _loss as sklearn_loss
 
 # Required to read the models from disk
 from sklearn.ensemble import HistGradientBoostingRegressor  # noqa: F401 pylint: disable=unused-import
@@ -36,6 +38,8 @@ def get_model_path():
         return Path("lambda/JobPredict/models")
 
 
+# Existing sklearn 1.7.2 model files reference this extension through its old top-level name.
+sys.modules.setdefault("_loss", sklearn_loss)
 memory_model_path = get_model_path() / "memory_model.pkl"
 memory_model_saved = joblib.load(memory_model_path)
 
