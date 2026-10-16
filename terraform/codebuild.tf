@@ -20,6 +20,7 @@ resource aws_codebuild_project ami_rotation {
         type            = "LINUX_CONTAINER"
         privileged_mode = true
         image_pull_credentials_type = "SERVICE_ROLE"
+        host_kernel = "LINUX_KERNEL_6"
 
         environment_variable {
             name  = "TF_VAR_account_id"
