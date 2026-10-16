@@ -5,28 +5,28 @@ provider "aws" {
 }
 
 terraform {
-  required_version = ">= 1.16.5, < 1.17.0"
+  required_version = "~> 1.16.5"
 
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = ">= 6.0.0, < 7.0.0"
+      version = "~> 6.69.1"
     }
     hashicorp-external = {
       source = "hashicorp/external"
-      version = ">= 2.3.1, < 3.0.0"
+      version = "~2.4.2"
     }
     hashicorp-local = {
       source = "hashicorp/local"
-      version = ">= 2.4.0, < 3.0.0"
+      version = "~> 2.9.1"
     }
     hashicorp-null = {
       source = "hashicorp/null"
-      version = ">= 3.2.1, < 4.0.0"
+      version = "~>3.3.2"
     }
     hashicorp-random = {
       source = "hashicorp/random"
-      version = ">= 3.5.1, < 4.0.0"
+      version = "~> "3.9.1"
     }
     docker = {
       source = "kreuzwerker/docker"
