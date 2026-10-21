@@ -14,7 +14,7 @@ terraform {
     }
     hashicorp-external = {
       source = "hashicorp/external"
-      version = "~2.4.2"
+      version = "~> 2.4.2"
     }
     hashicorp-local = {
       source = "hashicorp/local"
@@ -22,11 +22,11 @@ terraform {
     }
     hashicorp-null = {
       source = "hashicorp/null"
-      version = "~>3.3.2"
+      version = "~> 3.3.2"
     }
     hashicorp-random = {
       source = "hashicorp/random"
-      version = "~> "3.9.1"
+      version = "~> 3.9.1"
     }
     docker = {
       source = "kreuzwerker/docker"
