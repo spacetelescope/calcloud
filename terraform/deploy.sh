@@ -54,8 +54,6 @@ for ((i=0; i<LENGTH_LADDER; i++)); do
     AWS_PROFILE=hst_reprocessing_admin_role terraform taint "aws_batch_compute_environment.compute_env[$i]"
 done
 
-AWS_PROFILE=hst_reprocessing_admin_role terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
-
 # This can be removed after v0.4.49 is deployed to all environments.
 # We need to tell terraform we are moving aws_launch_template.hstdp -> aws_launch_template.hstdp["default"]
 if AWS_PROFILE=hst_reprocessing_admin_role terraform state list | grep -q "aws_launch_template.hstdp$" ; then
