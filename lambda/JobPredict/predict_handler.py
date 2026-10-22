@@ -92,7 +92,7 @@ def build_feature_frame(feature_dict, feature_columns, for_wallclock=False):
     return feature_df.astype(float)
 
 
-def predict_memory(feature_dict):
+def predict_memory(feature_dict, dataset):
     """Predict memory in GB and memory bin for a given feature dict."""
     memory_model = memory_model_saved["model"]
     feature_columns = memory_model_saved["columns"]
@@ -100,6 +100,10 @@ def predict_memory(feature_dict):
     feature_df = build_feature_frame(feature_dict, feature_columns, for_wallclock=False)
 
     predicted_memory = memory_model.predict(feature_df)[0]
+
+    # Override one dataset to use too small memory so we can watch an out of memory error.
+    if dataset == "lezcg1010":
+        predicted_memory = 0.5
 
     # Adjust predicted memory to account for:
     # - 10% error in prediction
@@ -153,7 +157,7 @@ def lambda_handler(event, context):
     prep.input_data = prep.import_data()
     prep.inputs = prep.scrub_keys()
 
-    memval, membin = predict_memory(prep.inputs)
+    memval, membin = predict_memory(prep.inputs, ipppssoot)
     clocktime = predict_wallclock(prep.inputs)
 
     predictions = {"memBin": membin, "memVal": memval, "clockTime": clocktime}
