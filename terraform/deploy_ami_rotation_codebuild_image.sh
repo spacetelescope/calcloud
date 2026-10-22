@@ -35,6 +35,19 @@ sleep 30
 python3.13 ami-rotation-image-scan.py
 amirotation_image_scan_status=$?
 
+# exit status 3 means fatal vulnerabilities; any other nonzero status means the scan results could not be read,
+# so let the user confirm an offline scan instead
+if [ $amirotation_image_scan_status -ne 0 ] && [ $amirotation_image_scan_status -ne 3 ] && [ -t 0 ]
+then
+        echo "Could not get scan results for ${AMIROTATION_ECR_TAG_UNSCANNED}. To scan offline, run this with an AWS profile that can read ECR scan findings in account ${ECR_ACCOUNT_ID}:"
+        echo "    aws --profile <profile> ecr describe-image-scan-findings --registry-id ${ECR_ACCOUNT_ID} --repository-name ${IMAGE_REPO} --image-id imageTag=${AMIROTATION_ECR_TAG_UNSCANNED}"
+        read -r -p "Did the offline scan complete with no CRITICAL or HIGH findings? Type 'yes' to use the new image: " offline_scan_passed
+        if [ "$offline_scan_passed" == "yes" ]
+        then
+                amirotation_image_scan_status=0
+        fi
+fi
+
 # exit status 3 from the scan script means fatal vulnerabilities were found; other nonzero values mean errors
 if [ $amirotation_image_scan_status -eq 0 ]
 then
