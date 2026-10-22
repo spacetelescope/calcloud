@@ -116,28 +116,44 @@ class Targets(Scraper):
         return self.targets
 
     def get_wallclock_and_memory_lists(self) -> tuple[int, list[str], list[str]]:
-        """Return log_error, wallclock values, and memory values from the process and preview logs."""
+        """Read metrics by field name, accepting only an integer exit status of zero."""
         log_files = [self.process_log, self.preview_log]
         wallclock_list = []
         memory_list = []
         log_error = 0
+        clock_field = "Elapsed (wall clock) time (h:mm:ss or m:ss)"
+        memory_field = "Maximum resident set size (kbytes)"
         for key in log_files:
             body = job_features.get_s3_body_str_lines(self.bucket, key, log_exception=True)
-            if body is not None:
-                status = body[-1].split(":")[-1]
-                if "0" in status:
-                    clockstring = body[4].strip()
-                    wallclock = clockstring.replace("Elapsed (wall clock) time (h:mm:ss or m:ss): ", "")
-                    wallclock_list.append(wallclock)
-
-                    kbstring = body[9].strip()
-                    kb = kbstring.replace("Maximum resident set size (kbytes): ", "")
-                    memory_list.append(kb)
-                else:
-                    logger.warning("log status has non-zero value: %s", status, extra={"dataset": self.ipst})
-                    log_error = 1
-            else:
+            if body is None:
                 log_error = -1
+                continue
+
+            metrics = {}
+            for line in body:
+                field, separator, value = line.strip().rpartition(": ")
+                if separator:
+                    metrics[field] = value.strip()
+
+            try:
+                status = int(metrics["Exit status"])
+            except (KeyError, ValueError):
+                logger.error("Missing or invalid exit status in %s", key, extra={"dataset": self.ipst})
+                log_error = -1
+                continue
+
+            if status != 0:
+                logger.warning("Non-zero exit status %s in %s", status, key, extra={"dataset": self.ipst})
+                log_error = log_error or 1
+                continue
+
+            if not metrics.get(clock_field) or not metrics.get(memory_field):
+                logger.error("Missing wallclock or memory metric in %s", key, extra={"dataset": self.ipst})
+                log_error = -1
+                continue
+
+            wallclock_list.append(metrics[clock_field])
+            memory_list.append(metrics[memory_field])
         return log_error, wallclock_list, memory_list
 
     def get_max_disk_usage(self) -> int | None:
