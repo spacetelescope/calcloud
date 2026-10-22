@@ -249,6 +249,88 @@ def test_model_ingest_memory_bins(s3_resource):
         assert mem_bin == memory_bins["expected_mem_bin"][i]
 
 
+@pytest.mark.parametrize("failed_log", ["process", "preview"])
+@pytest.mark.parametrize("exit_status", ["1", "40", "100", "137"])
+def test_model_ingest_rejects_failed_metrics(s3_client, dynamodb_client, dynamodb_resource, failed_log, exit_status):
+    from calcloud import io, model_ingest
+
+    table_name = os.environ["DDBTABLE"]
+    conftest.setup_dynamodb(dynamodb_client)
+    comm = io.get_io_bundle(bucket=conftest.BUCKET, client=s3_client)
+    ipst = "ipppssoo0"
+    put_mem_model_file(ipst, comm)
+    process_params = metrics_default_param.copy()
+    preview_params = metrics_default_param.copy()
+    failed_params = process_params if failed_log == "process" else preview_params
+    failed_params["exit_status"] = exit_status
+    put_process_metrics_file(ipst, comm, fileparams=process_params)
+    put_preview_metrics_file(ipst, comm, fileparams=preview_params)
+
+    with pytest.raises(SystemExit) as exc:
+        model_ingest.ddb_ingest(ipst, conftest.BUCKET, table_name)
+
+    assert exc.value.code == 1
+    assert "Item" not in dynamodb_resource.Table(table_name).get_item(Key={"ipst": ipst})
+
+
+def test_model_ingest_metrics_by_field_name(s3_client, s3_resource):
+    from calcloud import io, model_ingest
+
+    ipst = "ipppssoo0"
+    comm = io.get_io_bundle(bucket=conftest.BUCKET, client=s3_client)
+    metrics = "\n".join(
+        [
+            "Command exited with non-zero status 40",
+            "\tMaximum resident set size (kbytes): 423876",
+            "\tExit status: 0",
+            "\tElapsed (wall clock) time (h:mm:ss or m:ss): 1:32.79",
+            "\tPercent of CPU this job got: 99%",
+        ]
+    )
+    comm.outputs.put({f"{ipst}/process_metrics.txt": metrics, f"{ipst}/preview_metrics.txt": metrics})
+    scraper = model_ingest.Targets(ipst, s3_resource.Bucket(conftest.BUCKET))
+
+    assert scraper.get_wallclock_and_memory_lists() == (0, ["1:32.79", "1:32.79"], ["423876", "423876"])
+    targets = scraper.scrape_targets()
+    assert targets["wallclock"] == 185
+    assert targets["memory"] == 0.847752
+
+
+@pytest.mark.parametrize("missing_field", ["exit_status", "elapsed_time", "max_resident_set_size"])
+def test_model_ingest_missing_metric_field(s3_client, s3_resource, missing_field, caplog):
+    from calcloud import io, model_ingest
+
+    ipst = "ipppssoo0"
+    comm = io.get_io_bundle(bucket=conftest.BUCKET, client=s3_client)
+    lines = get_metrics_file_text().splitlines()
+    metrics = "\n".join(line for line in lines if not line.startswith(metrics_text[missing_field]))
+    comm.outputs.put({f"{ipst}/process_metrics.txt": metrics})
+    put_preview_metrics_file(ipst, comm)
+    scraper = model_ingest.Targets(ipst, s3_resource.Bucket(conftest.BUCKET))
+
+    with pytest.raises(SystemExit):
+        scraper.get_target_data()
+
+    assert "process_metrics.txt" in caplog.text
+
+
+def test_model_ingest_invalid_metric_status(s3_client, s3_resource, caplog):
+    from calcloud import io, model_ingest
+
+    ipst = "ipppssoo0"
+    comm = io.get_io_bundle(bucket=conftest.BUCKET, client=s3_client)
+    params = metrics_default_param.copy()
+    params["exit_status"] = "invalid"
+    put_process_metrics_file(ipst, comm, fileparams=params)
+    put_preview_metrics_file(ipst, comm)
+    scraper = model_ingest.Targets(ipst, s3_resource.Bucket(conftest.BUCKET))
+
+    with pytest.raises(SystemExit):
+        scraper.get_target_data()
+
+    assert "process_metrics.txt" in caplog.text
+
+
 def test_model_ingest_disk_metrics_max_used_value_in_payload(s3_client, s3_resource, disk_metrics_mixed_df_bg_text):
     from calcloud import model_ingest
     from calcloud import io
