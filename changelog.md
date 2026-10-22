@@ -3,3 +3,4 @@
 - dependency updates
 - only retrieve latest 24 images
 - add EPH (ephemeral) to image names
+- Add invocation-scoped dataset logging with automatic enrichment and context reset, using all for bulk operations and unknown when unavailable.

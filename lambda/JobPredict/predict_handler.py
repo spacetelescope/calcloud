@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from botocore.config import Config
 from calcloud import job_features
-from calcloud.log import configure_logging
+from calcloud.log import configure_logging, lambda_logging
 from sklearn._loss import _loss as sklearn_loss
 
 # Required to read the models from disk
@@ -133,6 +133,7 @@ def predict_wallclock(feature_dict):
     return prediction
 
 
+@lambda_logging(lambda event: event["Ipppssoot"])
 def lambda_handler(event, context):
     """Predict Resource Allocation requirements for memory (GB) and max execution `kill time` / `wallclock` (seconds)
     using HistGradientBoostingRegressor regressions from scikit-learn.  This lambda is invoked from the

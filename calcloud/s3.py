@@ -10,10 +10,12 @@ broken apart internally like this:
 
 import os
 import os.path
+import urllib.parse
 
 import boto3
 
 from calcloud import common
+from calcloud import hst
 from calcloud import log
 
 logger = log.configure_logging()
@@ -34,6 +36,7 @@ __all__ = [
     "copy_object",
     "get_default_client",
     "parse_s3_event",
+    "event_dataset",
     "DEFAULT_BUCKET",
 ]
 
@@ -88,6 +91,16 @@ def _s3_setup(client, s3_filepath):
     client = client or get_default_client()
     bucket_name, object_name = s3_split_path(s3_filepath)
     return client, bucket_name, object_name
+
+
+def event_dataset(event):
+    """Read logging context from an S3 message, excluding broadcast and job IDs."""
+    key = urllib.parse.unquote_plus(event["Records"][0]["s3"]["object"]["key"])
+    message_type, _, dataset = key.removeprefix("messages/").partition("-")
+    if message_type == "broadcast" or dataset in ("all", "ingested"):
+        return "all"
+    dataset = dataset.removesuffix(".trigger")
+    return dataset if hst.is_dataset_name(dataset) else "unknown"
 
 
 # -------------------------------------------------------------

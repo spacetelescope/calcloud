@@ -23,11 +23,12 @@ from calcloud import batch
 from calcloud import io
 from calcloud import s3
 from calcloud import hst
-from calcloud.log import configure_logging, trap_exception
+from calcloud.log import configure_logging, dataset_context, lambda_logging, trap_exception
 
 logger = configure_logging()
 
 
+@lambda_logging(s3.event_dataset)
 def lambda_handler(event, context):
     bucket_name, dataset = s3.parse_s3_event(event)
 
@@ -44,20 +45,23 @@ def lambda_handler(event, context):
         job_id, dataset = dataset, "unknown"  # kill one job, dataset = job_id
         logger.info("Cancelling job_id %s", job_id)
         comm.messages.delete_literal(f"cancel-{job_id}")
-        with trap_exception("Handling messages + control for", job_id):
+        with trap_exception("Looking up dataset for", job_id):
             dataset = batch.get_job_name(job_id)
-            logger.info("Handling messages and control for %s", dataset)
-            comm.messages.delete(f"all-{dataset}")
-            comm.messages.put(f"terminated-{dataset}", "cancel lambda " + bucket_name)
-            try:
-                metadata = comm.xdata.get(dataset)
-            except comm.xdata.client.exceptions.NoSuchKey:
-                metadata = dict(job_id=job_id, cancel_type="job_id")
-            metadata["terminated"] = True
-            comm.xdata.put(dataset, metadata)
-        # Do last so terminate flag is set if possible.
-        logger.info("Terminating %s", job_id)
-        batch.terminate_job(job_id, "Operator cancelled")
+        with dataset_context(dataset):
+            if dataset != "unknown":
+                with trap_exception("Handling messages + control for", job_id):
+                    logger.info("Handling messages and control for %s", dataset)
+                    comm.messages.delete(f"all-{dataset}")
+                    comm.messages.put(f"terminated-{dataset}", "cancel lambda " + bucket_name)
+                    try:
+                        metadata = comm.xdata.get(dataset)
+                    except comm.xdata.client.exceptions.NoSuchKey:
+                        metadata = dict(job_id=job_id, cancel_type="job_id")
+                    metadata["terminated"] = True
+                    comm.xdata.put(dataset, metadata)
+            # Do last so terminate flag is set if possible.
+            logger.info("Terminating %s", job_id)
+            batch.terminate_job(job_id, "Operator cancelled")
     elif hst.IPPPSSOOT_RE.match(dataset) or hst.SVM_RE.match(dataset) or hst.MVM_RE.match(dataset):  # kill one dataset
         logger.info("Cancelling dataset %s", dataset)
         comm.messages.delete(f"all-{dataset}")

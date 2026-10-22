@@ -1,8 +1,11 @@
 import os
 import urllib.parse
 from calcloud import model_ingest
+from calcloud import s3
+from calcloud.log import lambda_logging
 
 
+@lambda_logging(s3.event_dataset)
 def lambda_handler(event, context=None):
     table_name = os.environ.get("DDBTABLE", "calcloud-model-sb")
     bucket_name = event["Records"][0]["s3"]["bucket"]["name"]

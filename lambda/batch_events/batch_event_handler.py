@@ -21,11 +21,12 @@ import os
 
 from calcloud import io
 from calcloud import exit_codes
-from calcloud.log import configure_logging
+from calcloud.log import configure_logging, lambda_logging
 
 logger = configure_logging()
 
 
+@lambda_logging(lambda event: event["detail"]["container"]["command"][1])
 def lambda_handler(event, context):
     logger.info(event)
 
