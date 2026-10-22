@@ -129,6 +129,7 @@ def predict_wallclock(feature_dict):
     return prediction
 
 
+@lambda_logging(lambda event: event["Ipppssoot"])
 def lambda_handler(event, context):
     """Predict Resource Allocation requirements for memory (GB) and max execution `kill time` / `wallclock` (seconds)
     using HistGradientBoostingRegressor regressions from scikit-learn.  This lambda is invoked from the

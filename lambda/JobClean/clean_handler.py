@@ -6,11 +6,12 @@ are deleted.
 
 from calcloud import io
 from calcloud import s3
-from calcloud.log import configure_logging
+from calcloud.log import configure_logging, lambda_logging
 
 logger = configure_logging()
 
 
+@lambda_logging(s3.event_dataset)
 def lambda_handler(event, context):
     bucket_name, dataset = s3.parse_s3_event(event)
 

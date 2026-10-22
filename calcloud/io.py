@@ -804,11 +804,11 @@ class IoBundle:
             ids = [ids]
         for id in ids:
             with log.trap_exception():
-                self.reset(ids)
+                self.reset(id)
             with log.trap_exception():
-                self.control.delete(ids)  # Memory model inputs
+                self.control.delete(id)  # Memory model inputs
             with log.trap_exception():
-                self.inputs.delete(ids)  # Input tarballs
+                self.inputs.delete(id)  # Input tarballs
 
     def ids(self, prefixes="all"):
         """Return the id associated with every object in any branch of this comm

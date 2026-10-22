@@ -1,18 +1,53 @@
-"""Minimal project logging helpers built on Python's standard logging.
-
-Lambda entrypoints configure standard `logging` loggers directly. This module
-only keeps the shared configuration helper and the small exception-trapping
-context manager that some call sites still use.
-"""
+"""Standard logging with invocation-scoped dataset context."""
 
 import contextlib
+from contextvars import ContextVar
 import datetime as dt
+from functools import wraps
 import json
 import logging
 import os
 
 _LOGGER_NAME = "calcloud"
 _NOISY_LAMBDA_LOGGERS = ("botocore.credentials",)
+_dataset = ContextVar("dataset", default="unknown")
+
+
+@contextlib.contextmanager
+def dataset_context(dataset):
+    """Temporarily tag logs, restoring the previous context even after an exception."""
+    token = _dataset.set(dataset)
+    try:
+        yield
+    finally:
+        _dataset.reset(token)
+
+
+def lambda_logging(dataset_from_event):
+    """Scope dataset context to one invocation, including calls to shared helpers."""
+
+    def decorate(handler):
+        @wraps(handler)
+        def wrapped(event, *args, **kwargs):
+            with dataset_context("unknown"):
+                with dataset_context(dataset_from_event(event)):
+                    return handler(event, *args, **kwargs)
+
+        return wrapped
+
+    return decorate
+
+
+class DatasetFilter(logging.Filter):
+    """Enrich records without overriding explicitly supplied dataset fields."""
+
+    def filter(self, record):
+        if not getattr(record, "dataset", None):
+            record.dataset = _dataset.get()
+        return True
+
+
+_dataset_filter = DatasetFilter()
 
 
 class JsonLogFormatter(logging.Formatter):
@@ -28,9 +63,7 @@ class JsonLogFormatter(logging.Formatter):
             "message": record.getMessage(),
         }
 
-        dataset = getattr(record, "dataset", None)
-        if dataset is not None:
-            payload["dataset"] = dataset
+        payload["dataset"] = getattr(record, "dataset", None) or _dataset.get()
 
         aws_request_id = getattr(record, "aws_request_id", None)
         if aws_request_id is not None:
@@ -64,6 +97,9 @@ def configure_logging(name=_LOGGER_NAME, level=None):
         logging.basicConfig(level=level, format="%(levelname)s - %(message)s")
 
     root.setLevel(level)
+    for handler in root.handlers:
+        if _dataset_filter not in handler.filters:
+            handler.addFilter(_dataset_filter)
 
     if _is_lambda_environment():
         formatter = JsonLogFormatter()
@@ -74,6 +110,8 @@ def configure_logging(name=_LOGGER_NAME, level=None):
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.NOTSET)
+    if _dataset_filter not in logger.filters:
+        logger.addFilter(_dataset_filter)
     return logger
 
 

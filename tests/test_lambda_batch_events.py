@@ -128,3 +128,14 @@ def test_batch_docker_timeout_error(s3_client):
 def test_batch_cannot_inspect_container(s3_client):
     """Batch returned CannotInspectContainer"""
     error_w_retry("batch-event-cannot-inspect-error.yaml")
+
+
+def test_batch_memory_error_logs_dataset(s3_client, caplog):
+    event, comm, dataset, _ = setup_job("batch-event-caldp-memory-error.yaml")
+    caplog.clear()
+    batch_event_handler.lambda_handler(event, None)
+
+    records = [record for record in caplog.records if record.name == "calcloud"]
+    assert any("Automatic OutOfMemory rescue" in record.getMessage() for record in records)
+    assert any(record.msg is event for record in records)
+    assert all(record.dataset == dataset for record in records)

@@ -7,12 +7,13 @@ import tempfile
 from calcloud import batch
 from calcloud import common
 from calcloud import hst
-from calcloud.log import configure_logging
+from calcloud.log import configure_logging, lambda_logging
 
 logger = configure_logging()
 
 
 # TODO: add queue name to metadata
+@lambda_logging(lambda event: "all")
 def lambda_handler(event, context):
 
     # various metadata definitions
