@@ -1,5 +1,5 @@
 #! /bin/bash -xu
-export CALCLOUD_VER="feature-CALCLOUD-489-4"
+export CALCLOUD_VER="feature-CALCLOUD-489-5"
 export CALDP_VER="feature-CALCLOUD-489-3"
 export CAL_BASE_IMAGE="stsci/hst-pipeline:2026.2.1.7-arcticdrizzle-py312"
 
