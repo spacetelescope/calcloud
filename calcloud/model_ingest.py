@@ -11,7 +11,6 @@ import time
 from decimal import Decimal
 from pprint import pformat
 
-from sklearn import metrics
 from . import common, hst, job_features, log
 
 logger = log.configure_logging()
