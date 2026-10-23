@@ -1,8 +1,10 @@
 from calcloud import lambda_submit
 from calcloud import io
 from calcloud import s3
+from calcloud.log import lambda_logging
 
 
+@lambda_logging(s3.event_dataset)
 def lambda_handler(event, context):
     bucket_name, dataset = s3.parse_s3_event(event)
 

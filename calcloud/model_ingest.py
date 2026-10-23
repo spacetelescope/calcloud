@@ -92,13 +92,13 @@ class Features(Scraper):
         input_data = {}
         body = job_features.get_s3_body_str_lines(self.bucket, key, log_exception=False)
         if body is None:
-            logger.info("Unable to download inputs: %s", self.ipst, extra={"dataset": self.ipst})
+            logger.info("Unable to download inputs: %s", self.ipst)
             return None
         else:
             for line in body:
                 k, v = line.split("=", 1)
                 input_data[k] = v
-            logger.debug("%s: %s", self.ipst, input_data, extra={"dataset": self.ipst})
+            logger.debug("%s: %s", self.ipst, input_data)
             return input_data
 
 
@@ -190,13 +190,13 @@ class Targets(Scraper):
             target_data["max_disk"] = max_disk
 
         if log_error < 0:
-            logger.error("Missing logs: cannot save target data.", extra={"dataset": self.ipst})
+            logger.error("Missing logs: cannot save target data.")
             sys.exit(-1)
         elif log_error > 0:
-            logger.error("Logs have Non-zero status: cannot save target data.", extra={"dataset": self.ipst})
+            logger.error("Logs have Non-zero status: cannot save target data.")
             sys.exit(log_error)
         else:
-            logger.info("%s: %s", self.ipst, target_data, extra={"dataset": self.ipst})
+            logger.info("%s: %s", self.ipst, target_data)
             return target_data
 
     def convert_target_data(self):
@@ -219,7 +219,7 @@ class Targets(Scraper):
             max_disk = self.target_data["max_disk"]
             logger.debug("max_disk=%s", max_disk)
             targets["max_disk"] = max_disk
-        logger.info("Targets:\n%s", targets, extra={"dataset": self.ipst})
+        logger.info("Targets:\n%s", targets)
         return targets
 
     def calculate_bin(self, memory):
@@ -267,7 +267,7 @@ def create_payload(job_data, timestamp):
     data = {k: v for k, v in data.items() if v is not None}
 
     ddb_payload = json.loads(json.dumps(data, allow_nan=True), parse_int=Decimal, parse_float=Decimal)
-    logger.debug("%s", pformat(ddb_payload, indent=2), extra={"dataset": ipst})
+    logger.debug("%s", pformat(ddb_payload, indent=2))
     return ddb_payload
 
 
@@ -287,7 +287,7 @@ def ddb_ingest(ipst, bucket_name, table_name):
         # If HSTSDP wants to bypass processing in the cloud, it does not upload the _MemModelFeatures.txt file
         # and creates a "processed-<dataset>.trigger" file.  The trigger file causes lambda_scrape to run, but
         # no processing was actually done.  In this case, skip model_ingest.py without error.
-        print(f"No job data found for {ipst}, skipping model_ingest.py")
+        logger.info("No job data found for %s, skipping model_ingest.py", ipst)
         return
 
     # Prior to HSTDP-2026.3.0, the on-premises code sends the same dummy feature file for all SVMs and MVMs.
@@ -300,16 +300,14 @@ def ddb_ingest(ipst, bucket_name, table_name):
         logger.info(
             "Put job data succeeded:\n%s",
             pformat(job_resp, indent=2),
-            extra={"dataset": ipst},
         )
         end_time = time.time()
         print_timestamp(end_time, "SCRAPE and INGEST", 1)
         duration = proc_time(start_time, end_time)
-        logger.info("Data ingest took %s", duration, extra={"dataset": ipst})
+        logger.info("Data ingest took %s", duration)
     else:
         logger.info(
             "Not storing data for %s %s - no dataset_type in features",
             job_data["features"].get("dataset_type"),
             ipst,
-            extra={"dataset": ipst},
         )

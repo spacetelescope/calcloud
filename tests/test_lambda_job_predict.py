@@ -11,7 +11,7 @@ get_mem_model_file_text = test_model_ingest.get_mem_model_file_text
 put_mem_model_file = test_model_ingest.put_mem_model_file
 
 
-def test_model_lambda_job_predict(s3_client, dynamodb_client):
+def test_model_lambda_job_predict(s3_client, dynamodb_client, caplog):
     """Test the lambda handler for JobPredict"""
     from JobPredict import predict_handler
 
@@ -35,6 +35,9 @@ def test_model_lambda_job_predict(s3_client, dynamodb_client):
     assert predictions["memBin"] == 0
     assert np.isclose(predictions["memVal"], 0.8456014685200817)
     assert np.isclose(predictions["clockTime"], 488.3735814329769)
+    records = [record for record in caplog.records if record.getMessage().startswith(f"ipppssoot: {ipst},")]
+    assert len(records) == 1
+    assert records[0].dataset == ipst
 
 
 def test_model_lambda_job_predict_features(s3_client, s3_resource):

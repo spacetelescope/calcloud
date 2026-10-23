@@ -46,6 +46,23 @@ premise OWL GUI where it is displayed for operators.
 Development cycle and CI
 ==========================
 
+Logging
+-------
+
+Lambda handlers use `@lambda_logging(dataset_from_event)` from `calcloud.log`
+to establish dataset context for the invocation. Logging filters automatically
+add that context to records, including logs from shared helpers. The context
+is reset in a `finally` block, so it cannot leak across warm Lambda invocations.
+Use `with dataset_context(dataset):` to temporarily switch datasets inside bulk
+operations or after resolving a job ID. No logging-only dataset arguments are
+needed in shared helpers.
+
+The dataset field is the identifier for single-dataset operations, `"all"` for
+bulk operations, and `"unknown"` when unavailable. 
+Lambda JSON logs also include context for third-party logging. Context does not
+automatically propagate to newly created threads; copy the context explicitly
+if adding threaded work that needs dataset tagging.
+
 Gitflow
 -------
 

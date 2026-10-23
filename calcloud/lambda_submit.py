@@ -52,7 +52,6 @@ def main(comm, dataset, bucket_name, overrides):
             "Exception in lambda_submit.main for %s = %s",
             dataset,
             exc,
-            extra={"dataset": dataset},
         )
         if terminated:
             msg_name = "terminated-" + dataset
@@ -89,13 +88,12 @@ def _main(comm, dataset, bucket_name, overrides):
     p = plan.get_plan(dataset, dataset_type, bucket_name, f"{bucket_name}/inputs", metadata)
 
     # Only reached if get_plan() defines a viable job plan
-    logger.info("Job Plan: %s", p, extra={"dataset": dataset})
+    logger.info("Job Plan: %s", p)
     response = submit.submit_job(p)
     logger.info(
         "Submitted job for %s as ID %s",
         dataset,
         response["jobId"],
-        extra={"dataset": dataset},
     )
     metadata["job_id"] = response["jobId"]
     comm.xdata.put(dataset, metadata)
@@ -127,7 +125,6 @@ def _wait_for_inputs(comm, dataset):
                 seconds_to_fail,
                 len(input_tarball),
                 len(memory_modeling),
-                extra={"dataset": dataset},
             )
             time.sleep(poll_seconds)
             seconds_to_fail -= poll_seconds
@@ -135,4 +132,4 @@ def _wait_for_inputs(comm, dataset):
                 raise CalcloudInputsFailure(
                     f"Wait for inputs for {dataset} timeout, aborting submission.  input_tarball={len(input_tarball)}  memory_modeling={len(memory_modeling)}"
                 )
-    logger.info("Inputs for %s found.", dataset, extra={"dataset": dataset})
+    logger.info("Inputs for %s found.", dataset)

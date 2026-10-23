@@ -10,7 +10,7 @@ A key feature of "rescuing" is the deletion of prior job outputs,  if any.
 from calcloud import io
 from calcloud import lambda_submit
 from calcloud import s3
-from calcloud.log import configure_logging
+from calcloud.log import configure_logging, lambda_logging
 
 RESCUE_TYPES = ["error", "terminated"]
 
@@ -20,6 +20,7 @@ MAX_PER_LAMBDA = 100
 logger = configure_logging()
 
 
+@lambda_logging(s3.event_dataset)
 def lambda_handler(event, context):
     bucket_name, dataset = s3.parse_s3_event(event)
 
