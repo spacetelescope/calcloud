@@ -90,7 +90,7 @@ class Features(Scraper):
         """
         key = f"control/{self.ipst}/{self.ipst}_MemModelFeatures.txt"
         input_data = {}
-        body = job_features.get_s3_body_str_lines(self.bucket, key, log_exception=False)
+        body = job_features.get_s3_body_str_lines(self.bucket, key)
         if body is None:
             logger.info("Unable to download inputs: %s", self.ipst)
             return None
@@ -123,7 +123,7 @@ class Targets(Scraper):
         memory_list = []
         log_error = 0
         for key in log_files:
-            body = job_features.get_s3_body_str_lines(self.bucket, key, log_exception=True)
+            body = job_features.get_s3_body_str_lines(self.bucket, key)
             if body is None:
                 log_error = -1
                 continue
@@ -165,7 +165,7 @@ class Targets(Scraper):
     def get_max_disk_usage(self) -> int | None:
         """Returns the maximum disk usage recorded in the disk_metrics log, in GB."""
         max_disk = 0
-        body = job_features.get_s3_body_str_lines(self.bucket, self.disk_log, log_exception=True)
+        body = job_features.get_s3_body_str_lines(self.bucket, self.disk_log)
         if body:
             for line in body:
                 items = line.split()

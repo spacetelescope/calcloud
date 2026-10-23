@@ -59,7 +59,7 @@ class Preprocess:
         """import job metadata file from s3 bucket"""
         bucket = s3.Bucket(self.bucket_name)
         input_data = {}
-        body = job_features.get_s3_body_str_lines(bucket, self.key, log_exception=True)
+        body = job_features.get_s3_body_str_lines(bucket, self.key)
         for line in body:
             k, v = line.split("=", 1)
             input_data[k] = v
