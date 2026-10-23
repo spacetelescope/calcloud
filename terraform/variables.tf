@@ -59,7 +59,7 @@ variable full_base_image {
 variable pinned_tf_ver {
   description = "the intended value of the terraform installation in the environment"
   type = string
-  default = "1.0.11"
+  default = "1.16.5"
 }
 
 # valid combos

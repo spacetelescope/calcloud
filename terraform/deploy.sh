@@ -15,8 +15,8 @@ echo $aws_tfstate
 # get AMI id(s)
 cd $CALCLOUD_BUILD_DIR/ami_rotation
 AWS_PROFILE=hst_reprocessing_admin_role aws ec2 describe-images --region us-east-1 --executable-users self --output json > images.json
-ci_ami=`python3.11 parse_image_json.py STSCI-AMAZON-LINUX2023`
-ecs_ami=`python3.11 parse_image_json.py STSCI-EPH-ECS-AL2023`
+ci_ami=`python3.13 parse_image_json.py STSCI-AMAZON-LINUX2023`
+ecs_ami=`python3.13 parse_image_json.py STSCI-EPH-ECS-AL2023`
 
 if [[ "$ci_ami" =~ ^ami-[a-z0-9]+$ ]]; then
     echo $ci_ami
@@ -53,8 +53,6 @@ EOF
 for ((i=0; i<LENGTH_LADDER; i++)); do
     AWS_PROFILE=hst_reprocessing_admin_role terraform taint "aws_batch_compute_environment.compute_env[$i]"
 done
-
-AWS_PROFILE=hst_reprocessing_admin_role terraform taint module.lambda_function_container_image.aws_lambda_function.this[0]
 
 # This can be removed after v0.4.49 is deployed to all environments.
 # We need to tell terraform we are moving aws_launch_template.hstdp -> aws_launch_template.hstdp["default"]

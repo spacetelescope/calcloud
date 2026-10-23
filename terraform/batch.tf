@@ -5,30 +5,32 @@ provider "aws" {
 }
 
 terraform {
+  required_version = "~> 1.16.5"
+
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = "~> 5.17.0"
-    }
-    hashicorp-null = {
-      source = "hashicorp/null"
-      version = "~> 3.2.1"
+      version = "~> 6.69.1"
     }
     hashicorp-external = {
       source = "hashicorp/external"
-      version = "~> 2.3.1"
+      version = "~> 2.4.2"
     }
     hashicorp-local = {
       source = "hashicorp/local"
-      version = "~> 2.4.0"
+      version = "~> 2.9.1"
+    }
+    hashicorp-null = {
+      source = "hashicorp/null"
+      version = "~> 3.3.2"
     }
     hashicorp-random = {
       source = "hashicorp/random"
-      version = "~> 3.5.1"
+      version = "~> 3.9.1"
     }
     docker = {
       source = "kreuzwerker/docker"
-      version = "~> 3.0.2"
+      version = "~> 4.6.0"
     }
   }
 }
@@ -119,14 +121,17 @@ resource "aws_launch_template" "hstdp" {
 resource "aws_batch_job_queue" "batch_queue" {
   name = "calcloud-hst-queue-${local.ladder[count.index].name}${local.environment}"
   count = length(local.ladder)
-  compute_environments = [aws_batch_compute_environment.compute_env[count.index].arn]
+  compute_environment_order {
+    order = 1
+    compute_environment = aws_batch_compute_environment.compute_env[count.index].arn
+  }
   priority = 10   # need to vectorize?
   state = "ENABLED"
 }
 
 resource "aws_batch_compute_environment" "compute_env" {
   count = length(local.ladder)
-  compute_environment_name_prefix = "calcloud-hst-${local.ladder[count.index].name}${local.environment}"
+  name_prefix = "calcloud-hst-${local.ladder[count.index].name}${local.environment}"
   type = "MANAGED"
   service_role = nonsensitive(data.aws_ssm_parameter.batch_service_role.value)
 
