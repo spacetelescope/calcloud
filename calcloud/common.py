@@ -1,4 +1,5 @@
 """a module to hold some common configuration items that various scripts may need"""
+
 import os
 
 from botocore.config import Config
