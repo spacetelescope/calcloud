@@ -103,7 +103,9 @@ def test_shared_helper_logging_dataset(s3_client, caplog):
         model_ingest.print_timestamp(0, "test", 0)
         bucket = model_ingest.s3.Bucket(conftest.BUCKET)
         assert job_features.get_s3_body_str_lines(bucket, "missing") is None
-        missing_records = [record for record in caplog.records if record.getMessage() == "S3 object does not exist: missing"]
+        missing_records = [
+            record for record in caplog.records if record.getMessage() == "S3 object does not exist: missing"
+        ]
         assert len(missing_records) == 1
         assert missing_records[0].levelno == logging.INFO
         s3.put_object("test", f"s3://{conftest.BUCKET}/outputs/{dataset}/example.txt", client=s3_client)
