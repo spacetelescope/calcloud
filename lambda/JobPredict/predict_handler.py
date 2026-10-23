@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from botocore.config import Config
 from calcloud import job_features
-from calcloud.log import configure_logging
+from calcloud.log import configure_logging, lambda_logging
 from sklearn._loss import _loss as sklearn_loss
 
 # Required to read the models from disk
