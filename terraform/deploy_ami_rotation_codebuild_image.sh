@@ -35,15 +35,41 @@ sleep 30
 python3.13 ami-rotation-image-scan.py
 amirotation_image_scan_status=$?
 
-if [ $amirotation_image_scan_status == 0 ]
+# exit status 3 from the scan script means fatal vulnerabilities were found; other nonzero values mean errors
+if [ $amirotation_image_scan_status -eq 0 ]
 then
         echo "Image scan successful."
-        ./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG_UNSCANNED $AMIROTATION_ECR_TAG_LATEST
+        if ! ./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG_UNSCANNED $AMIROTATION_ECR_TAG_LATEST
+        then
+                echo "Failed to tag scanned image as ${AMIROTATION_ECR_TAG_LATEST}; exiting"
+                exit 1
+        fi
         echo "Tagged latest successfully scanned image"
         ./deploy_ecr_image_delete.sh $AMIROTATION_ECR_TAG_UNSCANNED
         echo "Deleted unscanned tag"
 else
-        echo "Image scan failed. Using previously scanned image."
+        if [ $amirotation_image_scan_status -eq 3 ]
+        then
+                echo "Image scan found fatal vulnerabilities in ${AMIROTATION_ECR_TAG_UNSCANNED}."
+        else
+                echo "Could not get scan results for ${AMIROTATION_ECR_TAG_UNSCANNED} (exit status ${amirotation_image_scan_status})."
+        fi
+        if [ ! -t 0 ]
+        then
+                echo "No interactive terminal to confirm using previously scanned image ${AMIROTATION_ECR_TAG_LATEST}; exiting"
+                exit 1
+        fi
+        read -r -p "Proceed with previously scanned image ${AMIROTATION_ECR_TAG_LATEST}? Type 'yes' to continue: " use_previous_image
+        if [ "$use_previous_image" != "yes" ]
+        then
+                echo "Not using previously scanned image; exiting"
+                exit 1
+        fi
+        echo "Using previously scanned image ${AMIROTATION_ECR_TAG_LATEST}."
 fi
 
-./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG_LATEST $AMIROTATION_ECR_TAG
+if ! ./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG_LATEST $AMIROTATION_ECR_TAG
+then
+        echo "Failed to tag ${AMIROTATION_ECR_TAG_LATEST} as ${AMIROTATION_ECR_TAG}; exiting"
+        exit 1
+fi
