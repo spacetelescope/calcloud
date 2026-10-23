@@ -23,7 +23,6 @@ import copy
 import argparse
 import time
 
-
 KEEP_LEVELS = {
     "CRITICAL": ["CRITICAL"],
     "HIGH": ["CRITICAL", "HIGH"],
