@@ -25,7 +25,7 @@ import copy
 import argparse
 import time
 
-KEEP_LEVELS = {
+SEVERITY_LEVELS = {
     "CRITICAL": ["CRITICAL"],
     "HIGH": ["CRITICAL", "HIGH"],
     "MEDIUM": ["CRITICAL", "HIGH", "MEDIUM"],
@@ -38,7 +38,11 @@ EXIT_OK = 0
 EXIT_ERROR = 2
 EXIT_VULNERABLE = 3
 
-# Basic scanning reports COMPLETE; enhanced (Inspector) scanning reports ACTIVE.
+# Basic scanning will report COMPLETE when scan is done.
+# Enhanced scanning will report ACTIVE when the initial scan is done, and then it will continue
+# to monitor for CVEs that may affect this image.
+# The AWS team sets whether we are using basic or enhanced scanning, so we need to look for both statuses here.
+# The scan is done if the status is either COMPLETE or ACTIVE.
 SCAN_DONE_STATUSES = ("COMPLETE", "ACTIVE")
 SCAN_PENDING_STATUSES = ("IN_PROGRESS", "PENDING")
 SCAN_POLL_SECONDS = 10
@@ -98,38 +102,36 @@ def get_scan_results(image_digest):
     return _get_scan_results(image_digest, os.environ["AMIROTATION_ECR_TAG_UNSCANNED"])
 
 
-def limit_levels(keep_levels, fail_levels, full_results):
-    """Only keep findings with statuses in `levels`.  Assume `full_results` contains
-    everything returned from ECR which e.g. **may** include LOW or INFORMATIONAL CVE's
-    which are normally ignored when scanning for MEDIUM and higher;  remove lower
-    priority CVS's from return dict.
+def limit_levels(report_levels, fail_levels, full_results):
+    """Only report findings with statuses in `report_levels`.
+    Only report a failed scan if there are findings with statuses in `fail_levels`.
+    Assume `full_results` contains everything returned from ECR which may include
+    LOW or INFORMATIONAL CVE's which are normally ignored when scanning for MEDIUM and higher.
     """
-    reduced_results = copy.deepcopy(full_results)
-    scan_findings = reduced_results.setdefault("imageScanFindings", {})
-    reduced_results["overall_status"] = "OK"
+    results_to_report = copy.deepcopy(full_results)
+    scan_findings = results_to_report.setdefault("imageScanFindings", {})
+    results_to_report["overall_status"] = "OK"
     listed_fatal_count = 0
     for key in ("findings", "enhancedFindings"):
         if key not in scan_findings:
             continue
-        kept = []
-        for finding in scan_findings[key]:
-            if finding["severity"] in keep_levels or "ALL" in keep_levels:
-                kept.append(finding)
-            if finding["severity"] in fail_levels:
-                listed_fatal_count += 1
-        scan_findings[key] = kept
-    # ECR's per-severity totals cover the whole scan, so prefer them over the listed findings.
-    severity_counts = scan_findings.get("findingSeverityCounts") or {}
-    counted_fatal = sum(severity_counts.get(level, 0) for level in fail_levels)
-    reduced_results["fatal_count"] = max(counted_fatal, listed_fatal_count)
-    if reduced_results["fatal_count"]:
-        reduced_results["overall_status"] = "FAILED"
-    return reduced_results
+        listed_fatal_count += sum(1 for x in scan_findings[key] if x["severity"] in fail_levels)
+        scan_findings[key] = [x for x in scan_findings[key] if x["severity"] in report_levels]
+    severity_counts = scan_findings.get("findingSeverityCounts")
+    if severity_counts is None:
+        results_to_report["fatal_count"] = listed_fatal_count
+    else:
+        results_to_report["fatal_count"] = sum(
+            severity_counts.get(level, 0) for level in fail_levels
+        )
+    if results_to_report["fatal_count"]:
+        results_to_report["overall_status"] = "FAILED"
+    return results_to_report
 
 
-def get_report_dict(keep_levels, fail_levels, image_digest, timeout):
+def get_report_dict(report_levels, fail_levels, image_digest, timeout):
     """Wait for the ECR scan to finish and return its findings limited to
-    `keep_levels`. Raises ScanError if results cannot be obtained.
+    `report_levels`. Raises ScanError if results cannot be obtained.
     """
     deadline = time.monotonic() + timeout
     while True:
@@ -147,7 +149,7 @@ def get_report_dict(keep_levels, fail_levels, image_digest, timeout):
             scan_status = vulnerabilities.get("imageScanStatus", {})
             status = scan_status.get("status")
             if status in SCAN_DONE_STATUSES:
-                return limit_levels(keep_levels, fail_levels, vulnerabilities)
+                return limit_levels(report_levels, fail_levels, vulnerabilities)
             if status not in SCAN_PENDING_STATUSES:
                 raise ScanError(f"ECR scan ended with status {status}: {scan_status.get('description', '')}")
 
@@ -162,19 +164,17 @@ def get_report_dict(keep_levels, fail_levels, image_digest, timeout):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--keep-levels",
-        choices=["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFORMATIONAL"],
-        nargs="+",
+        "--report-levels",
+        choices=["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFORMATIONAL", "ALL"],
         action="store",
-        help="Minimum severity level, e.g. MEDIUM",
+        help="Report findings at this security level and higher, e.g. MEDIUM",
         default="MEDIUM",
     )
     parser.add_argument(
         "--fail-levels",
-        choices=["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFORMATIONAL"],
-        nargs="+",
+        choices=["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFORMATIONAL", "ALL"],
         action="store",
-        help="Minimum severity level, e.g. MEDIUM",
+        help="Fail if there are findings at this security level and higher, e.g. HIGH",
         default="HIGH",
     )
     parser.add_argument(
@@ -191,11 +191,11 @@ def main():
     )
     args = parser.parse_args()
 
-    keep_levels = KEEP_LEVELS[args.keep_levels.upper()]
-    fail_levels = KEEP_LEVELS[args.fail_levels.upper()]
+    report_levels = SEVERITY_LEVELS[args.report_levels.upper()]
+    fail_levels = SEVERITY_LEVELS[args.fail_levels.upper()]
 
     try:
-        reduced = get_report_dict(keep_levels, fail_levels, args.image_digest, args.timeout)
+        reduced = get_report_dict(report_levels, fail_levels, args.image_digest, args.timeout)
     except ScanError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         sys.exit(EXIT_ERROR)
