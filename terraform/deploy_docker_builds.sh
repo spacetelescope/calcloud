@@ -7,7 +7,7 @@ source deploy_checkout_repos.sh
 # imageTags are constructed in deploy_vars.sh
 
 # check if the tag(s) we're building for exist already; if so, we'll stop and warn the user
-/bin/bash deploy_existing_imageTag_check.sh ${CALDP_ECR_TAG//unscanned-/} ${PREDICT_ECR_TAG//unscanned-/} ${AMIROTATION_ECR_TAG//unscanned-/}
+/bin/bash deploy_existing_imageTag_check.sh ${CALDP_ECR_TAG} ${PREDICT_ECR_TAG} ${AMIROTATION_ECR_TAG}
 existingImage=$?
 
 if [[ $existingImage -eq 1 ]]; then

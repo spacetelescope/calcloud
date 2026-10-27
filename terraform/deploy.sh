@@ -97,9 +97,14 @@ cd $CALCLOUD_BUILD_DIR/terraform
 # this script doesn't replace "old-tag", it just takes that image, and adds this tag to it.
 # And in fact, if another image exists with this tag, it's removed from that one; so this is image promotion all-in-one
 echo ${aws_env}
-./deploy_image_promote.sh --old-tag $CALDP_ECR_TAG batch-${aws_env}
-./deploy_image_promote.sh --old-tag $PREDICT_ECR_TAG predict-${aws_env}
-./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG amirotation-${aws_env}
+promote_failed=0
+./deploy_image_promote.sh --old-tag $CALDP_ECR_TAG batch-${aws_env} || promote_failed=1
+./deploy_image_promote.sh --old-tag $PREDICT_ECR_TAG predict-${aws_env} || promote_failed=1
+./deploy_image_promote.sh --old-tag $AMIROTATION_ECR_TAG amirotation-${aws_env} || promote_failed=1
+if [[ $promote_failed -ne 0 ]]; then
+    echo "failed to tag one or more images for ${aws_env}; see errors above"
+    exit 1
+fi
 
 cd ${CALCLOUD_BUILD_DIR}/terraform
 source deploy_cleanup.sh
