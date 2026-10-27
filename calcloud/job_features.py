@@ -11,10 +11,13 @@ def get_s3_body_str_lines(bucket: str, key: str) -> list[str] | None:
     obj = bucket.Object(key)
     try:
         body = obj.get()["Body"].read().decode("utf-8").splitlines()
+        return body
     except bucket.meta.client.exceptions.NoSuchKey:
         logger.info("S3 object does not exist: %s", key)
         return None
-    return body
+    except Exception:
+        logger.exception("Failed to retrieve S3 object body for key: %s", key)
+        return None
 
 
 def get_features_for_ipst(dataset, input_data):
