@@ -5,19 +5,19 @@ from . import hst, log
 logger = log.configure_logging()
 
 
-def get_s3_body_str_lines(bucket: str, key: str, log_exception: bool = True) -> list[str] | None:
+def get_s3_body_str_lines(bucket: str, key: str) -> list[str] | None:
     """Retrieve the body of an S3 object as a list of strings, where each each string is a line in the S3 object.
-    If there is an error, return None."""
+    If the object does not exist, log that and return None."""
     obj = bucket.Object(key)
     try:
         body = obj.get()["Body"].read().decode("utf-8").splitlines()
-    except Exception as exc:  # noqa F841
-        body = None
-        if log_exception:
-            logger.exception("Failed to read S3 body for %s", key)
-        else:
-            logger.info("Failed to read S3 body for %s", key)
-    return body
+        return body
+    except bucket.meta.client.exceptions.NoSuchKey:
+        logger.info("S3 object does not exist: %s", key)
+        return None
+    except Exception:
+        logger.exception("Failed to retrieve S3 object body for key: %s", key)
+        return None
 
 
 def get_features_for_ipst(dataset, input_data):
