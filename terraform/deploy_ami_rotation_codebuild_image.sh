@@ -11,7 +11,7 @@ pwd
 
 source hst_admin_role_shim.sh cert-update
 
-set -o pipefail && docker build -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE_UNSCANNED} --build-arg aws_env="${aws_env}" --build-arg CALCLOUD_VER="${CALCLOUD_VER}" .
+set -o pipefail && docker build --pull -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE_UNSCANNED} --build-arg aws_env="${aws_env}" --build-arg CALCLOUD_VER="${CALCLOUD_VER}" .
 amirotation_docker_build_status=$?
 
 if [[ $amirotation_docker_build_status -ne 0 ]]; then

@@ -23,7 +23,7 @@ fi
 cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
 source hst_admin_role_shim.sh cert-update
 cd ${CALCLOUD_BUILD_DIR}
-set -o pipefail && docker build -f lambda/JobPredict/Dockerfile -t ${PREDICT_DOCKER_IMAGE} .
+set -o pipefail && docker build --pull -f lambda/JobPredict/Dockerfile -t ${PREDICT_DOCKER_IMAGE} .
 model_docker_build_status=$?
 if [[ $model_docker_build_status -ne 0 ]]; then
     echo "predict lambda env docker build failed; exiting"
@@ -33,7 +33,7 @@ fi
 # caldp image
 cd ${CALDP_BUILD_DIR}
 source hst_admin_role_shim.sh cert-update
-set -o pipefail && docker build -f Dockerfile -t ${CALDP_DOCKER_IMAGE} --build-arg CAL_BASE_IMAGE="${CAL_BASE_IMAGE}"  .
+set -o pipefail && docker build --pull -f Dockerfile -t ${CALDP_DOCKER_IMAGE} --build-arg CAL_BASE_IMAGE="${CAL_BASE_IMAGE}"  .
 caldp_docker_build_status=$?
 if [[ $caldp_docker_build_status -ne 0 ]]; then
     echo "caldp docker build failed; exiting"
