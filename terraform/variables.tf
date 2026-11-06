@@ -56,6 +56,18 @@ variable full_base_image {
   default = "undefined"
 }
 
+variable image_build_id {
+  description = "Optional image build ID; empty preserves legacy application-version image tags"
+  type = string
+  default = ""
+  nullable = false
+
+  validation {
+    condition = var.image_build_id == "" || can(regex("^[A-Za-z0-9][A-Za-z0-9_.-]{0,115}$", var.image_build_id))
+    error_message = "Image build ID must be empty or 1-116 characters, starting with a letter or digit and containing only letters, digits, underscores, periods, or hyphens."
+  }
+}
+
 variable pinned_tf_ver {
   description = "the intended value of the terraform installation in the environment"
   type = string
