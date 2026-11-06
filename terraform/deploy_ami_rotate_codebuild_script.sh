@@ -68,6 +68,21 @@ then
     aws_env=`echo $aws_env | tr -d '",'`
 fi
 
+if ! IMAGE_BUILD_ID=$(aws ssm get-parameter --name "/tf/env/image-build-id-${aws_env}" --query "Parameter.Value" --output text 2>&1); then
+    if [[ "$IMAGE_BUILD_ID" == *"(ParameterNotFound)"* ]]; then
+        echo "No deployed image build ID parameter; using legacy image tags."
+        IMAGE_BUILD_ID=""
+    else
+        printf 'Unable to read deployed image build ID; aborting AMI rotation: %s\n' "$IMAGE_BUILD_ID" >&2
+        exit 1
+    fi
+fi
+if [[ -n "${IMAGE_BUILD_ID}" && ! "${IMAGE_BUILD_ID}" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]{0,115}$ ]]; then
+    echo "Invalid deployed image build ID; aborting AMI rotation." >&2
+    exit 1
+fi
+export TF_VAR_image_build_id="${IMAGE_BUILD_ID}"
+
 # the tf state bucket name
 aws_tfstate_response=`aws ssm get-parameter --name "/s3/tfstate" | grep "Value"`
 aws_tfstate=${aws_tfstate_response##*:}

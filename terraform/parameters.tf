@@ -89,6 +89,20 @@ resource "aws_ssm_parameter" "ami_rotation_base_image" {
   overwrite = true
 }
 
+resource "aws_ssm_parameter" "image_build_id" {
+  count = var.image_build_id != "" ? 1 : 0
+  name  = "/tf/env/image-build-id${local.environment}"
+  description = "Deployed image build ID; an absent parameter selects legacy image tags"
+  type  = "String"
+  value = var.image_build_id
+  overwrite = true
+}
+
+moved {
+  from = aws_ssm_parameter.image_build_id
+  to = aws_ssm_parameter.image_build_id[0]
+}
+
 resource "aws_ssm_parameter" "awsysver" {
   name  = "/tf/env/awsysver${local.environment}"
   type  = "String"

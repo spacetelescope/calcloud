@@ -150,7 +150,7 @@ locals {
 
        # should be kept in sync with the string in deploy_vars.sh
        common_image_spec = "CALCLOUD_%s-CALDP_%s-BASE_%s"
-       common_image_tag = format(
+      common_image_tag = var.image_build_id != "" ? var.image_build_id : format(
          local.common_image_spec,
          var.awsysver,
          var.awsdpver,
