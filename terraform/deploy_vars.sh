@@ -1,11 +1,27 @@
 #! /bin/bash -xu
-export CALCLOUD_VER="feature-CALCLOUD-510-2"
+export CALCLOUD_VER="feature-CALCLOUD-487-1"
 export CALDP_VER="feature-CALCLOUD-507-1"
 export CAL_BASE_IMAGE="stsci/hst-pipeline:2026.2.1.7-arcticdrizzle-py312"
 
+export IMAGE_BUILD_ID=${IMAGE_BUILD_ID:-""}
+if [[ -n "${IMAGE_BUILD_ID}" && ! "${IMAGE_BUILD_ID}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\.[0-9]{2}$ ]]; then
+    echo "IMAGE_BUILD_ID must be empty or match YYYY-MM-DD.NN." >&2
+    exit 1
+fi
+
 export BASE_IMAGE_TAG=`cut -d ":" -f2- <<< ${CAL_BASE_IMAGE} `
 
-export COMMON_IMAGE_TAG="CALCLOUD_${CALCLOUD_VER}-CALDP_${CALDP_VER}-BASE_${BASE_IMAGE_TAG}"
+export LEGACY_COMMON_IMAGE_TAG="CALCLOUD_${CALCLOUD_VER}-CALDP_${CALDP_VER}-BASE_${BASE_IMAGE_TAG}"
+export COMMON_IMAGE_TAG="${LEGACY_COMMON_IMAGE_TAG}"
+if [[ -n "${IMAGE_BUILD_ID}" ]]; then
+    export COMMON_IMAGE_TAG="${IMAGE_BUILD_ID}"
+fi
+export TF_VAR_image_build_id="${IMAGE_BUILD_ID}"
+export IMAGE_RELEASE_MANIFEST_KEY=""
+if [[ -n "${IMAGE_BUILD_ID}" ]]; then
+    export IMAGE_RELEASE_MANIFEST_KEY="calcloud/releases/${IMAGE_BUILD_ID}/manifest.json"
+fi
+
 # these variables are overrides for developers that allow the deploy script to build from local calcloud/caldp source
 # i.e. CALCLOUD_BUILD_DIR="$HOME/deployer/calcloud"
 # these can be set as environment variables before running to avoid changing the script directly
@@ -44,6 +60,9 @@ export IMAGE_REPO=`echo $repo_url | cut -d '/' -f2`        # hst-repro
 
 ##### DOCKER IMAGE BUILDING #########
 # tags are exported individually for some ecr api call convenience in other scripts
+export LEGACY_CALDP_ECR_TAG="batch-${LEGACY_COMMON_IMAGE_TAG}"
+export LEGACY_PREDICT_ECR_TAG="predict-${LEGACY_COMMON_IMAGE_TAG}"
+export LEGACY_AMIROTATION_ECR_TAG="amirotation-${LEGACY_COMMON_IMAGE_TAG}"
 export CALDP_ECR_TAG="batch-${COMMON_IMAGE_TAG}"
 export PREDICT_ECR_TAG="predict-${COMMON_IMAGE_TAG}"
 export AMIROTATION_ECR_TAG="amirotation-${COMMON_IMAGE_TAG}"
@@ -59,7 +78,7 @@ export AMIROTATION_DOCKER_IMAGE_LATEST="${repo_url}:${AMIROTATION_ECR_TAG_LATEST
 # turn CAL_BASE_IMAGE into CSYS_VER by splitting at the :, splitting again by underscore and keeping the
 # first two fields, and then converting to lowercase
 CSYS_VER=${CAL_BASE_IMAGE##*:}
-CSYS_VER=`echo $CSYS_VER | cut -f1,2 -d'_'` #split by underscores, keep the first two
+CSYS_VER=`echo $CSYS_VER | cut -f1,2 -d'_'` #split by underscores, keep the first two256600
 export CSYS_VER=`echo $CSYS_VER | awk '{print tolower($0)}'`
 
 export PATH=`pwd`/tools:${PATH}

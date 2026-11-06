@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Calcloud image release manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "buildId", "recordedAt", "origin", "images"],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "buildId": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}\\.[0-9]{2}$"
+    },
+    "recordedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this manifest was recorded; this is not necessarily the image build time."
+    },
+    "origin": {
+      "type": "string",
+      "enum": ["built", "migrated"]
+    },
+    "images": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["batch", "predict", "amirotation"],
+      "properties": {
+        "batch": { "$ref": "#/$defs/image" },
+        "predict": { "$ref": "#/$defs/image" },
+        "amirotation": { "$ref": "#/$defs/image" }
+      }
+    }
+  },
+  "$defs": {
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "buildTag", "legacyTag", "digest", "sourceVersions", "sourceRefs", "sourceCommits", "baseImage", "os"],
+      "properties": {
+        "repository": {
+          "type": "string"
+        },
+        "buildTag": {
+          "type": "string",
+          "pattern": "^(batch|predict|amirotation)-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.[0-9]{2}$"
+        },
+        "legacyTag": {
+          "type": ["string", "null"],
+          "description": "The prior composite tag, or null when this image has no known legacy tag."
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "sourceVersions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["calcloud", "caldp"],
+          "properties": {
+            "calcloud": { "type": ["string", "null"] },
+            "caldp": { "type": ["string", "null"] }
+          }
+        },
+        "sourceRefs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["calcloud", "caldp"],
+          "description": "The exact branch or tag checked out for each repository; null when it cannot be verified.",
+          "properties": {
+            "calcloud": { "type": ["string", "null"] },
+            "caldp": { "type": ["string", "null"] }
+          }
+        },
+        "sourceCommits": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["calcloud", "caldp"],
+          "properties": {
+            "calcloud": { "type": ["string", "null"] },
+            "caldp": { "type": ["string", "null"] }
+          }
+        },
+        "baseImage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reference", "digest"],
+          "properties": {
+            "reference": { "type": ["string", "null"] },
+            "digest": {
+              "type": ["string", "null"],
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            }
+          }
+        },
+        "os": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["distribution", "release", "patchLevel", "packageInventoryS3Key"],
+          "properties": {
+            "distribution": { "type": ["string", "null"] },
+            "release": { "type": ["string", "null"] },
+            "patchLevel": { "type": ["string", "null"] },
+            "packageInventoryS3Key": {
+              "type": ["string", "null"],
+              "description": "S3 key for the package inventory or SBOM; null means it was not captured or verified."
+            }
+          }
+        }
+      }
+    }
+  }
+}
