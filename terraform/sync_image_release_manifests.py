@@ -1,8 +1,8 @@
 """Copy release manifests from the dev bucket to other account buckets.
 
-Each destination is specified as an AWS profile and bucket pair. Use '-'
-as the profile to use the default AWS credential chain. The command only
-uploads objects when --apply is supplied.
+The source and each destination are specified as AWS profile and bucket
+pairs. Use '-' as a profile to use the default AWS credential chain. The
+command only uploads objects when --apply is supplied.
 """
 
 import argparse
@@ -124,8 +124,13 @@ def upload_manifests(s3, bucket, uploads):
 
 def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-bucket", required=True, help="Bucket containing the canonical dev manifests.")
-    parser.add_argument("--source-profile", help="AWS profile used to read the source bucket.")
+    parser.add_argument(
+        "--source",
+        nargs=2,
+        metavar=("PROFILE", "BUCKET"),
+        required=True,
+        help="Source AWS profile and bucket. Use '-' for the default profile.",
+    )
     parser.add_argument(
         "--destination",
         action="append",
@@ -141,8 +146,9 @@ def parse_args():
 
 def main():
     args = parse_args()
-    source_bucket = normalize_bucket(args.source_bucket)
-    source_s3 = make_session(args.source_profile, args.region).client("s3")
+    source_profile, source_bucket = args.source
+    source_bucket = normalize_bucket(source_bucket)
+    source_s3 = make_session(None if source_profile == "-" else source_profile, args.region).client("s3")
     manifests = load_source_manifests(source_s3, source_bucket)
 
     destinations = []
