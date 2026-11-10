@@ -23,7 +23,12 @@ fi
 cd ${CALCLOUD_BUILD_DIR}/lambda/JobPredict
 source hst_admin_role_shim.sh cert-update
 cd ${CALCLOUD_BUILD_DIR}
-set -o pipefail && docker build --pull -f lambda/JobPredict/Dockerfile -t ${PREDICT_DOCKER_IMAGE} .
+PREDICT_BASE_IMAGE_REF=${PREDICT_BASE_IMAGE:-public.ecr.aws/lambda/python:3.13}
+PREDICT_BASE_IMAGE_RESOLVED=$(resolve_base_image "JobPredict" "${PREDICT_BASE_IMAGE_REF}") || exit 1
+export PREDICT_BASE_IMAGE_REF PREDICT_BASE_IMAGE_RESOLVED
+echo "Building JobPredict from ${PREDICT_BASE_IMAGE_RESOLVED}"
+set -o pipefail && docker build --pull -f lambda/JobPredict/Dockerfile -t ${PREDICT_DOCKER_IMAGE} \
+    --build-arg PREDICT_BASE_IMAGE="${PREDICT_BASE_IMAGE_RESOLVED}" .
 model_docker_build_status=$?
 if [[ $model_docker_build_status -ne 0 ]]; then
     echo "predict lambda env docker build failed; exiting"
@@ -33,7 +38,12 @@ fi
 # caldp image
 cd ${CALDP_BUILD_DIR}
 source hst_admin_role_shim.sh cert-update
-set -o pipefail && docker build --pull -f Dockerfile -t ${CALDP_DOCKER_IMAGE} --build-arg CAL_BASE_IMAGE="${CAL_BASE_IMAGE}"  .
+CAL_BASE_IMAGE_REF=${CAL_BASE_IMAGE}
+CAL_BASE_IMAGE_RESOLVED=$(resolve_base_image "CALDP" "${CAL_BASE_IMAGE_REF}") || exit 1
+export CAL_BASE_IMAGE_REF CAL_BASE_IMAGE_RESOLVED
+echo "Building CALDP from ${CAL_BASE_IMAGE_RESOLVED}"
+set -o pipefail && docker build --pull -f Dockerfile -t ${CALDP_DOCKER_IMAGE} \
+    --build-arg CAL_BASE_IMAGE="${CAL_BASE_IMAGE_RESOLVED}" .
 caldp_docker_build_status=$?
 if [[ $caldp_docker_build_status -ne 0 ]]; then
     echo "caldp docker build failed; exiting"
@@ -54,4 +64,11 @@ echo Pushing ${CALDP_DOCKER_IMAGE}
 docker push ${CALDP_DOCKER_IMAGE}
 
 cd ${CALCLOUD_BUILD_DIR}/terraform
+if [[ -n "${IMAGE_BUILD_ID}" ]]; then
+    if ! python3.13 write_image_release_manifest.py --apply; then
+        echo "Failed to write release manifest for ${IMAGE_BUILD_ID}; exiting" >&2
+        exit 1
+    fi
+fi
+
 source deploy_cleanup.sh
