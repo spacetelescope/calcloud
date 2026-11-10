@@ -11,7 +11,13 @@ pwd
 
 source hst_admin_role_shim.sh cert-update
 
-set -o pipefail && docker build --pull -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE_UNSCANNED} --build-arg aws_env="${aws_env}" --build-arg CALCLOUD_VER="${CALCLOUD_VER}" .
+AMIROTATION_BASE_IMAGE_REF=${AMIROTATION_BASE_IMAGE:-public.ecr.aws/amazonlinux/amazonlinux:2023}
+AMIROTATION_BASE_IMAGE_RESOLVED=$(resolve_base_image "AMI rotation" "${AMIROTATION_BASE_IMAGE_REF}") || exit 1
+export AMIROTATION_BASE_IMAGE_REF AMIROTATION_BASE_IMAGE_RESOLVED
+echo "Building AMI rotation from ${AMIROTATION_BASE_IMAGE_RESOLVED}"
+set -o pipefail && docker build --pull -f Dockerfile -t ${AMIROTATION_DOCKER_IMAGE_UNSCANNED} \
+        --build-arg AMIROTATION_BASE_IMAGE="${AMIROTATION_BASE_IMAGE_RESOLVED}" \
+        --build-arg aws_env="${aws_env}" --build-arg CALCLOUD_VER="${CALCLOUD_VER}" .
 amirotation_docker_build_status=$?
 
 if [[ $amirotation_docker_build_status -ne 0 ]]; then
@@ -48,6 +54,10 @@ then
         ./deploy_ecr_image_delete.sh $AMIROTATION_ECR_TAG_UNSCANNED
         echo "Deleted unscanned tag"
 else
+        if [[ -n "${IMAGE_BUILD_ID}" ]]; then
+                echo "Build-ID image sets require the newly built AMI-rotation image to pass scanning; refusing the previous-image fallback." >&2
+                exit 1
+        fi
         if [ $amirotation_image_scan_status -eq 3 ]
         then
                 echo "Image scan found fatal vulnerabilities in ${AMIROTATION_ECR_TAG_UNSCANNED}."

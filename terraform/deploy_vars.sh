@@ -11,6 +11,26 @@ fi
 
 export BASE_IMAGE_TAG=`cut -d ":" -f2- <<< ${CAL_BASE_IMAGE} `
 
+resolve_base_image() {
+    local image_name="$1"
+    local image_ref="$2"
+    local resolved_ref
+
+    if ! docker pull "$image_ref" >&2; then
+        echo "Failed to pull ${image_name} base image ${image_ref}; exiting" >&2
+        return 1
+    fi
+    if ! resolved_ref=$(docker image inspect --format '{{index .RepoDigests 0}}' "$image_ref"); then
+        echo "Failed to resolve ${image_name} base image digest for ${image_ref}; exiting" >&2
+        return 1
+    fi
+    if [[ ! "${resolved_ref}" =~ @sha256:[a-f0-9]{64}$ ]]; then
+        echo "Could not find a SHA-256 RepoDigest for ${image_name} base image ${image_ref}; exiting" >&2
+        return 1
+    fi
+    printf '%s\n' "${resolved_ref}"
+}
+
 export LEGACY_COMMON_IMAGE_TAG="CALCLOUD_${CALCLOUD_VER}-CALDP_${CALDP_VER}-BASE_${BASE_IMAGE_TAG}"
 export COMMON_IMAGE_TAG="${LEGACY_COMMON_IMAGE_TAG}"
 if [[ -n "${IMAGE_BUILD_ID}" ]]; then

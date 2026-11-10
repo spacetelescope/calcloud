@@ -66,7 +66,7 @@
           "type": "object",
           "additionalProperties": false,
           "required": ["calcloud", "caldp"],
-          "description": "The exact branch or tag checked out for each repository; null when it cannot be verified.",
+          "description": "The selected branch, tag, or commit ref for each repository; null when not applicable or unverifiable.",
           "properties": {
             "calcloud": { "type": ["string", "null"] },
             "caldp": { "type": ["string", "null"] }
