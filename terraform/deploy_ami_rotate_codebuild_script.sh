@@ -1,7 +1,7 @@
 #! /bin/bash -xu
 
-# Same as deploy_ami_rotate.sh but removed ADMIN_ARN
-# since the hst-repro-codebuild-role should be able to run this script without assuming the admin role
+# AMI rotation deploy script for the CodeBuild path.
+# The hst-repro-codebuild-role should be able to run this script without assuming the admin role.
 aws_env=${aws_env:-""}
 
 # get the versions from ssm params
@@ -76,9 +76,9 @@ echo $aws_tfstate
 
 # get AMI id
 cd $CALCLOUD_BUILD_DIR/ami_rotation
-ami_json=$(echo $(aws ec2 describe-images --region us-east-1 --executable-users self))
-ci_ami=`python3 parse_image_json.py "${ami_json}" STSCI-AMAZON-LINUX2023`
-ecs_ami=`python3 parse_image_json.py "${ami_json}" STSCI-EPH-ECS-AL2023`
+aws ec2 describe-images --region us-east-1 --executable-users self --output json > images.json
+ci_ami=`python3.11 parse_image_json.py STSCI-AMAZON-LINUX2023`
+ecs_ami=`python3.11 parse_image_json.py STSCI-EPH-ECS-AL2023`
 
 if [[ "$ci_ami" =~ ^ami-[a-z0-9]+$ ]]; then
     echo $ci_ami
@@ -101,22 +101,22 @@ cd ${CALCLOUD_BUILD_DIR}/terraform
 terraform init -backend-config="bucket=${aws_tfstate}" -backend-config="key=calcloud/${aws_env}.tfstate" -backend-config="region=us-east-1"
 
 # in order to rotate the ami, requires a new version of the launch template and the associated compute environments
-terraform taint aws_batch_compute_environment.compute_env[0]
-terraform taint aws_batch_compute_environment.compute_env[1]
-terraform taint aws_batch_compute_environment.compute_env[2]
-terraform taint aws_batch_compute_environment.compute_env[3]
-terraform taint aws_batch_compute_environment.model_compute_env[0]
+LENGTH_LADDER=$(terraform console <<'EOF' | tail -n 1
+length(local.ladder)
+EOF
+)
 
-terraform plan -no-color -var "environment=${aws_env}" -out ami_rotate.out \
-    -target aws_batch_compute_environment.model_compute_env \
+for ((i=0; i<LENGTH_LADDER; i++)); do
+    terraform taint "aws_batch_compute_environment.compute_env[$i]"
+done
+
+terraform plan -no-color -out ami_rotate.out \
     -target aws_batch_compute_environment.compute_env \
     -target aws_batch_job_queue.batch_queue \
-    -target aws_batch_job_queue.model_queue \
     -target aws_launch_template.hstdp \
-    -target aws_launch_template.ami_rotation \
     -var "awsysver=${CALCLOUD_VER}" -var "awsdpver=${CALDP_VER}" -var "csys_ver=${CSYS_VER}" -var "environment=${aws_env}" -var "ci_ami=${ci_ami}" -var "ecs_ami=${ecs_ami}"
 
+terraform show ami_rotate.out > "ami_rotate.txt"
 terraform apply -no-color "ami_rotate.out"
 
 cd $HOME
-rm -rf $TMP_INSTALL_DIR

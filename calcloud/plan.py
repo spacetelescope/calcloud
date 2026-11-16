@@ -14,12 +14,14 @@ import os
 from collections import namedtuple
 
 from . import hst
-from . import log
 from . import common
+from . import log
 
 import json
 import boto3
 from boto3.dynamodb.conditions import Key
+
+logger = log.configure_logging()
 
 client = boto3.client("lambda", config=common.retry_config)
 dynamodb = boto3.resource("dynamodb", config=common.retry_config, region_name="us-east-1")
@@ -37,6 +39,7 @@ JobResources = namedtuple(
         "crds_config",
         "initial_modeled_bin",
         "max_seconds",
+        "disk_size",
     ],
 )
 
@@ -106,16 +109,17 @@ def invoke_lambda_predict(dataset, dataset_type, output_bucket):
             Payload=json.dumps(inputParams),
         )
         predictions = json.load(response["Payload"])
-        log.info(f"Predictions for {dataset}: {predictions}")
+        logger.info("Predictions for %s: %s", dataset, predictions, extra={"dataset": dataset})
+        # defaults: db_clock=20 minutes, wc_std=5
+        db_clock, wc_std = query_ddb(dataset)
+        clockTime = predictions["clockTime"] * (1 + wc_std)
+        memBin = predictions["memBin"]
     else:
-        # Return a default 'predictions' for now since models for SVM and MVM not yet implemented
-        predictions = dict()
-        predictions["clockTime"] = 20 * 60
-        predictions["memBin"] = 1
-    # defaults: db_clock=20 minutes, wc_std=5
-    db_clock, wc_std = query_ddb(dataset)
-    clockTime = predictions["clockTime"] * (1 + wc_std)
-    return clockTime, db_clock, predictions["memBin"]
+        # The maximum MVM time seen on-prem is 54 hours, so set SVM/MVM clockTime to 72 hours.
+        clockTime = 72 * 60 * 60
+        db_clock = 0
+        memBin = 1
+    return clockTime, db_clock, memBin
 
 
 def _get_resources(dataset, dataset_type, output_bucket, input_path, timeout_scale):
@@ -139,12 +143,19 @@ def _get_resources(dataset, dataset_type, output_bucket, input_path, timeout_sca
     crds_config = "caldp-config-aws"
     # default: predicted time * 6 or * 1+std_err
     clockTime, db_clock, initial_bin = invoke_lambda_predict(dataset, dataset_type, output_bucket)
-    # clip between 20 minutes and 2 days, * timeout_scale
-    kill_time = int(min(max(clockTime, db_clock), 48 * 60 * 60) * timeout_scale)
+
+    # clip between 20 minutes and 2 (ipst) or 3 (svm/mvm) days, * timeout_scale
+    max_hours = 48 if dataset_type == "ipst" else 72
+    kill_time = int(min(max(clockTime, db_clock), max_hours * 60 * 60) * timeout_scale)
+
     # minimum Batch requirement 60 seconds
     kill_time = int(max(kill_time, 60))
 
-    return JobResources(dataset, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time)
+    disk_size = "large-volume" if dataset_type == "mvm" else "default"
+
+    return JobResources(
+        dataset, instr, job_name, s3_output_uri, input_path, crds_config, initial_bin, kill_time, disk_size
+    )
 
 
 def _get_environment(job_resources, memory_retries, memory_bin):
@@ -156,33 +167,30 @@ def _get_environment(job_resources, memory_retries, memory_bin):
     job_queues = os.environ["JOBQUEUES"].split(",")
     job_resources = JobResources(*job_resources)
 
+    if job_resources.disk_size == "large-volume":
+        job_queues = [x for x in job_queues if "large-volume" in x]
+        job_defs = [x for x in job_defs if "large-volume" in x]
+    else:
+        job_queues = [x for x in job_queues if "large-volume" not in x]
+        job_defs = [x for x in job_defs if "large-volume" not in x]
+
     final_bin = memory_bin if memory_bin is not None else job_resources.initial_modeled_bin
     final_bin += memory_retries
     if final_bin < len(job_defs):
-        log.info(
-            "Selecting resources for",
+        logger.info(
+            "Selecting resources for %s Initial modeled bin %s Memory retries %s Memory bin %s Final bin index %s",
             job_resources.dataset,
-            "Initial modeled bin",
             job_resources.initial_modeled_bin,
-            "Memory retries",
             memory_retries,
-            "Memory bin",
             memory_bin,
-            "Final bin index",
             final_bin,
+            extra={"dataset": job_resources.dataset},
         )
         job_definition = job_defs[final_bin]
         job_queue = job_queues[final_bin]
     else:
-        msg = (
-            "No higher memory job definition for",
-            job_resources.dataset,
-            "after",
-            memory_retries,
-            "and",
-            memory_bin,
-        )
-        log.info(*msg)
+        msg = f"No higher memory job definition for {job_resources.dataset} " f"after {memory_retries} and {memory_bin}"
+        logger.info(msg, extra={"dataset": job_resources.dataset})
         raise AllBinsTriedQuit(*msg)
 
     return JobEnv(job_queue, job_definition, "caldp-process")

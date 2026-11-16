@@ -16,7 +16,6 @@ boto3.set_stream_logger("botocore.credentials", logging.DEBUG)
 # add lambda paths for testing
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/blackboard"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/batch_events"))
-sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/AmiRotation"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobClean"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobDelete"))
 sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/JobRescue"))
@@ -25,9 +24,36 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "lambda/broadcast")
 
 EVENT_DIR = str(Path(__file__).resolve().parent / "artifacts/events")
 
-JOBDEFINITIONS = ["calcloud-jobdef-2g", "calcloud-jobdef-8g", "calcloud_jobdef-16g", "calcloud-jobdef-64g"]
-CENVIRONMENTS = ["calcloud-cenv-2g", "calcloud-cenv-8g", "calcloud-cenv-16g", "calcloud-cenv-64g"]
-JOBQUEUES = ["calcloud-jobqueue-2g", "calcloud-jobqueue-8g", "calcloud-jobqueue-16g", "calcloud-jobqueue-64g"]
+JOBDEFINITIONS = [
+    "calcloud-jobdef-2g",
+    "calcloud-jobdef-2g-large-volume",
+    "calcloud-jobdef-8g",
+    "calcloud-jobdef-8g-large-volume",
+    "calcloud_jobdef-16g",
+    "calcloud_jobdef-16g-large-volume",
+    "calcloud-jobdef-64g",
+    "calcloud-jobdef-64g-large-volume",
+]
+CENVIRONMENTS = [
+    "calcloud-cenv-2g",
+    "calcloud-cenv-2g-large-volume",
+    "calcloud-cenv-8g",
+    "calcloud-cenv-8g-large-volume",
+    "calcloud-cenv-16g",
+    "calcloud-cenv-16g-large-volume",
+    "calcloud-cenv-64g",
+    "calcloud-cenv-64g-large-volume",
+]
+JOBQUEUES = [
+    "calcloud-jobqueue-2g",
+    "calcloud-jobqueue-2g-large-volume",
+    "calcloud-jobqueue-8g",
+    "calcloud-jobqueue-8g-large-volume",
+    "calcloud-jobqueue-16g",
+    "calcloud-jobqueue-16g-large-volume",
+    "calcloud-jobqueue-64g",
+    "calcloud-jobqueue-64g-large-volume",
+]
 BUCKET = "calcloud-processing-moto"
 TEST_DATASET_NAMES = [
     "ieloc4yzq",
@@ -49,7 +75,6 @@ os.environ["BUCKET"] = BUCKET
 os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 os.environ["MAX_MEMORY_RETRIES"] = "4"
 os.environ["MAX_DOCKER_RETRIES"] = "4"
-os.environ["LAUNCH_TEMPLATE_NAME"] = "test_launch_template"
 os.environ["SUBMIT_TIMEOUT"] = "10"  # for timing out waiting for inputs to submit batch jobs
 os.environ["JOBPREDICTLAMBDA"] = "job_predict_lambda"
 os.environ["DDBTABLE"] = "mock_ddb_table"

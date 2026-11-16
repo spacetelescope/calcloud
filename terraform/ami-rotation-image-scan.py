@@ -17,7 +17,8 @@ import sys
 import os
 import subprocess
 import json
-#import yaml
+
+# import yaml
 import copy
 import argparse
 import time
@@ -35,7 +36,7 @@ KEEP_LEVELS = {
 FAIL_LEVELS = ["CRITCAL", "HIGH"]
 
 
-def run(cmd, cwd="."):
+def run(cmd, cwd=".", env=None):
     result = subprocess.run(
         cmd.split(),
         stdout=subprocess.PIPE,
@@ -43,6 +44,7 @@ def run(cmd, cwd="."):
         text=True,
         check=True,
         cwd=cwd,
+        env=env,
     )  # maybe succeeds
     return result.stdout
 
@@ -51,7 +53,6 @@ def _get_scan_results(image_digest, image_tag):
     """Issue an AWS command to dump the ECR scan results as JSON, load the
     JSON,  and return the resulting dict.
     """
-    admin_arn = os.environ["ADMIN_ARN"]
     image_repo = os.environ["IMAGE_REPO"]
     ecr_account_to_use = os.environ["ECR_ACCOUNT_ID"]
 
@@ -64,16 +65,19 @@ def _get_scan_results(image_digest, image_tag):
         file=sys.stderr,
     )
 
+    # This uses hst-repro-cross-account-ECR-access which is a role in the ECR account.
+    # You cannot run describe-image-scan-findings cross account, you have to use a role in the other account.
     scan_results = run(
-        f"awsudo -d 3600 {admin_arn}  aws ecr describe-image-scan-findings "
+        f"aws ecr describe-image-scan-findings "
         f"--no-paginate "
         f"--registry-id {ecr_account_to_use} "
         f"--repository-name {image_repo} "
-        f"--image-id {image_id_arg}"
+        f"--image-id {image_id_arg}",
+        env=dict(os.environ) | {"AWS_PROFILE": "hst-repro-cross-account-ECR-access"},
     )
 
-    #print("Scan Results")
-    #print(scan_results)
+    # print("Scan Results")
+    # print(scan_results)
 
     return json.loads(scan_results)
 
@@ -83,13 +87,11 @@ def get_scan_results(image_digest):
     try:
         return _get_scan_results(image_digest, image_tag)
     except Exception:
-        print(
-            f"Failed fetching {image_tag}.  Trying for approved tag.", file=sys.stderr
-        )
+        print(f"Failed fetching {image_tag}.  Trying for approved tag.", file=sys.stderr)
         if image_tag.endswith("_UNSCANNED"):
-            return _get_scan_results(image_digest, image_tag[:len("_UNSCANNED")])
+            return _get_scan_results(image_digest, image_tag[: len("_UNSCANNED")])
         else:
-           raise
+            raise
 
 
 def limit_levels(keep_levels, fail_levels, full_results):
@@ -161,10 +163,11 @@ def main():
 
     reduced = get_report_dict(keep_levels, fail_levels, args.image_digest)
 
-    #print(reduced)
-    #print(yaml.dump(reduced))
+    # print(reduced)
+    # print(yaml.dump(reduced))
 
     sys.exit(reduced["overall_status"] == "FAILED")
+
 
 if __name__ == "__main__":
     main()

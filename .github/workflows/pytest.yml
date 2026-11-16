@@ -5,28 +5,29 @@ on: [push, pull_request]
 jobs:
   coverage:
     name: code coverage check
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: set up python 3.11
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: 3.11
 
       - name: checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: install requirements
         run: |
           pip install .[dev]
-          pip install numpy scikit-learn==1.4.1.post1 tensorflow==2.15.0.post1 --upgrade-strategy only-if-needed
+          pip install -r lambda/JobPredict/requirements.txt --upgrade-strategy only-if-needed
 
       - name: run pytest code coverage check
         run: |
+          # Match docker flag
+          export JOBLIB_MULTIPROCESSING=0
           pytest \
             --verbose \
             --cov=calcloud \
-            --cov=lambda/AmiRotation \
             --cov=lambda/batch_events \
             --cov=lambda/blackboard \
             --cov=lambda/broadcast \
@@ -35,28 +36,29 @@ jobs:
             --cov=lambda/JobPredict \
             --cov=lambda/JobRescue \
             --cov=lambda/ModelIngest \
-            --cov=lambda/refreshCacheLogs \
-            --cov=lambda/refreshCacheSubmit \
             --cov=lambda/s3_trigger \
             --cov-fail-under 30 \
 
   pytest:
     name: pytest
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: set up python 3.11
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: 3.11
 
       - name: checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: install requirements
         run: |
           pip install .[dev]
-          pip install numpy scikit-learn==1.4.1.post1 tensorflow==2.15.0.post1 --upgrade-strategy only-if-needed
+          pip install -r lambda/JobPredict/requirements.txt --upgrade-strategy only-if-needed
 
       - name: run pytest
-        run: pytest -rP
+        run: |
+          # Match docker flag
+          export JOBLIB_MULTIPROCESSING=0
+          pytest -rP

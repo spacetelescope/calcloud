@@ -20,7 +20,7 @@ if [[ $amirotation_docker_build_status -ne 0 ]]; then
 fi
 
 # need to "log in" to ecr to push or pull the images
-awsudo $ADMIN_ARN aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $repo_url
+AWS_PROFILE=hst_reprocessing_admin_role aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $repo_url
 
 echo Pushing ${AMIROTATION_DOCKER_IMAGE_UNSCANNED}
 docker push ${AMIROTATION_DOCKER_IMAGE_UNSCANNED}
@@ -32,7 +32,7 @@ pwd
 echo "Sleeping for 30 seconds before scanning"
 sleep 30
 
-python3 ami-rotation-image-scan.py
+python3.11 ami-rotation-image-scan.py
 amirotation_image_scan_status=$?
 
 if [ $amirotation_image_scan_status == 0 ]

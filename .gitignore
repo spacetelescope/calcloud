@@ -3,6 +3,7 @@ coverage
 .pydevproject
 .project
 .vscode
+.env
 *.pyc
 *~
 *.egg-info/
@@ -25,3 +26,4 @@ testing/predict_lambda_tests/*
 tests/test_artifacts/*
 
 *.DS_Store
+scratch/

@@ -6,6 +6,9 @@ are deleted.
 
 from calcloud import io
 from calcloud import s3
+from calcloud.log import configure_logging
+
+logger = configure_logging()
 
 
 def lambda_handler(event, context):
@@ -14,7 +17,7 @@ def lambda_handler(event, context):
     comm = io.get_io_bundle(bucket_name)
 
     if dataset == "all":
-        print("Cleaning all datasets;  removing all job resources (S3 files).")
+        logger.info("Cleaning all datasets;  removing all job resources (S3 files).")
 
         comm.messages.delete_literal("clean-all")  # don't interpret all as existing datasets
 
@@ -22,7 +25,7 @@ def lambda_handler(event, context):
 
         comm.messages.broadcast("clean", cleanup_ids)
     elif dataset == "ingested":  # a variation of "all" restricted to datasets with an ingest message
-        print("Cleaning all ingested datasets;  removing all job resources (S3 files).")
+        logger.info("Cleaning all ingested datasets;  removing all job resources (S3 files).")
 
         comm.messages.delete_literal("clean-ingested")  # don't interpret "ingested"
 
@@ -30,5 +33,5 @@ def lambda_handler(event, context):
 
         comm.messages.broadcast("clean", cleanup_ids)
     else:
-        print("Cleaning", dataset)
+        logger.info("Cleaning %s", dataset)
         comm.clean(dataset)

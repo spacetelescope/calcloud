@@ -1,11 +1,19 @@
+"""Snapshot AWS Batch job metadata for the blackboard process."""
+
+import boto3
+import os
+import tempfile
+
+from calcloud import batch
+from calcloud import common
+from calcloud import hst
+from calcloud.log import configure_logging
+
+logger = configure_logging()
+
+
 # TODO: add queue name to metadata
 def lambda_handler(event, context):
-    import boto3
-    import os
-    import tempfile
-    from calcloud import batch
-    from calcloud import common
-    from calcloud import hst
 
     # various metadata definitions
     jobStatuses = ["FAILED", "SUBMITTED", "PENDING", "RUNNABLE", "STARTING", "RUNNING", "SUCCEEDED"]
@@ -49,9 +57,9 @@ def lambda_handler(event, context):
 
                 for page in jobs_iterator:
                     jobs = page["jobSummaryList"]
-                    print(f"handling {len(jobs)} jobs from {q} in {jobStatus} status...")
+                    logger.info("handling %s jobs from %s in %s status...", len(jobs), q, jobStatus)
                     for j in jobs:
-                        print(j)
+                        logger.debug(j)
                         jobId = j["jobId"]
 
                         submitDate = int(j.get("createdAt", default_timestamp) / 1000.0)

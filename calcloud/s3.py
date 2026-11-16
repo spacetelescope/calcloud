@@ -13,8 +13,10 @@ import os.path
 
 import boto3
 
-from calcloud import log
 from calcloud import common
+from calcloud import log
+
+logger = log.configure_logging()
 
 # -------------------------------------------------------------
 
@@ -108,7 +110,7 @@ def upload_filepath(filepath, s3_filepath, client=None):
     ------
     None
     """
-    log.verbose("s3.upload_filepath:", filepath, s3_filepath)
+    logger.debug("s3.upload_filepath: %s %s", filepath, s3_filepath)
     client, bucket_name, object_name = _s3_setup(client, s3_filepath)
     return client.upload_file(filepath, bucket_name, object_name)
 
@@ -129,7 +131,7 @@ def download_filepath(filepath, s3_filepath, client=None):
     ------
     None
     """
-    log.verbose("s3.download_filepath:", filepath, s3_filepath)
+    logger.debug("s3.download_filepath: %s %s", filepath, s3_filepath)
     client, bucket_name, object_name = _s3_setup(client, s3_filepath)
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     return client.download_file(bucket_name, object_name, filepath)
@@ -152,7 +154,7 @@ def copy_object(s3_filepath_from, s3_filepath_to, client=None):
     ------
     None
     """
-    log.verbose("s3.copy_object", s3_filepath_from, s3_filepath_to)
+    logger.debug("s3.copy_object %s %s", s3_filepath_from, s3_filepath_to)
     client = client or get_default_client()
     from_bucket_name, from_object_name = s3_split_path(s3_filepath_from)
     to_bucket_name, to_object_name = s3_split_path(s3_filepath_to)
@@ -179,7 +181,7 @@ def move_object(s3_filepath_from, s3_filepath_to, client=None):
     ------
     None
     """
-    log.verbose("s3.move_object", s3_filepath_from, s3_filepath_to)
+    logger.debug("s3.move_object %s %s", s3_filepath_from, s3_filepath_to)
     client = client or get_default_client()
     copy_object(s3_filepath_from, s3_filepath_to, client)
     delete_object(s3_filepath_from, client)
@@ -210,7 +212,7 @@ def download_objects(dirpath, s3_dirpath, max_objects=1000, client=None):
     downloads : list (str)
        file paths of downloaded files.
     """
-    log.verbose("s3.download_objects", dirpath, s3_dirpath, max_objects)
+    logger.debug("s3.download_objects %s %s %s", dirpath, s3_dirpath, max_objects)
     client = client or get_default_client()
     downloads = []
     for s3_filepath in list_objects(s3_dirpath, max_objects=max_objects, client=client):
@@ -260,7 +262,7 @@ def list_objects(s3_prefix, client=None, max_objects=MAX_LIST_OBJECTS):
         list of full s3 paths of objects matching `s3_prefix` except
         `s3_prefix` itself.
     """
-    log.verbose("s3.list_objects", s3_prefix, max_objects)
+    logger.debug("s3.list_objects %s %s", s3_prefix, max_objects)
     client, bucket_name, prefix = _s3_setup(client, s3_prefix)
     paginator = client.get_paginator("list_objects_v2")
     config = {"MaxItems": max_objects, "PageSize": 1000}
@@ -288,7 +290,7 @@ def get_object(s3_filepath, client=None, encoding="utf-8"):
     ------
     object contents : str or bytes
     """
-    log.verbose("s3.get_object", s3_filepath)
+    logger.debug("s3.get_object %s", s3_filepath)
     client, bucket_name, object_name = _s3_setup(client, s3_filepath)
     response = client.get_object(Bucket=bucket_name, Key=object_name)
     binary = response["Body"].read()
@@ -302,7 +304,7 @@ def put_object(string, s3_filepath, encoding="utf-8", client=None):
     describes the full path of a file in S3 storage defining both bucket
     and object key.
     """
-    log.verbose("s3.put_object", s3_filepath, "length", len(string))
+    logger.debug("s3.put_object %s length %s", s3_filepath, len(string))
     client, bucket_name, object_name = _s3_setup(client, s3_filepath)
     if encoding:
         string = string.encode(encoding)
@@ -323,7 +325,7 @@ def delete_object(s3_filepath, client=None):
     ------
     None
     """
-    log.verbose("s3.delete_object", s3_filepath)
+    logger.debug("s3.delete_object %s", s3_filepath)
     client, bucket_name, object_name = _s3_setup(client, s3_filepath)
     return client.delete_object(Bucket=bucket_name, Key=object_name)
 
@@ -336,12 +338,12 @@ def parse_s3_event(event):
 
     Returns bucket_name, dataset
     """
-    log.verbose("S3 Event:", event)
+    logger.debug("S3 Event: %s", event)
 
     message = event["Records"][0]["s3"]["object"]["key"]
     bucket_name = event["Records"][0]["s3"]["bucket"]["name"]
     dataset = "-".join(message.split("-")[1:])
 
-    log.info(f"received {message} : bucket = {bucket_name}, dataset = {dataset}")
+    logger.info("received %s : bucket = %s, dataset = %s", message, bucket_name, dataset)
 
     return "s3://" + bucket_name, dataset

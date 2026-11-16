@@ -1,10 +1,72 @@
-def test_log_mock():
-    """Testing log.py using available doctests
-    Still missing lines 95-101, 123, 129, 160-161, 167-171, 190, 215-216, 244, 254,
-    259, 281-283, 287, 299, 302, 311, 314, 333, 344-348, 357-360, 367-370, 374"""
-    import doctest
-    from calcloud import log
+import io
+import json
+import logging
 
-    doctest_result = doctest.testmod(log)
-    assert doctest_result[0] == 0, "More than zero doctest errors occurred."  # test errors
-    assert doctest_result[1] >= 17, "Too few tests ran,  something is wrong with testing."  # tests run
+from calcloud.log import JsonLogFormatter, configure_logging
+
+
+def test_configure_logging_uses_json_formatter_in_lambda(monkeypatch):
+    root = logging.getLogger()
+    original_handlers = root.handlers[:]
+    original_level = root.level
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+
+    try:
+        root.handlers = [handler]
+        monkeypatch.setenv("AWS_LAMBDA_FUNCTION_NAME", "test-lambda")
+
+        logger = configure_logging("test.lambda.logger")
+        logger.info("hello %s", "world")
+
+        payload = json.loads(stream.getvalue().strip())
+        assert payload["level"] == "INFO"
+        assert payload["logger"] == "test.lambda.logger"
+        assert payload["message"] == "hello world"
+        assert handler.formatter.__class__ is JsonLogFormatter
+    finally:
+        root.handlers = original_handlers
+        root.setLevel(original_level)
+
+
+def test_configure_logging_preserves_structured_dataset_fields_in_lambda(monkeypatch):
+    root = logging.getLogger()
+    original_handlers = root.handlers[:]
+    original_level = root.level
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+
+    try:
+        root.handlers = [handler]
+        monkeypatch.setenv("AWS_LAMBDA_FUNCTION_NAME", "test-lambda")
+
+        logger = configure_logging("test.lambda.logger")
+        logger.info("submitted", extra={"dataset": "acs_9es_06"})
+
+        payload = json.loads(stream.getvalue().strip())
+        assert payload["dataset"] == "acs_9es_06"
+    finally:
+        root.handlers = original_handlers
+        root.setLevel(original_level)
+
+
+def test_configure_logging_keeps_plain_formatter_outside_lambda(monkeypatch):
+    root = logging.getLogger()
+    original_handlers = root.handlers[:]
+    original_level = root.level
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    handler.setFormatter(logging.Formatter("%(levelname)s - %(message)s"))
+
+    try:
+        root.handlers = [handler]
+        monkeypatch.delenv("AWS_LAMBDA_FUNCTION_NAME", raising=False)
+
+        logger = configure_logging("test.local.logger")
+        logger.info("hello %s", "world")
+
+        assert stream.getvalue().strip() == "INFO - hello world"
+        assert handler.formatter._fmt == "%(levelname)s - %(message)s"
+    finally:
+        root.handlers = original_handlers
+        root.setLevel(original_level)

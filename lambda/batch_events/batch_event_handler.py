@@ -21,10 +21,13 @@ import os
 
 from calcloud import io
 from calcloud import exit_codes
+from calcloud.log import configure_logging
+
+logger = configure_logging()
 
 
 def lambda_handler(event, context):
-    print(event)
+    logger.info(event)
 
     detail = event["detail"]
     job_id = detail["jobId"]
@@ -63,31 +66,47 @@ def lambda_handler(event, context):
         if not metadata["terminated"] and metadata["memory_retries"] < int(os.environ["MAX_MEMORY_RETRIES"]):
             metadata["memory_retries"] += 1
             continuation_msg = "rescue-" + dataset
-            print("Automatic OutOfMemory rescue of", dataset, "with memory retry count", metadata["memory_retries"])
+            logger.info(
+                "Automatic OutOfMemory rescue of %s with memory retry count %s",
+                dataset,
+                metadata["memory_retries"],
+            )
         else:
-            print("Automatic OutOfMemory retries for", dataset, "exhausted at", metadata["memory_retries"])
+            logger.error("Automatic OutOfMemory retries for %s exhausted at %s", dataset, metadata["memory_retries"])
     elif container_reason.startswith("CannotInspectContainer"):
         if not metadata["terminated"] and metadata["retries"] < int(os.environ["MAX_DOCKER_RETRIES"]):
             metadata["retries"] += 1
             continuation_msg = "rescue-" + dataset
-            print("Automatic CannotInspectContainer rescue for", dataset, "with retry count", metadata["retries"])
+            logger.info(
+                "Automatic CannotInspectContainer rescue for %s with retry count %s",
+                dataset,
+                metadata["retries"],
+            )
         else:
-            print("Automatic CannotInspectContainer retries for", dataset, "exhausted at", metadata["retries"])
+            logger.error(
+                "Automatic CannotInspectContainer retries for %s exhausted at %s",
+                dataset,
+                metadata["retries"],
+            )
     elif container_reason.startswith("DockerTimeoutError"):
         if not metadata["terminated"] and metadata["retries"] < int(os.environ["MAX_DOCKER_RETRIES"]):
             metadata["retries"] += 1
             continuation_msg = "rescue-" + dataset
-            print("Automatic DockerTimeoutError rescue for", dataset, "with retry count", metadata["retries"])
+            logger.info(
+                "Automatic DockerTimeoutError rescue for %s with retry count %s",
+                dataset,
+                metadata["retries"],
+            )
         else:
-            print("Automatic DockerTimeoutError retries for", dataset, "exhausted at", metadata["retries"])
+            logger.error("Automatic DockerTimeoutError retries for %s exhausted at %s", dataset, metadata["retries"])
     elif status_reason.startswith("Operator cancelled"):
-        print("Operator cancelled job", job_id, "for", dataset, "no automatic retry.")
+        logger.info("Operator cancelled job %s for %s no automatic retry.", job_id, dataset)
         continuation_msg = "terminated-" + dataset
     else:
-        print("Failure for", dataset, "no automatic retry for", combined_reason)
+        logger.error("Failure for %s no automatic retry for %s", dataset, combined_reason)
 
     # XXXX Since retry count used in planning, control output must precede rescue message
-    print(metadata)
+    logger.info(metadata)
     comm.xdata.put(dataset, metadata)
     comm.messages.delete("all-" + dataset)
     comm.messages.put(continuation_msg)

@@ -116,17 +116,14 @@ variable ce_max_vcpu {
   }
 }
 
-# Temporarily set test crds_context to 1099 for test because that context has the calibration files
-# required by the WFC3 code changes. This needs to be changed back to the Ops value after testing
-# for build release/v0.4.42.
 variable crds_context {
   description = "the crds context to be the default for the environment"
   type = map(string)
   default = {
-    "-sb" = "hst_1298.pmap"
-    "-dev" = "hst_1298.pmap"
-    "-test" = "hst_1323.pmap"
-    "-ops" = "hst_1323.pmap"
+    "-sb" = "hst_1356.pmap"
+    "-dev" = "hst_1356.pmap"
+    "-test" = "hst_1356.pmap"
+    "-ops" = "hst_1372.pmap"
   }
 }
 
@@ -135,7 +132,7 @@ variable crds_bucket {
   default = {
     "-sb" = "test"
     "-dev" = "test"
-    "-test" = "ops"
+    "-test" = "test"
     "-ops" = "ops"
   }
 }

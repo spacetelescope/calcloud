@@ -60,10 +60,6 @@ output ecr_predict_lambda_image {
   value = local.ecr_predict_lambda_image
 }
 
-output ecr_model_training_image {
-  value = local.ecr_model_training_image
-}
-
 output ecr_caldp_batch_image {
   value = local.ecr_caldp_batch_image
 }
