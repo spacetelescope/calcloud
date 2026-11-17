@@ -121,9 +121,7 @@ def limit_levels(report_levels, fail_levels, full_results):
     if severity_counts is None:
         results_to_report["fatal_count"] = listed_fatal_count
     else:
-        results_to_report["fatal_count"] = sum(
-            severity_counts.get(level, 0) for level in fail_levels
-        )
+        results_to_report["fatal_count"] = sum(severity_counts.get(level, 0) for level in fail_levels)
     if results_to_report["fatal_count"]:
         results_to_report["overall_status"] = "FAILED"
     return results_to_report

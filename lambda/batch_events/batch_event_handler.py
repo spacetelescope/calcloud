@@ -17,6 +17,7 @@ A rescue message is sent to trigger the rescue lambda for qualifying
 memory related failures, otherwise an error-dataset message is sent.
 """
 
+import boto3
 import os
 
 from calcloud import io
@@ -24,6 +25,64 @@ from calcloud import exit_codes
 from calcloud.log import configure_logging, lambda_logging
 
 logger = configure_logging()
+
+
+def get_caldp_log(job_id, dataset):
+    batch = boto3.client("batch")
+    logs = boto3.client("logs")
+
+    # 1. Get the log stream name from AWS Batch
+    response = batch.describe_jobs(jobs=[job_id])
+    if response["ResponseMetadata"]["HTTPStatusCode"] != 200:
+        logger.warning(f"describe_jobs failed for {job_id}, {dataset}, {response}")
+        return None
+    jobs = response["jobs"]
+    if not jobs:
+        logger.warning(f"No jobs found for {job_id}, {dataset}")
+        return None
+
+    log_stream = jobs[0].get("container", {}).get("logStreamName")
+
+    if not log_stream:
+        logger.warning(
+            f"Log stream not available for dataset {dataset}, job {job_id} yet "
+            "(job may still be pending or starting)"
+        )
+        return None
+
+    # 2. Fetch all log events using forward pagination
+    log_group = "/aws/batch/job"
+
+    kwargs = {
+        "logGroupName": log_group,
+        "logStreamName": log_stream,
+        "startFromHead": True,  # Read oldest logs first
+    }
+
+    lines = []
+    while True:
+        response = logs.get_log_events(**kwargs)
+        if response["ResponseMetadata"]["HTTPStatusCode"] != 200:
+            logger.warning(
+                f"get_log_events failed for log stream {log_stream} in log group {log_group}, "
+                f"dataset {dataset}, {response}"
+            )
+            return None
+        lines.extend(event["message"] for event in response["events"])
+
+        # CloudWatch returns the same nextForwardToken when you reach the end of the stream
+        next_token = response.get("nextForwardToken")
+        if not next_token or next_token == kwargs.get("nextToken"):
+            break
+
+        kwargs["nextToken"] = next_token
+
+    if lines:
+        logger.info(f"Retrieved caldp log for dataset {dataset}")
+    else:
+        logger.warning(f"No caldp log found for dataset {dataset}")
+
+    return "\n".join(lines)
 
 
 @lambda_logging(lambda event: event["detail"]["container"]["command"][1])
@@ -61,7 +120,7 @@ def lambda_handler(event, context):
     else:
         combined_reason = status_reason
 
-    continuation_msg = "error-" + dataset
+    continuation_msg = "clouderror-" + dataset
 
     if exit_codes.is_memory_error(exit_code) or container_reason.startswith("OutOfMemoryError: Container killed"):
         if not metadata["terminated"] and metadata["memory_retries"] < int(os.environ["MAX_MEMORY_RETRIES"]):
@@ -106,8 +165,47 @@ def lambda_handler(event, context):
     else:
         logger.error("Failure for %s no automatic retry for %s", dataset, combined_reason)
 
+    if continuation_msg in (f"clouderror-{dataset}", f"terminated-{dataset}"):
+        diagnostic = (
+            f"Dataset: {dataset}\n"
+            f"Batch job ID: {job_id}\n"
+            f"Exit code: {exit_code}\n"
+            f"Exit reason: {exit_reason}\n"
+            f"Status reason: {status_reason}\n"
+            f"Container reason: {container_reason}\n\n"
+        )
+
+        try:
+            caldp_log = get_caldp_log(job_id, dataset)
+        except Exception as exc:
+            logger.exception(
+                "Could not retrieve Batch logs for %s, job %s",
+                dataset,
+                job_id,
+            )
+            diagnostic += f"Batch log retrieval failed: {type(exc).__name__}: {exc}\n"
+        else:
+            diagnostic += caldp_log or "No Batch log content was available.\n"
+
+        if continuation_msg == f"clouderror-{dataset}":
+            # A cloud-error trigger promises that diagnostics exist.
+            comm.outputs.put({f"{dataset}/caldp_{dataset}.log": diagnostic})
+        else:
+            try:
+                comm.outputs.put({f"{dataset}/caldp_{dataset}.log": diagnostic})
+            except Exception:
+                logger.exception(
+                    "Could not upload Batch diagnostics for %s",
+                    dataset,
+                )
+
     # XXXX Since retry count used in planning, control output must precede rescue message
     logger.info(metadata)
     comm.xdata.put(dataset, metadata)
     comm.messages.delete("all-" + dataset)
     comm.messages.put(continuation_msg)
+
+
+if __name__ == "__main__":
+    result = get_caldp_log("411b6722-d714-45ba-ad94-679595e7856e", "acs_cxx_01")
+    a = 1

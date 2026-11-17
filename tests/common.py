@@ -70,10 +70,10 @@ def setup_error_messages(comm, overrides={}):
     # insert the extra error messages
     for i in range(3):
         dataset = f"ipppss{str(i + n).zfill(2)}t"
-        comm.messages.put(f"error-{dataset}", payload=overrides)
+        comm.messages.put(f"clouderror-{dataset}", payload=overrides)
         datasets.append(dataset)
-        message_types.append("error")
-        print("error", dataset, comm.messages.get(f"{'error'}-{dataset}"))
+        message_types.append("clouderror")
+        print("error", dataset, comm.messages.get(f"clouderror-{dataset}"))
 
     # read all messages back and assert they match the lists
     mess = comm.messages.listl()
