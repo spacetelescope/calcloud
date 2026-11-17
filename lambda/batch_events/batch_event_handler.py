@@ -26,6 +26,7 @@ from calcloud.log import configure_logging, lambda_logging
 
 logger = configure_logging()
 
+
 def get_caldp_log(job_id, dataset):
     batch = boto3.client("batch")
     logs = boto3.client("logs")
@@ -48,12 +49,14 @@ def get_caldp_log(job_id, dataset):
     log_stream = jobs[0].get("container", {}).get("logStreamName")
 
     if not log_stream:
-        logger.warning(f"Log stream not available for dataset {dataset}, job {job_id} yet "
-                       "(job may still be pending or starting)")
+        logger.warning(
+            f"Log stream not available for dataset {dataset}, job {job_id} yet "
+            "(job may still be pending or starting)"
+        )
         return None
 
     # 2. Fetch all log events using forward pagination
-    log_group = f"/aws/batch/job"
+    log_group = "/aws/batch/job"
 
     kwargs = {
         "logGroupName": log_group,
@@ -85,6 +88,7 @@ def get_caldp_log(job_id, dataset):
         logger.warning(f"No caldp log found for dataset {dataset}")
 
     return "\n".join(lines)
+
 
 @lambda_logging(lambda event: event["detail"]["container"]["command"][1])
 def lambda_handler(event, context):
@@ -171,7 +175,7 @@ def lambda_handler(event, context):
     if copy_logs:
         caldp_log = get_caldp_log(job_id, dataset)
         if caldp_log:
-            comm.outputs.put({f'{dataset}/{dataset}-caldp-log.txt': caldp_log})
+            comm.outputs.put({f"{dataset}/{dataset}-caldp-log.txt": caldp_log})
 
     # XXXX Since retry count used in planning, control output must precede rescue message
     logger.info(metadata)
@@ -179,7 +183,7 @@ def lambda_handler(event, context):
     comm.messages.delete("all-" + dataset)
     comm.messages.put(continuation_msg)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     result = get_caldp_log("411b6722-d714-45ba-ad94-679595e7856e", "acs_cxx_01")
     a = 1
-

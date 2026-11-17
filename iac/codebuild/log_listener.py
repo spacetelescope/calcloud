@@ -41,7 +41,7 @@ while True:
                         sequenceToken=nextToken,
                     )
                     nextToken = response["nextSequenceToken"]
-            except Exception as e:
+            except Exception as e:  # noqa: F841
                 # print(e)
                 continue
 

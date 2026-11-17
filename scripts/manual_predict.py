@@ -520,7 +520,6 @@ def test_locally():
     predicted_memory, predicted_bin = predict_memory(row)
     predicted_wallclock = predict_wallclock(row)
     print(f"Predicted Memory: {predicted_memory} GB, Bin: {predicted_bin}, Wallclock: {predicted_wallclock} s")
-    a = 1
 
 
 def main():

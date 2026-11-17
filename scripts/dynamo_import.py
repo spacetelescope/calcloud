@@ -44,7 +44,7 @@ def write_to_dynamo(rows, table_name):
         with table.batch_writer() as batch:
             for i in range(len(rows)):
                 batch.put_item(Item=rows[i])
-    except:
+    except Exception:
         import traceback
 
         traceback.print_exc()
