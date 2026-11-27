@@ -1,5 +1,5 @@
 import pytest
-from . import conftest
+from tests import conftest
 from botocore.exceptions import ClientError
 
 

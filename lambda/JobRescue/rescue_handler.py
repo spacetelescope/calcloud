@@ -12,7 +12,7 @@ from calcloud import lambda_submit
 from calcloud import s3
 from calcloud.log import configure_logging, lambda_logging
 
-RESCUE_TYPES = ["error", "terminated"]
+RESCUE_TYPES = ["clouderror", "terminated"]
 
 MAX_PER_LAMBDA = 100
 

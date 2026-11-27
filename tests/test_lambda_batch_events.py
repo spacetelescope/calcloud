@@ -49,7 +49,7 @@ def assert_rescue(event_basename, **overrides):
 
 def assert_error(event_basename, **overrides):
     """Verify that the failyre event generates only an error message."""
-    return assert_final_message("error", event_basename, **overrides)
+    return assert_final_message("clouderror", event_basename, **overrides)
 
 
 def assert_terminated(event_basename, **overrides):

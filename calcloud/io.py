@@ -37,7 +37,8 @@ MESSAGE_TYPES = [
     "submit",
     "processing",
     "processed",
-    "error",
+    "caldperror",
+    "clouderror",
     "ingesterror",
     "ingested",
     "terminated",
@@ -303,13 +304,13 @@ class MessageIo(YamlIo):
     processing.
 
     It can operate on a particular message type for a paritcular
-    dataset, e.g.  'error-lcw303cjq'.
+    dataset, e.g.  'clouderror-lcw303cjq'.
 
     It can operate on all message types for a particular dataset,
     e.g. 'all-lcw303cj'
 
     It can operate on a particular message type for all datasets,
-    e.g. 'error' or 'error-all'.
+    e.g. 'clouderror' or 'clouderror-all'.
 
     It can operate on all types of messages for all datasets,
     e.g. 'all'.
@@ -323,14 +324,14 @@ class MessageIo(YamlIo):
     including the full dataset.   Specified as a string or list the message payload(s) are
     defaulted to the empty string:
 
-    >>> comm.messages.put(['cancel-lcw303cjq', 'error-lcw303cjq', 'processed-lcw303cjq', 'rescue-lcw303cjq']);
+    >>> comm.messages.put(['cancel-lcw303cjq', 'clouderror-lcw303cjq', 'processed-lcw303cjq', 'rescue-lcw303cjq']);
     >>> comm.messages.listl()
-    ['cancel-lcw303cjq', 'error-lcw303cjq', 'processed-lcw303cjq', 'rescue-lcw303cjq']
+    ['cancel-lcw303cjq', 'clouderror-lcw303cjq', 'processed-lcw303cjq', 'rescue-lcw303cjq']
 
     list_s3() yields the fully qualified S3 paths matching the given prefix(es) that exist on S3:
 
-    >>> list(comm.messages.list_s3("error")) #doctest: +ELLIPSIS
-    ['s3://.../messages/error-lcw303cjq']
+    >>> list(comm.messages.list_s3("clouderror")) #doctest: +ELLIPSIS
+    ['s3://.../messages/clouderror-lcw303cjq.trigger']
 
     listl() is primarily a test method which returns the list of messages matching prefix(es):
 
@@ -341,7 +342,7 @@ class MessageIo(YamlIo):
 
     >>> comm.messages.delete("rescue");
     >>> comm.messages.listl()
-    ['cancel-lcw303cjq', 'error-lcw303cjq', 'processed-lcw303cjq']
+    ['cancel-lcw303cjq', 'clouderror-lcw303cjq', 'processed-lcw303cjq']
 
     The "all" or "" messages expand to all existing messages:
 
@@ -361,19 +362,19 @@ class MessageIo(YamlIo):
 
     The all-dataset message is expanded to every type-dataset:
 
-    >>> comm.messages.put(['cancel-lcw303cjq', 'error-lcw303cjq', 'rescue-lcw304cjq']);
+    >>> comm.messages.put(['cancel-lcw303cjq', 'clouderror-lcw303cjq', 'rescue-lcw304cjq']);
     >>> comm.messages.delete('all-lcw303cjq'); comm.messages.listl()
     ['rescue-lcw304cjq']
 
     The type-all message is expanded into every type-dataset combination and is really
     equivalent to searching for S3 prefix "type".
 
-    >>> comm.messages.put(['error-lcw303cjq', 'error-lcw304cjq', 'error-lcw305cjq']);  comm.messages.listl()
-    ['error-lcw303cjq', 'error-lcw304cjq', 'error-lcw305cjq', 'rescue-lcw304cjq']
-    >>> comm.messages.delete('error-all');  comm.messages.listl()
+    >>> comm.messages.put(['clouderror-lcw303cjq', 'clouderror-lcw304cjq', 'clouderror-lcw305cjq']);  comm.messages.listl()
+    ['clouderror-lcw303cjq', 'clouderror-lcw304cjq', 'clouderror-lcw305cjq', 'rescue-lcw304cjq']
+    >>> comm.messages.delete('clouderror-all');  comm.messages.listl()
     ['rescue-lcw304cjq']
 
-    Methods list() and listl() report 'processed' messages without the .trigger suffix:
+    Methods list() and listl() report 'processed' and 'clouderror' messages without the .trigger suffix:
 
     >>> comm.messages.move('rescue-lcw304cjq', 'processed-lcw304cjq'); comm.messages.listl();
     ['processed-lcw304cjq']
@@ -387,7 +388,7 @@ class MessageIo(YamlIo):
     []
     """
 
-    add_trigger_types = ["processed"]
+    add_trigger_types = ["processed", "clouderror"]
 
     def path(self, prefix):
         """Converts `prefix` to an appropriate fully specified S3 path, which
@@ -425,13 +426,13 @@ class MessageIo(YamlIo):
         key prefixes, match all datasets of each type:
 
         >>> list(comm.messages.expand_all('all'))
-        ['broadcast', 'placed', 'submit', 'processing', 'processed', 'error', 'ingesterror', 'ingested', 'terminated', 'cancel', 'rescue', 'clean']
+        ['broadcast', 'placed', 'submit', 'processing', 'processed', 'caldperror', 'clouderror', 'ingesterror', 'ingested', 'terminated', 'cancel', 'rescue', 'clean']
 
         The message 'all-dataset' expands into a sequence of type-dataset messages for each
         type in MESSAGE_TYPES:
 
         >>> list(comm.messages.expand_all('all-lcw303cjq'))
-        ['broadcast-lcw303cjq', 'placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'error-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq', 'clean-lcw303cjq']
+        ['broadcast-lcw303cjq', 'placed-lcw303cjq', 'submit-lcw303cjq', 'processing-lcw303cjq', 'processed-lcw303cjq', 'caldperror-lcw303cjq', 'clouderror-lcw303cjq', 'ingesterror-lcw303cjq', 'ingested-lcw303cjq', 'terminated-lcw303cjq', 'cancel-lcw303cjq', 'rescue-lcw303cjq', 'clean-lcw303cjq']
 
         A fully specified type-ipppsoot message expands to itself:
 
@@ -550,12 +551,12 @@ class MessageIo(YamlIo):
         of those types.
 
         >>> comm = get_io_bundle()
-        >>> comm.messages.put(['cancel-lcw303cjq', 'cancel-lcw304cjq', 'error-lcw303cjq'])
+        >>> comm.messages.put(['cancel-lcw303cjq', 'cancel-lcw304cjq', 'clouderror-lcw303cjq'])
 
-        >>> result = comm.messages.ids(["cancel", "error"])
+        >>> result = comm.messages.ids(["cancel", "clouderror"])
         >>> assert set(result) == set(['lcw303cjq', 'lcw304cjq'])
 
-        >>> comm.messages.ids("error")
+        >>> comm.messages.ids("clouderror")
         ['lcw303cjq']
 
         >>> comm.messages.ids("placed")
@@ -563,9 +564,11 @@ class MessageIo(YamlIo):
 
         >>> comm.messages.delete("all")
         """
-        return list(
-            set("-".join(msg.split("-")[1:]) for msg in self.list(message_types))
-        )  # need to use "-".join() to ensure that MVM dataset names (e.g. skycell-p0797x14y06) stay intact
+        messages = self.list(message_types)
+        # need to use "-".join() to esure that MVM dataset names (e.g. skycell-p0797x14y06) stay intact
+        messages = ["-".join(msg.split("-")[1:]) for msg in messages]
+        messages = [msg.split(".")[0] for msg in messages]
+        return sorted(set(messages))
 
     def list(self, prefix, max_objects=s3.MAX_LIST_OBJECTS):
         """List all objects related to `prefix,  removing any .trigger suffix."""
@@ -581,6 +584,24 @@ class MessageIo(YamlIo):
         if isinstance(ids, str):
             ids = [ids]
         self.delete(["all-" + id for id in ids])
+
+    def delete(self, prefixes, check_exists=True):
+        """Delete messages, including renamed cloud-error triggers."""
+        for prefix in self.expand_all(prefixes):
+            message_type, _, dataset = prefix.partition("-")
+            if message_type != "clouderror" or not hst.is_dataset_name(dataset):
+                super().delete(prefix, check_exists=check_exists)
+                continue
+
+            trigger_path = self.path(prefix)
+            for suffix in ("", "_wait", "_submit", "_proc"):
+                path = trigger_path + suffix
+                try:
+                    if check_exists:
+                        s3.get_object(path, client=self.client)
+                    s3.delete_object(path, client=self.client)
+                except self.client.exceptions.NoSuchKey:
+                    pass
 
 
 class InputsIo(S3Io):

@@ -150,8 +150,8 @@ def assert_submit_timeout(comm, datasets, message_types, check_types=("rescue"))
     for i, (dataset, m) in enumerate(zip(datasets, message_types)):
         if m in check_types:
             text_check = f"Wait for inputs for {dataset} timeout, aborting submission."
-            assert f"error-{dataset}" in messages
-            payload = comm.messages.get(f"error-{dataset}")
+            assert f"clouderror-{dataset}" in messages
+            payload = comm.messages.get(f"clouderror-{dataset}")
             assert text_check in payload["exception"]
 
 
@@ -182,7 +182,7 @@ def test_rescue_all_no_override(s3_client):
 
     comm = io.get_io_bundle()
 
-    # sets up a list of messages of nearly all types, with a few extra error- messages
+    # sets up a list of messages of nearly all types, with a few extra clouderror- messages
     datasets, message_types = common.setup_error_messages(comm)
 
     # post the rescue-all, get a rescue-all event, and run the lambda
@@ -204,7 +204,7 @@ def test_rescue_all_w_override(s3_client):
 
     # payload to put in each rescue message
     timeout_scale_override = {"timeout_scale": 1.5, "memBin": 1}
-    # sets up a list of messages of nearly all types, with a few extra error- messages
+    # sets up a list of messages of nearly all types, with a few extra clouderror- messages
     datasets, message_types = common.setup_error_messages(comm, overrides=timeout_scale_override)
 
     # post the rescue-all, get a rescue-all event, and run the lambda
@@ -233,7 +233,7 @@ def test_rescue_dataset_timeout(s3_client, batch_client, iam_client):
     # grab the usual io bundle
     comm = io.get_io_bundle()
 
-    # sets up a list of messages of nearly all types, with a few extra error- messages
+    # sets up a list of messages of nearly all types, with a few extra clouderror- messages
     datasets, message_types = common.setup_error_messages(comm)
 
     # run the lambda for the rescue message that's naturally in the list above
@@ -251,7 +251,7 @@ def test_rescue_dataset_no_override(s3_client, batch_client, iam_client, lambda_
     # setup Batch
     conftest.setup_batch(iam_client, batch_client, busybox_sleep_timer=5)
 
-    # sets up a list of messages of nearly all types, with a few extra error- messages
+    # sets up a list of messages of nearly all types, with a few extra clouderror- messages
     datasets, message_types = common.setup_error_messages(comm)
 
     # inputs and control must be in place
@@ -286,7 +286,7 @@ def test_rescue_dataset_w_override(s3_client, batch_client, iam_client, lambda_c
     # setup Batch
     conftest.setup_batch(iam_client, batch_client, busybox_sleep_timer=5)
 
-    # sets up a list of messages of nearly all types, with a few extra error- messages
+    # sets up a list of messages of nearly all types, with a few extra clouderror- messages
     # payload to put in each rescue message
     timeout_scale_override = {"timeout_scale": 1.5}
     # this object is only for the setup_error_messages function

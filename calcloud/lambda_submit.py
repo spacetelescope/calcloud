@@ -13,8 +13,9 @@ handlers for more information on how jobs are initiated and
 retried.
 """
 
-import time
 import os
+import time
+import traceback
 
 from . import plan
 from . import submit
@@ -42,24 +43,33 @@ def main(comm, dataset, bucket_name, overrides):
     7. If an exception occurs but a terminate-dataset message exists,
        a terminated-dataset message is sent.
     8. If an exception occurs but a terminate-dataset message does not exist,
-       an error-dataset messaage is sent.
+       an clouderror-dataset messaage is sent.
     """
+    terminated = comm.messages.listl(f"terminated-{dataset}")
     try:
-        terminated = comm.messages.listl(f"terminated-{dataset}")
         _main(comm, dataset, bucket_name, overrides)
     except Exception as exc:
-        logger.error(
-            "Exception in lambda_submit.main for %s = %s",
-            dataset,
-            exc,
-        )
+        logger.exception("Submission failed for %s", dataset)
+
         if terminated:
-            msg_name = "terminated-" + dataset
+            msg_name = f"terminated-{dataset}"
         else:
-            msg_name = "error-" + dataset
+            diagnostic = (
+                f"Dataset: {dataset}\n"
+                f"Bucket: {bucket_name}\n"
+                "Cloud submission failed:\n\n"
+                f"{traceback.format_exc()}"
+            )
+            comm.outputs.put({f"{dataset}/caldp_{dataset}.log": diagnostic})
+            msg_name = f"clouderror-{dataset}"
+
         comm.messages.delete(f"all-{dataset}")
         comm.messages.put(
-            msg_name, payload=dict(where="submit lambda exception handler " + bucket_name, exception=str(exc))
+            msg_name,
+            payload=dict(
+                where="submit lambda exception handler " + bucket_name,
+                exception=str(exc),
+            ),
         )
 
 

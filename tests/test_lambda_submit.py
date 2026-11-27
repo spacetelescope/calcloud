@@ -21,7 +21,7 @@ def test_lambda_submit_mock(s3_client, lambda_client, iam_client, dynamodb_clien
         placed_msg = f"placed-{dataset}"
         submit_msg = f"submit-{dataset}"
         terminate_msg = f"terminated-{dataset}"
-        error_msg = f"error-{dataset}"
+        error_msg = f"clouderror-{dataset}"
         inputs_tar = f"{dataset}.tar.gz"
         controls_mem_model_feature = f"{dataset}/{dataset}_MemModelFeatures.txt"
         overrides = {}
@@ -68,7 +68,7 @@ def good_submit(comm, bucket, comm_messages):
 def no_placed_msg_submit(comm, bucket, comm_messages):
     from calcloud import lambda_submit
 
-    # a submit that will end in error because the placed-dataset or rescue-dataset message is not present
+    # a submit that will end in clouderror because the placed-dataset or rescue-dataset message is not present
 
     overrides = comm_messages["overrides"]
     dataset = comm_messages["dataset"]
@@ -90,7 +90,7 @@ def no_placed_msg_submit(comm, bucket, comm_messages):
 def no_input_submit(comm, bucket, comm_messages):
     from calcloud import lambda_submit
 
-    # a submit that will end in error because input tar.gz and memory model feature files are not present
+    # a submit that will end in clouderror because input tar.gz and memory model feature files are not present
 
     overrides = comm_messages["overrides"]
     dataset = comm_messages["dataset"]
@@ -112,8 +112,8 @@ def no_input_submit(comm, bucket, comm_messages):
 def terminated_submit(comm, bucket, comm_messages):
     from calcloud import lambda_submit
 
-    # a submit that will end in error because the placed-dataset or rescue-dataset message is not present
-    # it will also has terminated-dataset as error message instead of error-dataset because a terminated-dataset is present in messages
+    # a submit that will end in clouderror because the placed-dataset or rescue-dataset message is not present
+    # it will also has terminated-dataset as error message instead of clouderror-dataset because a terminated-dataset is present in messages
 
     overrides = comm_messages["overrides"]
     dataset = comm_messages["dataset"]
